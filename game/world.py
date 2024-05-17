@@ -3,6 +3,7 @@ import random
 import noise
 from .settings import TILE_SIZE
 from .utils import load_images
+from .buildings import *
 
 
 CHARMAP = {'tree': 't',
@@ -11,8 +12,10 @@ CHARMAP = {'tree': 't',
 
 class World:
 
-    def __init__(self, hud, grid_length_x, grid_length_y, width, height):
+    def __init__(self, hud, entities, grid_length_x, grid_length_y, width, height):
         self.hud = hud
+        self.resourcemanager = self.hud.resourcemanager
+        self.entities = entities
         self.grid_length_x = grid_length_x
         self.grid_length_y = grid_length_y
         self.width = width
@@ -27,6 +30,8 @@ class World:
 
         self.tiles = self.hud.images
         self.world = self.create_world()
+
+        self.buildings = [[None for x in range(self.grid_length_x)] for y in range(self.grid_length_y)]
 
         # self.write_map()
 
@@ -68,25 +73,49 @@ class World:
 
                 # place the building down if the user left-clicked
                 if mouse_action[0] and not collision:
+
+                    e = None
+                    if self.hud.selected_tile['name'] == 'chopping':
+                        e = ChoppingBlock(render_pos, self.resourcemanager)
+                    elif self.hud.selected_tile['name'] == 'well':
+                        e = Well(render_pos, self.resourcemanager)
+                    if e is not None:
+                        self.entities.append(e)
+                        self.buildings[grid_pos[0]][grid_pos[1]] = e
+
+
                     self.world[grid_pos[0]][grid_pos[1]]["tile"] = self.hud.selected_tile["name"]
                     self.world[grid_pos[0]][grid_pos[1]]["collision"] = True
-                    self.hud.selected_tile = None
+
+                    # this line will delete the item from the cursor, so you have to click it again to build another
+                    # TODO: with the following line commented, you can place multiple copies of a block without having
+                    #  to click the build panel again.  However, even if the select panel is not shown, you still can't
+                    #  place a block over where it should be.  Need to add logic to check select panel collision ONLY
+                    #  when the select panel is visible.
+                    # self.hud.selected_tile = None
+
 
         # the user has clicked on a tile with a blank cursor
         else:
             grid_pos = self.mouse_to_grid(mouse_pos[0], mouse_pos[1], camera.scroll)
             if self.can_place_tile(grid_pos):
-                collision = self.world[grid_pos[0]][grid_pos[1]]["collision"]
-                if mouse_action[0] and collision:
+                bldg = self.buildings[grid_pos[0]][grid_pos[1]]
+                # collision = self.world[grid_pos[0]][grid_pos[1]]["collision"]
+                # if mouse_action[0] and collision:
+                if mouse_action[0] and bldg is not None:
                     self.examine_tile = grid_pos
-                    self.hud.examined_tile = self.world[grid_pos[0]][grid_pos[1]]
+                    # self.hud.examined_tile = self.world[grid_pos[0]][grid_pos[1]]
+                    self.hud.examined_tile = bldg
 
     def draw(self, screen, camera):
 
         screen.blit(self.grass_tiles, (camera.scroll.x, camera.scroll.y))
 
+        # iterate over each space on the map
         for x in range(self.grid_length_x):
             for y in range(self.grid_length_y):
+
+                # draw world tiles
                 render_pos = self.world[x][y]["render_pos"]
                 tile = self.world[x][y]["tile"]
                 if tile != "":
@@ -99,6 +128,20 @@ class World:
                             mask = pg.mask.from_surface(self.tiles[tile]).outline()
                             mask = [(x + render_pos[0] +  self.grass_tiles.get_width() / 2 + camera.scroll.x,
                                      y + render_pos[1] - (self.tiles[tile].get_height() - TILE_SIZE) + camera.scroll.y)
+                                    for x, y in mask]
+                            pg.draw.polygon(screen, (255, 255, 255), mask, 3)
+
+                # draw buildings
+                bldg = self.buildings[x][y]
+                if bldg is not None:
+                    screen.blit(bldg.image,
+                                (render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
+                                 render_pos[1] - (bldg.image.get_height() - TILE_SIZE) + camera.scroll.y))
+                    if self.examine_tile is not None:
+                        if x == self.examine_tile[0] and y == self.examine_tile[1]:
+                            mask = pg.mask.from_surface(bldg.image).outline()
+                            mask = [(x + render_pos[0] +  self.grass_tiles.get_width() / 2 + camera.scroll.x,
+                                     y + render_pos[1] - (bldg.image.get_height() - TILE_SIZE) + camera.scroll.y)
                                     for x, y in mask]
                             pg.draw.polygon(screen, (255, 255, 255), mask, 3)
 

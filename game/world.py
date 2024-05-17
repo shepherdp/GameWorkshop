@@ -5,6 +5,10 @@ from .settings import TILE_SIZE
 from .utils import load_images
 
 
+CHARMAP = {'tree': 't',
+           'rock': 'r',
+           '': '.'}
+
 class World:
 
     def __init__(self, hud, grid_length_x, grid_length_y, width, height):
@@ -23,6 +27,8 @@ class World:
 
         self.tiles = self.hud.images
         self.world = self.create_world()
+
+        # self.write_map()
 
         self.temp_tile = None
         self.examine_tile = None
@@ -219,3 +225,9 @@ class World:
             return True
         else:
             return False
+
+    def write_map(self):
+        f = open('map.txt', 'w')
+        for row in self.world:
+            f.write(','.join([CHARMAP[i['tile']] for i in row]) + '\n')
+        f.close()

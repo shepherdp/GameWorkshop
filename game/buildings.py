@@ -54,3 +54,25 @@ class Road(Building):
 
     def __init__(self, pos, manager):
         super().__init__(pos, 'road', 'road', manager)
+
+class Quarry(Building):
+
+    def __init__(self, pos, manager):
+        super().__init__(pos, 'quarry', 'quarry', manager)
+
+    def update(self):
+        if pg.time.get_ticks() - self.resourcecooldown > 2000:
+            self.resourcemanager.resources['stone'] += 1
+            self.resourcemanager.resources['gold'] += 1
+            self.resourcecooldown = pg.time.get_ticks()
+
+class Wheatfield(Building):
+
+    def __init__(self, pos, manager):
+        super().__init__(pos, 'wheatfield', 'wheatfield', manager)
+
+    def update(self):
+        if pg.time.get_ticks() - self.resourcecooldown > 2000:
+            self.resourcemanager.resources['wheat'] += 1
+            self.resourcemanager.resources['gold'] += 1
+            self.resourcecooldown = pg.time.get_ticks()

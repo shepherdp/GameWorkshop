@@ -30,7 +30,8 @@ class Game:
         # world
         self.world = World(self.resource_manager, self.entities, self.hud, WORLD_W, WORLD_H, self.width, self.height)
 
-        for _ in range(10): Worker(self.world.world[25][25], self.world)
+        for _ in range(5):
+            Worker(self.world.world[25][25], self.world)
 
         # camera
         self.camera = Camera(self.width, self.height)

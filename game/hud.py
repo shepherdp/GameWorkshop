@@ -34,6 +34,8 @@ class HUD:
         self.selected_tile = None
         self.examined_tile = None
 
+        self.town_exists = False
+
     def populate_build_hud(self):
         render_pos = [self.width * .84 + 10, self.height * .74 + 10]
         surface_w = self.building_panel.get_width() // 5
@@ -107,7 +109,15 @@ class HUD:
                       self.select_rect.topleft)
 
         for tile in self.tiles:
-            if not tile['affordable']:
+            if not self.town_exists:
+                if tile['name'] == 'tc':
+                    screen.blit(tile['icon'], tile['rect'].topleft)
+                else:
+                    icon = tile['icon'].copy()
+                    icon.set_alpha(100)
+                    screen.blit(icon, tile['rect'].topleft)
+                continue
+            elif not tile['affordable']:
                 icon = tile['icon'].copy()
                 icon.set_alpha(100)
                 screen.blit(icon, tile['rect'].topleft)
@@ -123,12 +133,11 @@ class HUD:
                 screen.blit(tile['icon'], tile['rect'].topleft)
 
         # draw resource amounts at top of screen
-        pos = self.width - 400
-        # for resource in ['wood', 'stone', 'gold']:
+        pos = self.width - 720
         for resource, value in self.resourcemanager.resources.items():
             text = f'{resource}: {value}'
             draw_text(screen, text, 30, (0, 0, 0), (pos, 0))
-            pos += 100
+            pos += 120
 
     def scale_image(self, image, w=None, h=None):
         if w is None and h is None:

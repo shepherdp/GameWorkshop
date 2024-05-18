@@ -82,32 +82,6 @@ class Hud:
 
     def create_build_hud(self):
 
-        # render_pos = [self.width * 0.84 + 10, self.height * 0.74 + 10]
-        # object_width = self.build_surface.get_width() // 5
-        #
-        # tiles = []
-        #
-        # print(self.images)
-        # for image_name, image in self.images.items():
-        #
-        #     pos = render_pos.copy()
-        #     image_tmp = image.copy()
-        #     image_scale = self.scale_image(image_tmp, w=object_width)
-        #     rect = image_scale.get_rect(topleft=pos)
-        #
-        #     tiles.append(
-        #         {
-        #             "name": image_name,
-        #             "icon": image_scale,
-        #             "image": self.images[image_name],
-        #             "rect": rect
-        #         }
-        #     )
-        #
-        #     render_pos[0] += image_scale.get_width() + 10
-        #
-        # return tiles
-
         render_pos = [self.width * .84 + 10, self.height * .74 + 10]
         surface_w = self.build_surface.get_width() // 5
         leftpos = render_pos[0]
@@ -244,7 +218,7 @@ class World:
                 if mouse_action[0] and not collision:
                     self.world[grid_pos[0]][grid_pos[1]]["tile"] = self.hud.selected_tile["name"]
                     self.world[grid_pos[0]][grid_pos[1]]["collision"] = True
-                    self.hud.selected_tile = None
+                    # self.hud.selected_tile = None
 
         else:
 

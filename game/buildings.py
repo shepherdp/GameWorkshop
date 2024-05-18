@@ -24,6 +24,7 @@ class ChoppingBlock(Building):
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
             self.resourcemanager.resources['wood'] += 1
+            self.resourcemanager.resources['gold'] += 1
             self.resourcecooldown = pg.time.get_ticks()
 
 class Well(Building):
@@ -34,4 +35,22 @@ class Well(Building):
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
             self.resourcemanager.resources['water'] += 1
+            self.resourcemanager.resources['gold'] += 1
             self.resourcecooldown = pg.time.get_ticks()
+
+class TownCenter(Building):
+
+    def __init__(self, pos, manager):
+        super().__init__(pos, 'towncenter', 'tc', manager)
+
+    def update(self):
+        if pg.time.get_ticks() - self.resourcecooldown > 2000:
+            self.resourcemanager.resources['wood'] += 2
+            self.resourcemanager.resources['water'] += 2
+            self.resourcemanager.resources['gold'] += 2
+            self.resourcecooldown = pg.time.get_ticks()
+
+class Road(Building):
+
+    def __init__(self, pos, manager):
+        super().__init__(pos, 'road', 'road', manager)

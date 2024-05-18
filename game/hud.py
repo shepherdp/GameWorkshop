@@ -43,7 +43,7 @@ class HUD:
         horizontal_pos = 0
 
         # elements to leave out of the build panel
-        skip = ['block', 'tree', 'rock', 'water']
+        skip = ['block', 'tree', 'rock', 'water', 'worker']
 
         for name, img in self.images.items():
             if name in skip:

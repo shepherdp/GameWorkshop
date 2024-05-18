@@ -4,11 +4,15 @@ class ResourceManager:
 
     def __init__(self):
 
-        self.resources = {'wood': 10,
-                          'water': 10}
+        self.resources = {'wood': 100,
+                          'water': 100,
+                          'gold': 100}
 
-        self.costs = {'well': {'wood': 5},
-                      'chopping': {'wood': 3, 'water': 2}}
+        self.costs = {'well': {'wood': 5, 'gold': 2},
+                      'chopping': {'wood': 3, 'water': 2, 'gold': 2},
+                      'tc': {'wood': 10, 'water': 10, 'gold': 10},
+                      'road': {'wood': 1}
+                      }
 
     def apply_cost(self, bldg):
         for r, cost in self.costs[bldg].items():

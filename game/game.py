@@ -1,14 +1,15 @@
 import pygame as pg
 import sys
-from .world import World
-from .settings import TILE_SIZE
-from .utils import draw_text
+
 from .camera import Camera
 from .hud import HUD
 from .resourcemanager import ResourceManager
+from .utils import draw_text
+from .workers import Worker
+from .world import World
 
-WORLD_W = 100
-WORLD_H = 100
+from .settings import WORLD_W, WORLD_H
+
 
 class Game:
 
@@ -20,13 +21,16 @@ class Game:
         # entities
         self.entities = []
 
-        self.resourcemanager = ResourceManager()
+        # resource manager
+        self.resource_manager = ResourceManager()
 
         # hud
-        self.hud = HUD(self.resourcemanager, self.width, self.height)
+        self.hud = HUD(self.resource_manager, self.width, self.height)
 
         # world
-        self.world = World(self.hud, self.entities, WORLD_W, WORLD_H, self.width, self.height)
+        self.world = World(self.resource_manager, self.entities, self.hud, WORLD_W, WORLD_H, self.width, self.height)
+
+        for _ in range(10): Worker(self.world.world[25][25], self.world)
 
         # camera
         self.camera = Camera(self.width, self.height)
@@ -42,17 +46,15 @@ class Game:
     def events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
+                self.quit()
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
+                    self.playing = False
+                    self.quit()
 
     def update(self):
         self.camera.update()
-        for e in self.entities:
-            e.update()
+        for e in self.entities: e.update()
         self.hud.update()
         self.world.update(self.camera)
 
@@ -70,3 +72,7 @@ class Game:
         )
 
         pg.display.flip()
+
+    def quit(self):
+        pg.quit()
+        sys.exit()

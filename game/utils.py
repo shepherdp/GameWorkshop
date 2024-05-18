@@ -19,6 +19,8 @@ def load_images():
     block = pg.image.load('assets\\graphics\\testblock.png').convert_alpha()
     road = pg.image.load('assets\\graphics\\road.png').convert_alpha()
     water = pg.image.load('assets\\graphics\\water.png').convert_alpha()
+    tc = pg.image.load('assets\\graphics\\towncenter.png').convert_alpha()
+    worker = pg.image.load('assets\\graphics\\worker.png').convert_alpha()
 
     images = {'b1': b1,
               'b2': b2,
@@ -28,7 +30,9 @@ def load_images():
               'chopping': chopping,
               'block': block,
               'road': road,
-              'water': water
+              'water': water,
+              'tc': tc,
+              'worker': worker
               }
 
     return images

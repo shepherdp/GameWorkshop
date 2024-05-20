@@ -30,15 +30,18 @@ class Game:
         # world
         self.world = World(self.resource_manager, self.entities, self.hud, WORLD_W, WORLD_H, self.width, self.height)
 
-        for _ in range(5):
-            Worker(self.world.world[25][25], self.world)
-
         # camera
         self.camera = Camera(self.width, self.height)
+
+        self.spawncooldown = pg.time.get_ticks()
 
     def run(self):
         self.playing = True
         while self.playing:
+            now = pg.time.get_ticks()
+            if now - self.spawncooldown > 10000:
+                Worker(self.world.world[25][25], self.world)
+                self.spawncooldown = now
             self.clock.tick(60)
             self.events()
             self.update()

@@ -48,11 +48,11 @@ class World:
             y = random.randint(0, self.grid_length_y - 1)
             if self.world[x][y]["collision"]:
                 continue
-            render_pos = self.world[20][20]['render_pos']
-            grid_pos = (20, 20)
+            render_pos = self.world[x][y]['render_pos']
+            grid_pos = (x, y)
             ent = TownCenter(render_pos, grid_pos, self.resource_manager)
             self.towns = [ent]
-            self.buildings[20][20] = ent
+            self.buildings[x][y] = ent
             self.entities.append(ent)
             self.hud.town_exists = True
             break

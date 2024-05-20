@@ -30,6 +30,8 @@ class World:
         self.width = width
         self.height = height
 
+        self.hud.parent = self
+
         self.perlin_scale = grid_length_x / 2
 
         self.grass_tiles = pg.Surface(
@@ -38,10 +40,22 @@ class World:
         self.world = self.create_world()
         self.collision_matrix = self.create_collision_matrix()
 
-        self.towns = []
-
         self.buildings = [[None for x in range(self.grid_length_x)] for y in range(self.grid_length_y)]
         self.workers = [[None for x in range(self.grid_length_x)] for y in range(self.grid_length_y)]
+
+        while 1:
+            x = random.randint(0, self.grid_length_x - 1)
+            y = random.randint(0, self.grid_length_y - 1)
+            if self.world[x][y]["collision"]:
+                continue
+            render_pos = self.world[20][20]['render_pos']
+            grid_pos = (20, 20)
+            ent = TownCenter(render_pos, grid_pos, self.resource_manager)
+            self.towns = [ent]
+            self.buildings[20][20] = ent
+            self.entities.append(ent)
+            self.hud.town_exists = True
+            break
 
         self.temp_tile = None
         self.examine_tile = None
@@ -51,23 +65,31 @@ class World:
         mouse_pos = pg.mouse.get_pos()
         mouse_action = pg.mouse.get_pressed()
 
+        # if the user left-clicks, deselect anything that is selected
         if mouse_action[2]:
             self.examine_tile = None
             self.hud.examined_tile = None
+            self.hud.select_panel_visible = False
 
         # user wants to place a tile
         self.temp_tile = None
         if self.hud.selected_tile is not None:
 
+            # get grid coordinates of current mouse position
             grid_pos = self.mouse_to_grid(mouse_pos[0], mouse_pos[1], camera.scroll)
 
+
             if self.can_place_tile(grid_pos):
+
+                # grab a copy of the image to place over the tile with the mouse
                 img = self.hud.selected_tile["image"].copy()
                 img.set_alpha(100)
 
                 render_pos = self.world[grid_pos[0]][grid_pos[1]]["render_pos"]
                 iso_poly = self.world[grid_pos[0]][grid_pos[1]]["iso_poly"]
                 collision = self.world[grid_pos[0]][grid_pos[1]]["collision"]
+
+                # can't place blocks on spaces containing workers
                 if self.workers[grid_pos[0]][grid_pos[1]] is not None:
                     collision = True
 
@@ -81,18 +103,20 @@ class World:
                 if mouse_action[0] and not collision:
                     ent = None
                     if self.hud.selected_tile["name"] == "chopping":
-                        ent = ChoppingBlock(render_pos, self.resource_manager)
+                        ent = ChoppingBlock(render_pos, grid_pos, self.resource_manager)
                     elif self.hud.selected_tile["name"] == "well":
-                        ent = Well(render_pos, self.resource_manager)
+                        ent = Well(render_pos, grid_pos, self.resource_manager)
                     elif self.hud.selected_tile["name"] == "tc":
-                        ent = TownCenter(render_pos, self.resource_manager)
+                        ent = TownCenter(render_pos, grid_pos, self.resource_manager)
+                        self.towns.append(ent)
+                        # when this is false, no other buildings can be made
                         self.hud.town_exists = True
                     elif self.hud.selected_tile["name"] == "quarry":
-                        ent = Quarry(render_pos, self.resource_manager)
+                        ent = Quarry(render_pos, grid_pos, self.resource_manager)
                     elif self.hud.selected_tile["name"] == "road":
-                        ent = Road(render_pos, self.resource_manager)
+                        ent = Road(render_pos, grid_pos, self.resource_manager)
                     elif self.hud.selected_tile["name"] == "wheatfield":
-                        ent = Wheatfield(render_pos, self.resource_manager)
+                        ent = Wheatfield(render_pos, grid_pos, self.resource_manager)
                     self.world[grid_pos[0]][grid_pos[1]]["collision"] = True
                     self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
                     if ent is not None:
@@ -110,6 +134,7 @@ class World:
                 if mouse_action[0] and (building is not None):
                     self.examine_tile = grid_pos
                     self.hud.examined_tile = building
+                    self.hud.select_panel_visible = True
 
     def draw(self, screen, camera):
 
@@ -252,9 +277,13 @@ class World:
 
     def can_place_tile(self, grid_pos):
         mouse_on_panel = False
-        for rect in [self.hud.resources_rect, self.hud.building_rect, self.hud.select_rect]:
+        for rect in [self.hud.resources_rect, self.hud.building_rect]:
             if rect.collidepoint(pg.mouse.get_pos()):
                 mouse_on_panel = True
+
+        if self.hud.select_panel_visible and self.hud.select_rect.collidepoint(pg.mouse.get_pos()):
+                mouse_on_panel = True
+
         world_bounds = (0 <= grid_pos[0] < self.grid_length_x) and (0 <= grid_pos[1] < self.grid_length_x)
 
         if world_bounds and not mouse_on_panel:

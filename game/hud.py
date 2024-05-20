@@ -11,6 +11,8 @@ class HUD:
         self.width = width
         self.height = height
 
+        self.parent = None
+
         self.panel_color = (198, 155, 93, 175)
 
         # resources panel
@@ -27,6 +29,7 @@ class HUD:
         self.select_panel = pg.Surface((self.width * .3, self.height * .2), pg.SRCALPHA)
         self.select_panel.fill(self.panel_color)
         self.select_rect = self.select_panel.get_rect(topleft=(self.width * .35, self.height * .79))
+        self.select_panel_visible = False
 
         self.images = load_images()
         self.tiles = self.populate_build_hud()
@@ -35,6 +38,7 @@ class HUD:
         self.examined_tile = None
 
         self.town_exists = False
+        self.town_center_selected = False
 
     def populate_build_hud(self):
         render_pos = [self.width * .84 + 10, self.height * .74 + 10]
@@ -45,7 +49,7 @@ class HUD:
         horizontal_pos = 0
 
         # elements to leave out of the build panel
-        skip = ['block', 'tree', 'rock', 'water', 'worker']
+        skip = ['block', 'tree', 'rock', 'water', 'worker', 'grass1', 'grass2']
 
         for name, img in self.images.items():
             if name in skip:
@@ -82,6 +86,9 @@ class HUD:
             if tile['rect'].collidepoint(mouse_pos) and tile['affordable']:
                 if mouse_action[0]:
                     self.selected_tile = tile
+                    self.parent.examine_tile = None
+                    self.examined_tile = None
+                    self.select_panel_visible = False
 
     def draw(self, screen):
 
@@ -103,12 +110,12 @@ class HUD:
             img_scale = self.scale_image(img, h=h*.75)
             screen.blit(img_scale, (self.width * .35 + 10,
                                     self.height * .79 + 40))
-            # draw_text(screen, self.examined_tile['tile'], 40, (255, 255, 255),
-            #           self.select_rect.center)
             draw_text(screen, self.examined_tile.name, 40, (255, 255, 255),
                       self.select_rect.topleft)
 
         for tile in self.tiles:
+
+            # require town center before building other things
             if not self.town_exists:
                 if tile['name'] == 'tc':
                     screen.blit(tile['icon'], tile['rect'].topleft)

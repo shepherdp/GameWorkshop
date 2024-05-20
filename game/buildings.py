@@ -5,10 +5,11 @@ import pygame as pg
 
 class Building:
 
-    def __init__(self, pos, imgname, bldgname, resourcemanager):
+    def __init__(self, pos, loc, imgname, bldgname, resourcemanager):
         self.image = pg.image.load(f'assets\\graphics\\{imgname}.png').convert_alpha()
         self.name = bldgname
         self.rect = self.image.get_rect(topleft=pos)
+        self.loc = loc
         self.resourcemanager = resourcemanager
         self.resourcemanager.apply_cost(self.name)
         self.resourcecooldown = pg.time.get_ticks()
@@ -18,8 +19,8 @@ class Building:
 
 class ChoppingBlock(Building):
 
-    def __init__(self, pos, manager):
-        super().__init__(pos, 'choppingblock', 'chopping', manager)
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'choppingblock', 'chopping', manager)
 
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
@@ -29,8 +30,8 @@ class ChoppingBlock(Building):
 
 class Well(Building):
 
-    def __init__(self, pos, manager):
-        super().__init__(pos, 'well', 'well', manager)
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'well', 'well', manager)
 
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
@@ -40,8 +41,8 @@ class Well(Building):
 
 class TownCenter(Building):
 
-    def __init__(self, pos, manager):
-        super().__init__(pos, 'towncenter', 'tc', manager)
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'towncenter', 'tc', manager)
 
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
@@ -52,13 +53,13 @@ class TownCenter(Building):
 
 class Road(Building):
 
-    def __init__(self, pos, manager):
-        super().__init__(pos, 'road', 'road', manager)
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'road', 'road', manager)
 
 class Quarry(Building):
 
-    def __init__(self, pos, manager):
-        super().__init__(pos, 'quarry', 'quarry', manager)
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'quarry', 'quarry', manager)
 
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
@@ -68,8 +69,8 @@ class Quarry(Building):
 
 class Wheatfield(Building):
 
-    def __init__(self, pos, manager):
-        super().__init__(pos, 'wheatfield', 'wheatfield', manager)
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'wheatfield', 'wheatfield', manager)
 
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:

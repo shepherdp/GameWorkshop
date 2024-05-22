@@ -50,20 +50,14 @@ class World:
 
         self.towns = []
         # choose a random spot on the map to place one initial town center
-        for i in range(1):
-            x, y = self.get_random_position()
-            render_pos = self.world[x][y]['render_pos']
-            grid_pos = (x, y)
-            ent = TownCenter(render_pos, grid_pos, ResourceManager())
-            self.towns.append(ent)
-            self.buildings[x][y] = ent
-            self.entities.append(ent)
-            self.hud.town_exists = True
-
-        # self.towns = [ent]
-        # self.buildings[x][y] = ent
-        # self.entities.append(ent)
-        # self.hud.town_exists = True
+        x, y = self.get_random_position()
+        render_pos = self.world[x][y]['render_pos']
+        grid_pos = (x, y)
+        ent = TownCenter(render_pos, grid_pos, ResourceManager())
+        self.towns.append(ent)
+        self.buildings[x][y] = ent
+        self.entities.append(ent)
+        self.hud.town_exists = True
 
         self.temp_tile = None
         self.examine_tile = None
@@ -394,6 +388,37 @@ class World:
         else:
             return False
 
+    def write_world_network(self):
+        for x, y in self.world_network.nodes:
+            color = ''
+            if self.buildings[x][y] is not None:
+                color = (.5, .5, 0)
+            elif self.world[x][y]['tile'] == '':
+                color = (0, 1, 0)
+            elif self.world[x][y]['tile'] == 'tree':
+                color = (0, 1, 1)
+            elif self.world[x][y]['tile'] == 'rock':
+                color = (0, 0, 0)
+
+            # scatter([self.grid_length_x - 1 - x], [y], c=(color,))
+            scatter([y], [self.grid_length_x - 1 - x], c=(color,))
+            # scatter([x], [self.grid_length_y - 1 - y], c=(color,))
+
+        for n1, n2 in self.world_network.edges:
+            x1, y1 = n1
+            x1 = self.grid_length_x - 1 - x1
+            # y1 = self.grid_length_y - 1 - y1
+            x2, y2 = n2
+            x2 = self.grid_length_x - 1 - x2
+            # y2 = self.grid_length_y - 1 - y2
+
+
+            # plot([x1, x2], [y1, y2], 'k')
+            plot([y1, y2], [x1, x2], 'k')
+
+        # nx.draw_networkx(self.world_network, with_labels=True)
+        savefig('world_network.png')
+
     def write_map(self):
         f = open('map.txt', 'w')
         for x in range(self.grid_length_x):
@@ -418,38 +443,6 @@ class World:
             f.write(string[:-1] + '\n')
 
         f.close()
-
-        for x, y in self.world_network.nodes:
-            color = ''
-            if self.buildings[x][y] is not None:
-                color = (.5, .5, 0)
-            elif self.world[x][y]['tile'] == '':
-                color = (0, 1, 0)
-            elif self.world[x][y]['tile'] == 'tree':
-                color = (0, 1, 1)
-            elif self.world[x][y]['tile'] == 'rock':
-                color = (0, 0, 0)
-
-            # scatter([self.grid_length_x - 1 - x], [y], c=(color,))
-            scatter([y], [self.grid_length_x - 1 - x], c=(color,))
-
-
-            # scatter([x], [self.grid_length_y - 1 - y], c=(color,))
-
-        for n1, n2 in self.world_network.edges:
-            x1, y1 = n1
-            x1 = self.grid_length_x - 1 - x1
-            # y1 = self.grid_length_y - 1 - y1
-            x2, y2 = n2
-            x2 = self.grid_length_x - 1 - x2
-            # y2 = self.grid_length_y - 1 - y2
-
-
-            # plot([x1, x2], [y1, y2], 'k')
-            plot([y1, y2], [x1, x2], 'k')
-
-        # nx.draw_networkx(self.world_network, with_labels=True)
-        savefig('world_network.png')
 
     def get_random_position(self):
         found = False

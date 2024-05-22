@@ -17,6 +17,7 @@ class Worker:
         self.image = pg.transform.scale(image, (image.get_width()*2, image.get_height()*2))
         self.tile = tile
         self.moving = False
+        self.path_index = 0
 
         # pathfinding
         self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
@@ -27,12 +28,13 @@ class Worker:
     def create_path(self):
         num = random.randint(0, len(self.world.towns) - 1)
         x, y = self.world.towns[num].loc
-        print('In network: ', (x, y) in self.world.world_network.nodes, (x, y))
-        print('Spawn: ', (self.tile['grid'][0], self.tile['grid'][1]) in self.world.world_network.nodes, self.tile['grid'])
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         self.end = (x, y)
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
-        print('Path: ', self.path)
+        self.moving = True
+
+    # A star was not reading the map right for some reason.  Should figure that one out.
+    # For now, just using Dijkstra on a networkx graph of all walkable tiles in the game
 
     # def create_path(self):
     #     searching_for_path = True
@@ -65,8 +67,8 @@ class Worker:
 
     def change_tile(self, new_tile):
         self.world.workers[self.tile["grid"][0]][self.tile["grid"][1]] = None
-        self.world.workers[new_tile.x][new_tile.y] = self
-        self.tile = self.world.world[new_tile.x][new_tile.y]
+        self.world.workers[new_tile['grid'][0]][new_tile['grid'][1]] = self
+        self.tile = self.world.world[new_tile['grid'][0]][new_tile['grid'][1]]
 
     def update(self):
         if not self.moving:
@@ -76,12 +78,15 @@ class Worker:
             try:
                 new_pos = self.path[self.path_index]
             except:
-                self.create_path()
+                # self.create_path()
                 return
             # update position in the world
-            self.change_tile(new_pos)
+
+            new_tile = self.world.world[new_pos[0]][new_pos[1]]
+            self.change_tile(new_tile)
             self.path_index += 1
             self.move_timer = now
+
             if self.path_index == len(self.path) - 1:
                 self.moving = False
                 # self.create_path()

@@ -6,8 +6,6 @@ class HUD:
 
     def __init__(self, width, height):
 
-        # self.resourcemanager = resourcemanager
-
         self.width = width
         self.height = height
 
@@ -64,7 +62,8 @@ class HUD:
         horizontal_pos = 0
 
         # elements to leave out of the build panel
-        skip = ['block', 'tree', 'rock', 'water', 'worker', 'grass1', 'grass2']
+        skip = ['block', 'tree', 'rock', 'water', 'worker', 'grass1', 'grass2',
+                'water_icon', 'wood_icon']
 
         for name, img in self.images.items():
             if name in skip:

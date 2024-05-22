@@ -92,18 +92,21 @@ class HUD:
         if mouse_action[2]:
             self.selected_tile = None
 
+        # check to see if the user selected the current town center
         if self.examined_tile is not None:
             if self.examined_tile.name == 'towncenter':
                 if self.activate_town_center_rect.collidepoint(mouse_pos):
                     if mouse_action[0]:
                         self.parent.active_town_center = self.examined_tile
 
+        # check to see if the user wants to deselect the current town center
         if self.parent.active_town_center is not None:
             if self.deselect_town_center_rect.collidepoint(mouse_pos):
                 if mouse_action[0]:
                     self.parent.active_town_center = None
                     self.selected_tile = None
 
+        # only update build tiles based on affordability if a town center is active
         if self.parent.active_town_center is not None:
             for tile in self.tiles:
                 if self.parent.active_town_center.resourcemanager.is_affordable(tile['name']):
@@ -136,14 +139,32 @@ class HUD:
             draw_text(screen, self.examined_tile.name, 40, (255, 255, 255),
                       self.select_rect.topleft)
 
+            if self.examined_tile.name != 'towncenter':
+                x = self.width * .5
+                y = self.height * .84
+                draw_text(screen, f'Workers: {len(self.examined_tile.workers)} / {self.examined_tile.workers_needed}',
+                          20, (255, 255, 255), (x, y))
+
             # if a town center is selected and the World doesn't currently have an active one,
             # draw a button for making it the active town center
-            if self.examined_tile.name == 'towncenter' and (self.parent.active_town_center is None or
+            elif self.examined_tile.name == 'towncenter' and (self.parent.active_town_center is None or
                                                             self.examined_tile is not self.parent.active_town_center):
                 screen.blit(self.activate_town_center_button, (self.width * .5, self.height * .84))
                 draw_text(screen, 'Select', 30, (255, 255, 255),
                           self.activate_town_center_rect.topleft)
+            elif (self.examined_tile.name == 'towncenter') and (self.examined_tile is self.parent.active_town_center):
+                x = self.width * .5
+                y = self.height * .84
+                draw_text(screen,
+                          f'Villagers: {len(self.examined_tile.villagers)} / {self.examined_tile.housing_capacity}',
+                          20, (255, 255, 255), (x, y)
+                          )
+                y += 20
+                for name, count in self.parent.active_town_center.num_buildings.items():
+                    draw_text(screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+                    y += 20
 
+        # draw active town center panel and deselect button
         if self.parent.active_town_center is not None:
             screen.blit(self.current_town_center_panel, (self.width * .85, self.height * .1))
             draw_text(screen, self.parent.active_town_center.name, 30, (0, 0, 0),
@@ -151,6 +172,7 @@ class HUD:
             screen.blit(self.deselect_town_center_button, (self.width * .96, self.height * .1))
             draw_text(screen, 'X', 20, (0, 0, 0), self.deselect_town_center_rect.topleft)
 
+        # only draw build tiles when a town center is active
         if self.parent.active_town_center is not None:
             screen.blit(self.building_panel, (self.width * .84, self.height * .74))
             for tile in self.tiles:

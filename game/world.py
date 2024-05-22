@@ -140,8 +140,14 @@ class World:
                         self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
                         self.entities.append(ent)
                         self.buildings[grid_pos[0]][grid_pos[1]] = ent
+
+                        # if the building is not a town center, assign it to the currently active one
                         if self.hud.selected_tile["name"] != "towncenter":
                             self.active_town_center.buildings.append(ent)
+                            if self.hud.selected_tile["name"] in self.active_town_center.num_buildings:
+                                self.active_town_center.num_buildings[self.hud.selected_tile["name"]] += 1
+                            else:
+                                self.active_town_center.num_buildings[self.hud.selected_tile["name"]] = 1
                             # self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
 
                     # self.hud.selected_tile = None

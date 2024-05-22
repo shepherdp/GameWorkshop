@@ -18,6 +18,8 @@ class Worker:
         self.tile = tile
         self.moving = False
         self.path_index = 0
+        self.town = None
+        self.workplace = None
 
         # pathfinding
         self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
@@ -26,14 +28,80 @@ class Worker:
         self.create_path()
 
     def create_path(self):
-        num = random.randint(0, len(self.world.towns) - 1)
-        x, y = self.world.towns[num].loc
+        random_path = True
+        for i in range(len(self.world.towns)):
+            if len(self.world.towns[i].villagers) < self.world.towns[i].housing_capacity:
+                random_path = False
+                break
+
+        if random_path:
+            self.get_random_path()
+
+        else:
+            # towns = list(range(len(self.world.towns)))
+            # random.shuffle(towns)
+            found = False
+            while not found:
+                num = random.randint(0, len(self.world.towns) - 1)
+                # num = towns.pop(0)
+                if len(self.world.towns[num].villagers) == self.world.towns[num].housing_capacity:
+                    continue
+                found = True
+                self.town = self.world.towns[num]
+                x, y = self.town.loc
+                self.start = (self.tile["grid"][0], self.tile["grid"][1])
+                self.end = (x, y)
+                self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+                self.moving = True
+                self.town.villagers.append(self)
+
+    def get_path_to_work(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
-        self.end = (x, y)
+        self.end = self.workplace.loc
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+        self.path_index = 0
         self.moving = True
 
-    # A star was not reading the map right for some reason.  Should figure that one out.
+    def get_random_path(self):
+        self.start = (self.tile["grid"][0], self.tile["grid"][1])
+        self.end = self.world.get_random_position()
+        self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+        self.path_index = 0
+        self.moving = True
+
+    def change_tile(self, new_tile):
+        self.world.workers[self.tile["grid"][0]][self.tile["grid"][1]] = None
+        self.world.workers[new_tile['grid'][0]][new_tile['grid'][1]] = self
+        self.tile = self.world.world[new_tile['grid'][0]][new_tile['grid'][1]]
+
+    def update(self):
+        if not self.moving:
+            return
+        now = pg.time.get_ticks()
+        if now - self.move_timer > 1000:
+            try:
+                new_pos = self.path[self.path_index]
+            except:
+                # self.create_path()
+                return
+            # update position in the world
+
+            new_tile = self.world.world[new_pos[0]][new_pos[1]]
+            self.change_tile(new_tile)
+            self.path_index += 1
+            self.move_timer = now
+
+            # if worker reaches the destination, stop if it is a building and make a new random path if they
+            # are still just wandering
+            if self.path_index == len(self.path) - 1:
+                self.moving = False
+                if self.town is None:
+                    self.get_random_path()
+
+
+
+
+# A-star was not reading the map right for some reason.  Should figure that one out.
     # For now, just using Dijkstra on a networkx graph of all walkable tiles in the game
 
     # def create_path(self):
@@ -64,30 +132,3 @@ class Worker:
             #     self.path_index = 0
             #     self.path, runs = finder.find_path(self.start, self.end, self.grid)
             #     searching_for_path = False
-
-    def change_tile(self, new_tile):
-        self.world.workers[self.tile["grid"][0]][self.tile["grid"][1]] = None
-        self.world.workers[new_tile['grid'][0]][new_tile['grid'][1]] = self
-        self.tile = self.world.world[new_tile['grid'][0]][new_tile['grid'][1]]
-
-    def update(self):
-        if not self.moving:
-            return
-        now = pg.time.get_ticks()
-        if now - self.move_timer > 1000:
-            try:
-                new_pos = self.path[self.path_index]
-            except:
-                # self.create_path()
-                return
-            # update position in the world
-
-            new_tile = self.world.world[new_pos[0]][new_pos[1]]
-            self.change_tile(new_tile)
-            self.path_index += 1
-            self.move_timer = now
-
-            if self.path_index == len(self.path) - 1:
-                self.moving = False
-                # self.create_path()
-

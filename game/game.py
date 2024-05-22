@@ -35,7 +35,7 @@ class Game:
         self.playing = True
         while self.playing:
             now = pg.time.get_ticks()
-            if now - self.spawncooldown > 3000:
+            if now - self.spawncooldown > 10000:
                 x, y = self.world.get_random_position()
                 Worker(self.world.world[x][y], self.world)
                 self.spawncooldown = now

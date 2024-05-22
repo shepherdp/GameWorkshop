@@ -21,6 +21,7 @@ class TownCenter(Building):
 
     def __init__(self, pos, loc, manager):
         super().__init__(pos, loc, 'towncenter', 'towncenter', manager)
+        self.buildings = []
 
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:

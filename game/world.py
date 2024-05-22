@@ -3,7 +3,7 @@ import random
 import noise
 from .settings import TILE_SIZE
 from .buildings import *
-from .utils import load_images
+from .utils import draw_text, load_images
 from .resourcemanager import ResourceManager
 
 
@@ -135,6 +135,9 @@ class World:
                         self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
                         self.entities.append(ent)
                         self.buildings[grid_pos[0]][grid_pos[1]] = ent
+                        if self.hud.selected_tile["name"] != "towncenter":
+                            print(f'Adding {ent} to tc.')
+                            self.active_town_center.buildings.append(ent)
 
                     # self.hud.selected_tile = None
 
@@ -174,6 +177,8 @@ class World:
                     screen.blit(building.image,
                                 (render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
                                  render_pos[1] - (building.image.get_height() - TILE_SIZE) + camera.scroll.y))
+
+                    # place outline around active town center
                     if building is self.active_town_center:
                         mask = pg.mask.from_surface(building.image).outline()
                         mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
@@ -201,6 +206,11 @@ class World:
                 if free and self.temp_tile is not None:
                     iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y
                                 in self.world[x][y]['iso_poly']]
+
+                    # if self.active_town_center is not None:
+                    #     if self.in_towncenter_radius(self.world[x][y]['grid']):
+                    #         pg.draw.polygon(screen, (125, 125, 125, 150), iso_poly, 3)
+
                     if self.temp_tile['name'] == 'towncenter':
                         if self.in_any_towncenter_radius(self.world[x][y]['grid']):
                             pg.draw.polygon(screen, (125, 0, 0, 150), iso_poly, 3)
@@ -221,7 +231,8 @@ class World:
                 pg.draw.polygon(screen, (255, 0, 0), iso_poly, 3)
             else:
                 if self.temp_tile['name'] == 'towncenter':
-                    if self.in_towncenter_radius(grid_pos, newtc=True):
+                    if self.in_any_towncenter_radius(grid_pos):
+                    # if self.in_towncenter_radius(grid_pos, newtc=True):
                         pg.draw.polygon(screen, (255, 0, 0), iso_poly, 3)
                     else:
                         pg.draw.polygon(screen, (255, 255, 255), iso_poly, 3)
@@ -364,14 +375,34 @@ class World:
             d = self.dist(pos, tc.loc)
             if d <= 16:
                 return True
+            for b in tc.buildings:
+                d = self.dist(pos, b.loc)
+                if d <= 16:
+                    return True
         return False
 
     def in_towncenter_radius(self, pos, newtc=False):
         d = self.dist(pos, self.active_town_center.loc)
-        if newtc:
-            if d <= 16:
-                return True
-        else:
-            if d <= 8:
-                return True
+        if d <= 8:
+            return True
+        for b in self.active_town_center.buildings:
+            d = self.dist(pos, b.loc)
+            if newtc:
+                if d <= 16:
+                    return True
+            else:
+                if d <= 8:
+                    return True
         return False
+        # d = self.dist(pos, self.active_town_center.loc)
+        #
+        # for b in [self.active_town_center] + self.active_town_center.buildings:
+        #     d = self.dist(pos, b.loc)
+        #     if newtc:
+        #         if d <= 16:
+        #             return True
+        #     else:
+        #         if d <= 8:
+        #             return True
+        #     return False
+        # print()

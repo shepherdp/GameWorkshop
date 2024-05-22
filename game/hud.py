@@ -139,7 +139,8 @@ class HUD:
 
             # if a town center is selected and the World doesn't currently have an active one,
             # draw a button for making it the active town center
-            if self.examined_tile.name == 'towncenter' and self.parent.active_town_center is None:
+            if self.examined_tile.name == 'towncenter' and (self.parent.active_town_center is None or
+                                                            self.examined_tile is not self.parent.active_town_center):
                 screen.blit(self.activate_town_center_button, (self.width * .5, self.height * .84))
                 draw_text(screen, 'Select', 30, (255, 255, 255),
                           self.activate_town_center_rect.topleft)

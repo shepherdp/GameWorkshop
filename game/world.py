@@ -174,6 +174,12 @@ class World:
                     screen.blit(building.image,
                                 (render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
                                  render_pos[1] - (building.image.get_height() - TILE_SIZE) + camera.scroll.y))
+                    if building is self.active_town_center:
+                        mask = pg.mask.from_surface(building.image).outline()
+                        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
+                                 y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + camera.scroll.y)
+                                for x, y in mask]
+                        pg.draw.polygon(screen, (0, 255, 0), mask, 3)
 
                     # draw white outline around selected object
                     if self.examine_tile is not None:

@@ -31,7 +31,7 @@ def load_images():
               'block': block,
               'road': road,
               'water': water,
-              'tc': tc,
+              'towncenter': tc,
               'worker': worker,
               'quarry': quarry,
               'wheatfield': wheatfield,

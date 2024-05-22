@@ -14,7 +14,7 @@ CHARMAP = {'tree': 't',
            'road': '-',
            'water': '^',
            'chopping': 'c',
-           'tc': 'x',
+           'towncenter': 'x',
            'b1': 'b1',
            'b2': 'b2'}
 
@@ -43,7 +43,7 @@ def load_images():
               'block': block,
               'road': road,
               'water': water,
-              'tc': tc,
+              'towncenter': tc,
               'worker': worker
               }
 

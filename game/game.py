@@ -3,7 +3,6 @@ import sys
 
 from .camera import Camera
 from .hud import HUD
-from .resourcemanager import ResourceManager
 from .utils import draw_text
 from .workers import Worker
 from .world import World
@@ -22,13 +21,14 @@ class Game:
         self.entities = []
 
         # resource manager
-        self.resource_manager = ResourceManager()
+        # self.resource_manager = ResourceManager()
+        # Moving this inside of World because we need one for each town center
 
         # hud
-        self.hud = HUD(self.resource_manager, self.width, self.height)
+        self.hud = HUD(self.width, self.height)
 
         # world
-        self.world = World(self.resource_manager, self.entities, self.hud, WORLD_W, WORLD_H, self.width, self.height)
+        self.world = World(self.entities, self.hud, WORLD_W, WORLD_H, self.width, self.height)
 
         # camera
         self.camera = Camera(self.width, self.height)

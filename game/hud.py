@@ -125,24 +125,6 @@ class HUD:
             img = self.selected_tile['image'].copy()
             img.set_alpha(100)
 
-        ypos = 25
-        draw_text(
-            screen,
-            f'Towns: {len(self.parent.towns)}',
-            25,
-            (255, 255, 255),
-            (10, ypos)
-        )
-        for town in self.parent.towns:
-            ypos += 10
-            draw_text(
-                screen,
-                f'Selected: {town.name}, {len(town.buildings)}',
-                25,
-                (255, 255, 255),
-                (10, ypos)
-            )
-
         # select hud
         if self.examined_tile is not None:
             w, h = self.select_rect.width, self.select_rect.height

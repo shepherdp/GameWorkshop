@@ -20,10 +20,6 @@ class Game:
         # entities
         self.entities = []
 
-        # resource manager
-        # self.resource_manager = ResourceManager()
-        # Moving this inside of World because we need one for each town center
-
         # hud
         self.hud = HUD(self.width, self.height)
 
@@ -39,8 +35,9 @@ class Game:
         self.playing = True
         while self.playing:
             now = pg.time.get_ticks()
-            if now - self.spawncooldown > 10000:
-                Worker(self.world.world[25][25], self.world)
+            if now - self.spawncooldown > 3000:
+                x, y = self.world.get_random_position()
+                Worker(self.world.world[x][y], self.world)
                 self.spawncooldown = now
             self.clock.tick(60)
             self.events()
@@ -78,5 +75,6 @@ class Game:
         pg.display.flip()
 
     def quit(self):
+        self.world.write_map()
         pg.quit()
         sys.exit()

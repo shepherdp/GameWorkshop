@@ -1,22 +1,23 @@
-import pygame as pg
+# import pygame as pg
 import random
 import noise
 from .settings import TILE_SIZE
 from .buildings import *
 from .utils import draw_text, load_images
 from .resourcemanager import ResourceManager
+import networkx as nx
+from matplotlib.pyplot import plot, savefig, scatter
 
 
 CHARMAP = {'tree': 't',
            'rock': 'r',
            '': '.',
            'well': 'w',
-           'road': '-',
+           'road': 'p',
            'water': '^',
            'chopping': 'c',
            'towncenter': 'x',
-           'b1': 'b1',
-           'b2': 'b2'}
+           'quarry': 'q'}
 
 R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 
@@ -38,21 +39,31 @@ class World:
         self.grass_tiles = pg.Surface(
             (grid_length_x * TILE_SIZE * 2, grid_length_y * TILE_SIZE + 2 * TILE_SIZE)).convert_alpha()
         self.tiles = load_images()
+        self.world_network = nx.Graph()
         self.world = self.create_world()
-        self.collision_matrix = self.create_collision_matrix()
 
         self.buildings = [[None for x in range(self.grid_length_x)] for y in range(self.grid_length_y)]
         self.workers = [[None for x in range(self.grid_length_x)] for y in range(self.grid_length_y)]
 
+        self.collision_matrix = self.create_collision_matrix()
+        self.create_world_network()
+
+        self.towns = []
         # choose a random spot on the map to place one initial town center
-        x, y = self.get_random_position()
-        render_pos = self.world[x][y]['render_pos']
-        grid_pos = (x, y)
-        ent = TownCenter(render_pos, grid_pos, ResourceManager())
-        self.towns = [ent]
-        self.buildings[x][y] = ent
-        self.entities.append(ent)
-        self.hud.town_exists = True
+        for i in range(1):
+            x, y = self.get_random_position()
+            render_pos = self.world[x][y]['render_pos']
+            grid_pos = (x, y)
+            ent = TownCenter(render_pos, grid_pos, ResourceManager())
+            self.towns.append(ent)
+            self.buildings[x][y] = ent
+            self.entities.append(ent)
+            self.hud.town_exists = True
+
+        # self.towns = [ent]
+        # self.buildings[x][y] = ent
+        # self.entities.append(ent)
+        # self.hud.town_exists = True
 
         self.temp_tile = None
         self.examine_tile = None
@@ -136,8 +147,8 @@ class World:
                         self.entities.append(ent)
                         self.buildings[grid_pos[0]][grid_pos[1]] = ent
                         if self.hud.selected_tile["name"] != "towncenter":
-                            print(f'Adding {ent} to tc.')
                             self.active_town_center.buildings.append(ent)
+                            # self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
 
                     # self.hud.selected_tile = None
 
@@ -232,7 +243,6 @@ class World:
             else:
                 if self.temp_tile['name'] == 'towncenter':
                     if self.in_any_towncenter_radius(grid_pos):
-                    # if self.in_towncenter_radius(grid_pos, newtc=True):
                         pg.draw.polygon(screen, (255, 0, 0), iso_poly, 3)
                     else:
                         pg.draw.polygon(screen, (255, 255, 255), iso_poly, 3)
@@ -251,6 +261,23 @@ class World:
                 )
             )
 
+        # for x in range(self.grid_length_x):
+        #     for y in range(self.grid_length_y):
+        #         if (x, y) in self.world_network.nodes:
+        #             iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y
+        #                         in self.world[x][y]['iso_poly']]
+        #             pg.draw.polygon(screen, (0, 0, 50), iso_poly, 3)
+
+        # for x in range(self.grid_length_x):
+        #     for y in range(self.grid_length_y):
+        #         if (x, y) not in self.world_network:
+        #             continue
+        #         render_pos = self.world[x][y]["render_pos"]
+        #         tile = self.world[x][y]["tile"]
+        #         iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y
+        #                     in self.world[x][y]['iso_poly']]
+        #         pg.draw.polygon(screen, (0, 0, 150, 150), iso_poly, 3)
+
     def create_world(self):
 
         world = []
@@ -262,8 +289,6 @@ class World:
                 world[grid_x].append(world_tile)
 
                 render_pos = world_tile["render_pos"]
-                # self.grass_tiles.blit(self.tiles["block"],
-                #                       (render_pos[0] + self.grass_tiles.get_width() / 2, render_pos[1]))
                 self.grass_tiles.blit(random.choice([self.tiles["grass1"], self.tiles['grass2']]),
                                       (render_pos[0] + self.grass_tiles.get_width() / 2, render_pos[1]))
 
@@ -315,6 +340,27 @@ class World:
                     collision_matrix[y][x] = 0
         return collision_matrix
 
+    def create_world_network(self):
+        for x in range(self.grid_length_x):
+            for y in range(self.grid_length_y):
+                if self.buildings[x][y] is not None or self.world[x][y]['tile'] == '':
+                    self.world_network.add_node((x, y))
+
+        for x in range(self.grid_length_x):
+            for y in range(self.grid_length_y):
+                # for each node from the 1th row/column, check all neighbors and add edges between open ones
+                for i, j in [[-1, 0], [1, 0], [0, -1], [0, 1]]:
+                    nbrx = x + i
+                    nbry = y + j
+                    if nbrx < 0 or nbrx >= self.grid_length_x or nbry < 0 or nbry >= self.grid_length_y:
+                        continue
+                    if self.world[x][y]['tile'] in ['', 'towncenter'] and \
+                            self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
+                        self.world_network.add_edge((x, y), (nbrx, nbry))
+
+        # print(self.world_network.edges)
+
+
     def cart_to_iso(self, x, y):
         iso_x = x - y
         iso_y = (x + y) / 2
@@ -350,9 +396,60 @@ class World:
 
     def write_map(self):
         f = open('map.txt', 'w')
-        for row in self.world:
-            f.write(','.join([CHARMAP[i['tile']] for i in row]) + '\n')
+        for x in range(self.grid_length_x):
+            string = ''
+            for y in range(self.grid_length_y):
+                if self.buildings[x][y] is not None:
+                    string += CHARMAP[self.buildings[x][y].name]
+                else:
+                    string += CHARMAP[self.world[x][y]['tile']]
+                if (y+1 < self.grid_length_y) and ((x, y), (x, y+1)) in self.world_network.edges:
+                     string += '-'
+                else:
+                    string += ','
+            f.write(string[:-1] + '\n')
+            string = ''
+            for y in range(self.grid_length_y):
+                if (x + 1 < self.grid_length_x) and ((x, y), (x+1, y)) in self.world_network.edges:
+                    string += '|'
+                else:
+                    string += ' '
+                string += ' '
+            f.write(string[:-1] + '\n')
+
         f.close()
+
+        for x, y in self.world_network.nodes:
+            color = ''
+            if self.buildings[x][y] is not None:
+                color = (.5, .5, 0)
+            elif self.world[x][y]['tile'] == '':
+                color = (0, 1, 0)
+            elif self.world[x][y]['tile'] == 'tree':
+                color = (0, 1, 1)
+            elif self.world[x][y]['tile'] == 'rock':
+                color = (0, 0, 0)
+
+            # scatter([self.grid_length_x - 1 - x], [y], c=(color,))
+            scatter([y], [self.grid_length_x - 1 - x], c=(color,))
+
+
+            # scatter([x], [self.grid_length_y - 1 - y], c=(color,))
+
+        for n1, n2 in self.world_network.edges:
+            x1, y1 = n1
+            x1 = self.grid_length_x - 1 - x1
+            # y1 = self.grid_length_y - 1 - y1
+            x2, y2 = n2
+            x2 = self.grid_length_x - 1 - x2
+            # y2 = self.grid_length_y - 1 - y2
+
+
+            # plot([x1, x2], [y1, y2], 'k')
+            plot([y1, y2], [x1, x2], 'k')
+
+        # nx.draw_networkx(self.world_network, with_labels=True)
+        savefig('world_network.png')
 
     def get_random_position(self):
         found = False
@@ -394,15 +491,3 @@ class World:
                 if d <= 8:
                     return True
         return False
-        # d = self.dist(pos, self.active_town_center.loc)
-        #
-        # for b in [self.active_town_center] + self.active_town_center.buildings:
-        #     d = self.dist(pos, b.loc)
-        #     if newtc:
-        #         if d <= 16:
-        #             return True
-        #     else:
-        #         if d <= 8:
-        #             return True
-        #     return False
-        # print()

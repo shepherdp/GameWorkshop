@@ -9,6 +9,9 @@ import networkx as nx
 from matplotlib.pyplot import plot, savefig, scatter
 
 
+LOADMAP = True
+MAPNAME = 'map.txt'
+
 CHARMAP = {'tree': 't',
            'rock': 'r',
            '': '.',
@@ -17,7 +20,8 @@ CHARMAP = {'tree': 't',
            'water': '^',
            'chopping': 'c',
            'towncenter': 'x',
-           'quarry': 'q'}
+           'quarry': 'q',
+           'wheatfield': 'h'}
 
 R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 
@@ -50,14 +54,15 @@ class World:
 
         self.towns = []
         # choose a random spot on the map to place one initial town center
-        x, y = self.get_random_position()
-        render_pos = self.world[x][y]['render_pos']
-        grid_pos = (x, y)
-        ent = TownCenter(render_pos, grid_pos, ResourceManager())
-        self.towns.append(ent)
-        self.buildings[x][y] = ent
-        self.entities.append(ent)
-        self.hud.town_exists = True
+        if not LOADMAP:
+            x, y = self.get_random_position()
+            render_pos = self.world[x][y]['render_pos']
+            grid_pos = (x, y)
+            ent = TownCenter(render_pos, grid_pos, ResourceManager())
+            self.towns.append(ent)
+            self.buildings[x][y] = ent
+            self.entities.append(ent)
+            self.hud.town_exists = True
 
         self.temp_tile = None
         self.examine_tile = None
@@ -86,22 +91,22 @@ class World:
             if self.can_place_tile(grid_pos):
 
                 # grab a copy of the image to place over the tile with the mouse
-                img = self.hud.selected_tile["image"].copy()
+                img = self.hud.selected_tile['image'].copy()
                 img.set_alpha(100)
 
-                render_pos = self.world[grid_pos[0]][grid_pos[1]]["render_pos"]
-                iso_poly = self.world[grid_pos[0]][grid_pos[1]]["iso_poly"]
-                collision = self.world[grid_pos[0]][grid_pos[1]]["collision"]
+                render_pos = self.world[grid_pos[0]][grid_pos[1]]['render_pos']
+                iso_poly = self.world[grid_pos[0]][grid_pos[1]]['iso_poly']
+                collision = self.world[grid_pos[0]][grid_pos[1]]['collision']
 
                 # can't place blocks on spaces containing workers
                 if self.workers[grid_pos[0]][grid_pos[1]] is not None:
                     collision = True
 
                 self.temp_tile = {
-                    "image": img,
-                    "render_pos": render_pos,
-                    "iso_poly": iso_poly,
-                    "collision": collision,
+                    'image': img,
+                    'render_pos': render_pos,
+                    'iso_poly': iso_poly,
+                    'collision': collision,
                     'grid_pos': grid_pos,
                     'name': self.hud.selected_tile['name']
                 }
@@ -111,7 +116,7 @@ class World:
                     if self.active_town_center is None:
                         raise Exception('Placing building with no town center active.')
                     ent = None
-                    if self.hud.selected_tile["name"] == "towncenter":
+                    if self.hud.selected_tile['name'] == 'towncenter':
                         valid = not self.in_any_towncenter_radius(grid_pos)
                         if valid:
                             ent = TownCenter(render_pos, grid_pos, ResourceManager())
@@ -120,34 +125,36 @@ class World:
                             self.hud.town_exists = True
                     else:
                         valid = self.in_towncenter_radius(grid_pos)
-                        if self.hud.selected_tile["name"] == "well":
+                        if self.hud.selected_tile['name'] == 'well':
                             if valid:
                                 ent = Well(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile["name"] == "chopping":
+                        elif self.hud.selected_tile['name'] == 'chopping':
                             if valid:
                                 ent = ChoppingBlock(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile["name"] == "quarry":
+                        elif self.hud.selected_tile['name'] == 'quarry':
                             if valid:
                                 ent = Quarry(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile["name"] == "road":
+                        elif self.hud.selected_tile['name'] == 'road':
                             if valid:
                                 ent = Road(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile["name"] == "wheatfield":
+                        elif self.hud.selected_tile['name'] == 'wheatfield':
                             if valid:
                                 ent = Wheatfield(render_pos, grid_pos, self.active_town_center.resourcemanager)
                     if valid and (ent is not None):
-                        self.world[grid_pos[0]][grid_pos[1]]["collision"] = True
+                        self.world[grid_pos[0]][grid_pos[1]]['collision'] = True
                         self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
                         self.entities.append(ent)
                         self.buildings[grid_pos[0]][grid_pos[1]] = ent
 
                         # if the building is not a town center, assign it to the currently active one
-                        if self.hud.selected_tile["name"] != "towncenter":
+                        if self.hud.selected_tile['name'] != 'towncenter':
                             self.active_town_center.buildings.append(ent)
-                            if self.hud.selected_tile["name"] in self.active_town_center.num_buildings:
-                                self.active_town_center.num_buildings[self.hud.selected_tile["name"]] += 1
+                            if self.hud.selected_tile['name'] in self.active_town_center.num_buildings:
+                                self.active_town_center.num_buildings[self.hud.selected_tile['name']] += 1
                             else:
-                                self.active_town_center.num_buildings[self.hud.selected_tile["name"]] = 1
+                                self.active_town_center.num_buildings[self.hud.selected_tile['name']] = 1
+                        else:
+                            self.active_town_center.resourcemanager.apply_cost('towncenter')
                             # self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
 
                     # self.hud.selected_tile = None
@@ -170,12 +177,12 @@ class World:
 
         for x in range(self.grid_length_x):
             for y in range(self.grid_length_y):
-                render_pos = self.world[x][y]["render_pos"]
+                render_pos = self.world[x][y]['render_pos']
                 # draw world tiles
-                tile = self.world[x][y]["tile"]
+                tile = self.world[x][y]['tile']
 
                 free = True
-                if tile != "":
+                if tile != '':
                     free = False
                     screen.blit(self.tiles[tile],
                                 (render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
@@ -235,10 +242,10 @@ class World:
             mouse_pos = pg.mouse.get_pos()
             grid_pos = self.mouse_to_grid(mouse_pos[0], mouse_pos[1], camera.scroll)
 
-            iso_poly = self.temp_tile["iso_poly"]
+            iso_poly = self.temp_tile['iso_poly']
             iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y in
                         iso_poly]
-            if self.temp_tile["collision"] or (self.workers[grid_pos[0]][grid_pos[1]] is not None):
+            if self.temp_tile['collision'] or (self.workers[grid_pos[0]][grid_pos[1]] is not None):
                 pg.draw.polygon(screen, (255, 0, 0), iso_poly, 3)
             else:
                 if self.temp_tile['name'] == 'towncenter':
@@ -252,12 +259,12 @@ class World:
                     else:
                         pg.draw.polygon(screen, (255, 0, 0), iso_poly, 3)
 
-            render_pos = self.temp_tile["render_pos"]
+            render_pos = self.temp_tile['render_pos']
             screen.blit(
-                self.temp_tile["image"],
+                self.temp_tile['image'],
                 (
                     render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
-                    render_pos[1] - (self.temp_tile["image"].get_height() - TILE_SIZE) + camera.scroll.y
+                    render_pos[1] - (self.temp_tile['image'].get_height() - TILE_SIZE) + camera.scroll.y
                 )
             )
 
@@ -272,13 +279,19 @@ class World:
         #     for y in range(self.grid_length_y):
         #         if (x, y) not in self.world_network:
         #             continue
-        #         render_pos = self.world[x][y]["render_pos"]
-        #         tile = self.world[x][y]["tile"]
+        #         render_pos = self.world[x][y]['render_pos']
+        #         tile = self.world[x][y]['tile']
         #         iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y
         #                     in self.world[x][y]['iso_poly']]
         #         pg.draw.polygon(screen, (0, 0, 150, 150), iso_poly, 3)
 
     def create_world(self):
+
+        matrix = None
+        if LOADMAP:
+            f = open(MAPNAME, 'r')
+            matrix = [i[:-1].split(',') for i in f.readlines()]
+            f.close()
 
         world = []
 
@@ -286,10 +299,19 @@ class World:
             world.append([])
             for grid_y in range(self.grid_length_y):
                 world_tile = self.grid_to_world(grid_x, grid_y)
+
+                if LOADMAP:
+                    char = R_CHARMAP[matrix[grid_x][grid_y]]
+                    world_tile['tile'] = char
+                    if char != '':
+                        world_tile['collision'] = True
+                    else:
+                        world_tile['collision'] = False
+
                 world[grid_x].append(world_tile)
 
-                render_pos = world_tile["render_pos"]
-                self.grass_tiles.blit(random.choice([self.tiles["grass1"], self.tiles['grass2']]),
+                render_pos = world_tile['render_pos']
+                self.grass_tiles.blit(random.choice([self.tiles['grass1'], self.tiles['grass2']]),
                                       (render_pos[0] + self.grass_tiles.get_width() / 2, render_pos[1]))
 
         return world
@@ -311,23 +333,23 @@ class World:
         r = random.randint(1, 100)
         perlin = 100 * noise.pnoise2(grid_x / self.perlin_scale, grid_y / self.perlin_scale)
 
-        if (perlin >= 15) or (perlin <= -35):
-            tile = "tree"
-        else:
-            if r == 1:
-                tile = "tree"
-            elif r == 2:
-                tile = "rock"
+        tile = ''
+        if not LOADMAP:
+            if (perlin >= 15) or (perlin <= -35):
+                tile = 'tree'
             else:
-                tile = ""
+                if r == 1:
+                    tile = 'tree'
+                elif r == 2:
+                    tile = 'rock'
 
         out = {
-            "grid": [grid_x, grid_y],
-            "cart_rect": rect,
-            "iso_poly": iso_poly,
-            "render_pos": [minx, miny],
-            "tile": tile,
-            "collision": False if tile == "" else True
+            'grid': [grid_x, grid_y],
+            'cart_rect': rect,
+            'iso_poly': iso_poly,
+            'render_pos': [minx, miny],
+            'tile': tile,
+            'collision': False if tile == '' else True
         }
 
         return out
@@ -336,7 +358,7 @@ class World:
         collision_matrix = [[1 for x in range(self.grid_length_x)] for y in range(self.grid_length_y)]
         for x in range(self.grid_length_x):
             for y in range(self.grid_length_y):
-                if self.world[x][y]["collision"]:
+                if self.world[x][y]['collision']:
                     collision_matrix[y][x] = 0
         return collision_matrix
 
@@ -357,9 +379,6 @@ class World:
                     if self.world[x][y]['tile'] in ['', 'towncenter'] and \
                             self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
                         self.world_network.add_edge((x, y), (nbrx, nbry))
-
-        # print(self.world_network.edges)
-
 
     def cart_to_iso(self, x, y):
         iso_x = x - y
@@ -434,18 +453,7 @@ class World:
                     string += CHARMAP[self.buildings[x][y].name]
                 else:
                     string += CHARMAP[self.world[x][y]['tile']]
-                if (y+1 < self.grid_length_y) and ((x, y), (x, y+1)) in self.world_network.edges:
-                     string += '-'
-                else:
-                    string += ','
-            f.write(string[:-1] + '\n')
-            string = ''
-            for y in range(self.grid_length_y):
-                if (x + 1 < self.grid_length_x) and ((x, y), (x+1, y)) in self.world_network.edges:
-                    string += '|'
-                else:
-                    string += ' '
-                string += ' '
+                string += ','
             f.write(string[:-1] + '\n')
 
         f.close()
@@ -456,7 +464,7 @@ class World:
         while not found:
             x = random.randint(0, self.grid_length_x - 1)
             y = random.randint(0, self.grid_length_y - 1)
-            if self.world[x][y]["collision"]:
+            if self.world[x][y]['collision']:
                 continue
             found = True
         return x, y
@@ -490,3 +498,8 @@ class World:
                 if d <= 8:
                     return True
         return False
+
+    def find_town_with_vacancy(self):
+        for t in self.towns:
+            if len(t.villagers) < t.housing_capacity:
+                return t

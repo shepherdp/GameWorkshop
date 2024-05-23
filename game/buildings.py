@@ -11,7 +11,10 @@ class Building:
         self.rect = self.image.get_rect(topleft=pos)
         self.loc = loc
         self.resourcemanager = resourcemanager
-        self.resourcemanager.apply_cost(self.name)
+
+        if not self.name == 'towncenter':
+            self.resourcemanager.apply_cost(self.name)
+
         self.resourcecooldown = pg.time.get_ticks()
         self.workers_needed = workers_needed
         self.workers = []
@@ -30,6 +33,8 @@ class TownCenter(Building):
         self.housing_capacity = 5
 
     def update(self):
+
+        # assign villagers to workplaces if any are needed
         worker = None
         for v in self.villagers:
             if v.workplace is None:
@@ -43,11 +48,11 @@ class TownCenter(Building):
                     worker.get_path_to_work()
                     break
 
-        if pg.time.get_ticks() - self.resourcecooldown > 2000:
-            self.resourcemanager.resources['wood'] += 2
-            self.resourcemanager.resources['water'] += 2
-            self.resourcemanager.resources['gold'] += 2
-            self.resourcecooldown = pg.time.get_ticks()
+        # if pg.time.get_ticks() - self.resourcecooldown > 2000:
+        #     self.resourcemanager.resources['wood'] += 2
+        #     self.resourcemanager.resources['water'] += 2
+        #     self.resourcemanager.resources['gold'] += 2
+        #     self.resourcecooldown = pg.time.get_ticks()
 
 class ChoppingBlock(Building):
 

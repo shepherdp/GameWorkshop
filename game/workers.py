@@ -21,6 +21,13 @@ class Worker:
         self.town = None
         self.workplace = None
 
+        self.inventory = {}
+
+        self.going_to_work = False
+        self.arrived_at_work = False
+        self.going_to_towncenter = False
+        self.arrived_at_towncenter = False
+
         # pathfinding
         self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
         self.move_timer = pg.time.get_ticks()
@@ -28,32 +35,41 @@ class Worker:
         self.create_path()
 
     def create_path(self):
-        random_path = True
-        for i in range(len(self.world.towns)):
-            if len(self.world.towns[i].villagers) < self.world.towns[i].housing_capacity:
-                random_path = False
-                break
 
-        if random_path:
+        newtown = self.world.find_town_with_vacancy()
+        if newtown is None:
             self.get_random_path()
-
         else:
-            # towns = list(range(len(self.world.towns)))
-            # random.shuffle(towns)
-            found = False
-            while not found:
-                num = random.randint(0, len(self.world.towns) - 1)
-                # num = towns.pop(0)
-                if len(self.world.towns[num].villagers) == self.world.towns[num].housing_capacity:
-                    continue
-                found = True
-                self.town = self.world.towns[num]
-                x, y = self.town.loc
-                self.start = (self.tile["grid"][0], self.tile["grid"][1])
-                self.end = (x, y)
-                self.path = dijkstra_path(self.world.world_network, self.start, self.end)
-                self.moving = True
-                self.town.villagers.append(self)
+            self.town = newtown
+            self.moving = True
+            self.town.villagers.append(self)
+            self.get_path_to_towncenter()
+            self.going_to_towncenter = True
+
+    # random_path = True
+        # for i in range(len(self.world.towns)):
+        #     if len(self.world.towns[i].villagers) < self.world.towns[i].housing_capacity:
+        #         random_path = False
+        #         break
+        #
+        # if random_path:
+        #     self.get_random_path()
+        #
+        # else:
+            # found = False
+            # while not found:
+            #     num = random.randint(0, len(self.world.towns) - 1)
+            #     # num = towns.pop(0)
+            #     if len(self.world.towns[num].villagers) == self.world.towns[num].housing_capacity:
+            #         continue
+            #     found = True
+            #     self.town = self.world.towns[num]
+            #     x, y = self.town.loc
+            #     self.start = (self.tile["grid"][0], self.tile["grid"][1])
+            #     self.end = (x, y)
+            #     self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+            #     self.moving = True
+            #     self.town.villagers.append(self)
 
     def get_path_to_work(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
@@ -61,6 +77,15 @@ class Worker:
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
         self.path_index = 0
         self.moving = True
+        self.going_to_work = True
+
+    def get_path_to_towncenter(self):
+        self.start = (self.tile["grid"][0], self.tile["grid"][1])
+        self.end = self.town.loc
+        self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+        self.path_index = 0
+        self.moving = True
+        self.going_to_towncenter = True
 
     def get_random_path(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
@@ -95,8 +120,24 @@ class Worker:
             # are still just wandering
             if self.path_index == len(self.path) - 1:
                 self.moving = False
+                if self.going_to_towncenter:
+                    self.going_to_towncenter = False
+                    self.arrived_at_towncenter = True
+                if self.going_to_work:
+                    self.going_to_work = False
+                    self.arrived_at_work = True
+
+                # if not assigned to a town, look for one
+                # if none are available, just keep moving
                 if self.town is None:
-                    self.get_random_path()
+                    newtown = self.world.find_town_with_vacancy()
+                    if newtown is not None:
+                        self.town = newtown
+                        self.town.villagers.append(self)
+                        self.get_path_to_towncenter()
+                        self.going_to_towncenter = True
+                    else:
+                        self.get_random_path()
 
 
 

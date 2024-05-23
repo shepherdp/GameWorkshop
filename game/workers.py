@@ -20,6 +20,7 @@ class Worker:
         self.path_index = 0
         self.town = None
         self.workplace = None
+        self.selected = False
 
         self.inventory = {}
 
@@ -89,6 +90,8 @@ class Worker:
         self.world.workers[self.tile["grid"][0]][self.tile["grid"][1]] = None
         self.world.workers[new_tile['grid'][0]][new_tile['grid'][1]] = self
         self.tile = self.world.world[new_tile['grid'][0]][new_tile['grid'][1]]
+        if self.selected:
+            self.world.selected_worker = self.tile['grid']
 
     def update(self):
 

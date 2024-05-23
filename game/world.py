@@ -66,8 +66,9 @@ class World:
             self.hud.town_exists = True
 
         self.temp_tile = None
-        self.examine_tile = None
 
+        self.selected_building = None
+        self.selected_worker = None
         self.active_town_center = None
 
     def update(self, camera):
@@ -77,13 +78,17 @@ class World:
 
         # if the user left-clicks, deselect anything that is selected
         if mouse_action[2]:
-            self.examine_tile = None
-            self.hud.examined_tile = None
+            self.selected_building = None
+            self.hud.selected_building = None
+            if self.selected_worker is not None:
+                self.hud.selected_worker.selected = False
+            self.selected_worker = None
+            self.hud.selected_worker = None
             self.hud.select_panel_visible = False
 
         # user wants to place a tile
         self.temp_tile = None
-        if self.hud.selected_tile is not None:
+        if self.hud.structure_to_build is not None:
 
             # get grid coordinates of current mouse position
             grid_pos = self.mouse_to_grid(mouse_pos[0], mouse_pos[1], camera.scroll)
@@ -92,7 +97,7 @@ class World:
             if self.can_place_tile(grid_pos):
 
                 # grab a copy of the image to place over the tile with the mouse
-                img = self.hud.selected_tile['image'].copy()
+                img = self.hud.structure_to_build['image'].copy()
                 img.set_alpha(100)
 
                 render_pos = self.world[grid_pos[0]][grid_pos[1]]['render_pos']
@@ -109,7 +114,7 @@ class World:
                     'iso_poly': iso_poly,
                     'collision': collision,
                     'grid_pos': grid_pos,
-                    'name': self.hud.selected_tile['name']
+                    'name': self.hud.structure_to_build['name']
                 }
 
                 if mouse_action[0] and not collision:
@@ -117,7 +122,7 @@ class World:
                     if self.active_town_center is None:
                         raise Exception('Placing building with no town center active.')
                     ent = None
-                    if self.hud.selected_tile['name'] == 'towncenter':
+                    if self.hud.structure_to_build['name'] == 'towncenter':
                         valid = not self.in_any_towncenter_radius(grid_pos)
                         if valid:
                             ent = TownCenter(render_pos, grid_pos, ResourceManager())
@@ -126,22 +131,22 @@ class World:
                             self.hud.town_exists = True
                     else:
                         valid = self.in_towncenter_radius(grid_pos)
-                        if self.hud.selected_tile['name'] == 'well':
+                        if self.hud.structure_to_build['name'] == 'well':
                             if valid:
                                 ent = Well(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile['name'] == 'chopping':
+                        elif self.hud.structure_to_build['name'] == 'chopping':
                             if valid:
                                 ent = ChoppingBlock(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile['name'] == 'quarry':
+                        elif self.hud.structure_to_build['name'] == 'quarry':
                             if valid:
                                 ent = Quarry(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile['name'] == 'road':
+                        elif self.hud.structure_to_build['name'] == 'road':
                             if valid:
                                 ent = Road(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile['name'] == 'wheatfield':
+                        elif self.hud.structure_to_build['name'] == 'wheatfield':
                             if valid:
                                 ent = Wheatfield(render_pos, grid_pos, self.active_town_center.resourcemanager)
-                        elif self.hud.selected_tile['name'] == 'house':
+                        elif self.hud.structure_to_build['name'] == 'house':
                             if valid:
                                 ent = House(render_pos, grid_pos, self.active_town_center.resourcemanager)
                     if valid and (ent is not None):
@@ -151,19 +156,19 @@ class World:
                         self.buildings[grid_pos[0]][grid_pos[1]] = ent
 
                         # if the building is not a town center, assign it to the currently active one
-                        if self.hud.selected_tile['name'] != 'towncenter':
+                        if self.hud.structure_to_build['name'] != 'towncenter':
                             self.active_town_center.buildings.append(ent)
-                            if self.hud.selected_tile['name'] in self.active_town_center.num_buildings:
-                                self.active_town_center.num_buildings[self.hud.selected_tile['name']] += 1
+                            if self.hud.structure_to_build['name'] in self.active_town_center.num_buildings:
+                                self.active_town_center.num_buildings[self.hud.structure_to_build['name']] += 1
                             else:
-                                self.active_town_center.num_buildings[self.hud.selected_tile['name']] = 1
-                            if self.hud.selected_tile['name'] == 'house':
+                                self.active_town_center.num_buildings[self.hud.structure_to_build['name']] = 1
+                            if self.hud.structure_to_build['name'] == 'house':
                                 self.active_town_center.housing_capacity += 5
                         else:
                             self.active_town_center.resourcemanager.apply_cost('towncenter')
                             # self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
 
-                    # self.hud.selected_tile = None
+                    # self.hud.structure_to_build = None
 
         # user wants to select a building
         else:
@@ -171,11 +176,18 @@ class World:
             grid_pos = self.mouse_to_grid(mouse_pos[0], mouse_pos[1], camera.scroll)
 
             if self.can_place_tile(grid_pos):
-                building = self.buildings[grid_pos[0]][grid_pos[1]]
-                if mouse_action[0] and (building is not None):
-                    self.examine_tile = grid_pos
-                    self.hud.examined_tile = building
+                worker = self.workers[grid_pos[0]][grid_pos[1]]
+                if mouse_action[0] and (worker is not None):
+                    self.selected_worker = grid_pos
+                    self.hud.selected_worker = worker
+                    self.hud.selected_worker.selected = True
                     self.hud.select_panel_visible = True
+                if worker is None:
+                    building = self.buildings[grid_pos[0]][grid_pos[1]]
+                    if mouse_action[0] and (building is not None):
+                        self.selected_building = grid_pos
+                        self.hud.selected_building = building
+                        self.hud.select_panel_visible = True
 
     def draw(self, screen, camera):
 
@@ -211,8 +223,8 @@ class World:
                         pg.draw.polygon(screen, (0, 255, 0), mask, 3)
 
                     # draw white outline around selected object
-                    if self.examine_tile is not None:
-                        if (x == self.examine_tile[0]) and (y == self.examine_tile[1]):
+                    if self.selected_building is not None:
+                        if (x == self.selected_building[0]) and (y == self.selected_building[1]):
                             mask = pg.mask.from_surface(building.image).outline()
                             mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
                                      y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + camera.scroll.y)
@@ -226,6 +238,13 @@ class World:
                     screen.blit(worker.image,
                                 (render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
                                  render_pos[1] - (worker.image.get_height() - TILE_SIZE) + camera.scroll.y))
+                    if self.selected_worker is not None:
+                        if (x == self.selected_worker[0]) and (y == self.selected_worker[1]):
+                            mask = pg.mask.from_surface(worker.image).outline()
+                            mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + camera.scroll.x,
+                                     y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + camera.scroll.y)
+                                    for x, y in mask]
+                            pg.draw.polygon(screen, (255, 255, 255), mask, 3)
 
                 if free and self.temp_tile is not None:
                     iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y

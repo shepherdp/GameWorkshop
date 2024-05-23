@@ -175,31 +175,57 @@ class World:
 
             grid_pos = self.mouse_to_grid(mouse_pos[0], mouse_pos[1], camera.scroll)
 
+            # make sure user didn't click on a visible panel or outside the screen
             if self.can_place_tile(grid_pos):
+
+                # check if a worker is in the current position
                 worker = self.workers[grid_pos[0]][grid_pos[1]]
                 if mouse_action[0] and (worker is not None):
+                    # if another worker was already selected, deselect them
+                    if self.hud.selected_worker is not None:
+                        self.hud.selected_worker.selected = False
+
+                    # set selected worker data
                     self.selected_worker = grid_pos
                     self.hud.selected_worker = worker
                     self.hud.selected_worker.selected = True
                     self.hud.select_panel_visible = True
+
+                    # if a building was selected, deselect it
+                    if self.selected_building is not None:
+                        self.selected_building = None
+                        self.hud.selected_building = None
+
+                # if there was no worker in the position, check for a building
                 if worker is None:
                     building = self.buildings[grid_pos[0]][grid_pos[1]]
                     if mouse_action[0] and (building is not None):
+                        # update selected building data
                         self.selected_building = grid_pos
                         self.hud.selected_building = building
                         self.hud.select_panel_visible = True
 
+                        # if a worker was selected, deselect it
+                        if self.selected_worker is not None:
+                            self.selected_worker = None
+                            self.hud.selected_worker.selected = False
+                            self.hud.selected_worker = None
+
     def draw(self, screen, camera):
 
+        # draw the basic terrain
         screen.blit(self.grass_tiles, (camera.scroll.x, camera.scroll.y))
 
         for x in range(self.grid_length_x):
             for y in range(self.grid_length_y):
+
+                # iterate through every tile in the world
                 render_pos = self.world[x][y]['render_pos']
-                # draw world tiles
                 tile = self.world[x][y]['tile']
 
                 free = True
+
+                # if it is not a grass tile, mark it as not free and draw the tile
                 if tile != '':
                     free = False
                     screen.blit(self.tiles[tile],
@@ -390,22 +416,28 @@ class World:
     def create_world_network(self):
         for x in range(self.grid_length_x):
             for y in range(self.grid_length_y):
+                # add a node to the walkable network for any building or grass tile
                 if self.buildings[x][y] is not None or self.world[x][y]['tile'] == '':
                     self.world_network.add_node((x, y))
 
         for x in range(self.grid_length_x):
             for y in range(self.grid_length_y):
-                # for each node from the 1th row/column, check all neighbors and add edges between open ones
+                # for each node, check all neighbors and add edges between open ones
                 for i, j in [[-1, 0], [1, 0], [0, -1], [0, 1]]:
                     nbrx = x + i
                     nbry = y + j
+
+                    # continue if out of bounds
                     if nbrx < 0 or nbrx >= self.grid_length_x or nbry < 0 or nbry >= self.grid_length_y:
                         continue
+
+                    # if both the current tile and the neighbor are walkable, add an edge between them
                     if self.world[x][y]['tile'] in ['', 'towncenter'] and \
                             self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
                         self.world_network.add_edge((x, y), (nbrx, nbry))
 
     def cart_to_iso(self, x, y):
+        # get isometric coordinates from cartesian ones
         iso_x = x - y
         iso_y = (x + y) / 2
         return iso_x, iso_y
@@ -420,17 +452,21 @@ class World:
         # transform to grid coordinates
         grid_x = int(cart_x // TILE_SIZE)
         grid_y = int(cart_y // TILE_SIZE)
+
         return grid_x, grid_y
 
     def can_place_tile(self, grid_pos):
+        # check if mouse is on resources or building panel
         mouse_on_panel = False
         for rect in [self.hud.resources_rect, self.hud.building_rect]:
             if rect.collidepoint(pg.mouse.get_pos()):
                 mouse_on_panel = True
 
+        # only check if mouse is over select panel when it is showing
         if self.hud.select_panel_visible and self.hud.select_rect.collidepoint(pg.mouse.get_pos()):
                 mouse_on_panel = True
 
+        # check if mouse is outside of the map
         world_bounds = (0 <= grid_pos[0] < self.grid_length_x) and (0 <= grid_pos[1] < self.grid_length_x)
 
         if world_bounds and not mouse_on_panel:
@@ -450,20 +486,14 @@ class World:
             elif self.world[x][y]['tile'] == 'rock':
                 color = (0, 0, 0)
 
-            # scatter([self.grid_length_x - 1 - x], [y], c=(color,))
             scatter([y], [self.grid_length_x - 1 - x], c=(color,))
-            # scatter([x], [self.grid_length_y - 1 - y], c=(color,))
 
         for n1, n2 in self.world_network.edges:
             x1, y1 = n1
             x1 = self.grid_length_x - 1 - x1
-            # y1 = self.grid_length_y - 1 - y1
             x2, y2 = n2
             x2 = self.grid_length_x - 1 - x2
-            # y2 = self.grid_length_y - 1 - y2
 
-
-            # plot([x1, x2], [y1, y2], 'k')
             plot([y1, y2], [x1, x2], 'k')
 
         # nx.draw_networkx(self.world_network, with_labels=True)
@@ -484,6 +514,7 @@ class World:
         f.close()
 
     def get_random_position(self):
+        # find a random unoccupied tile on the map
         found = False
         x, y = None, None
         while not found:
@@ -495,6 +526,7 @@ class World:
         return x, y
 
     def dist(self, pos1, pos2):
+        # get the simple hamming distance between two tiles
         x1, y1 = pos1[0], pos1[1]
         x2, y2 = pos2[0], pos2[1]
         return abs(x2 - x1) + abs(y2 - y1)

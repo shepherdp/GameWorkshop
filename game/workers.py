@@ -123,7 +123,7 @@ class Worker:
                 return
 
         now = pg.time.get_ticks()
-        if now - self.move_timer > 500:
+        if now - self.move_timer > 1000:
             try:
                 new_pos = self.path[self.path_index]
             except:

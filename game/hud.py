@@ -8,41 +8,19 @@ class HUD:
 
         self.width = width
         self.height = height
-
         self.parent = None
-
         self.panel_color = (198, 155, 93, 175)
 
         # resources panel
-        self.resources_panel = pg.Surface((self.width, self.height * .02), pg.SRCALPHA)
-        self.resources_panel.fill(self.panel_color)
-        self.resources_rect = self.resources_panel.get_rect(topleft=(0, 0))
-
+        self.create_resources_panel()
         # building panel
-        self.building_panel = pg.Surface((self.width * .15, self.height * .25), pg.SRCALPHA)
-        self.building_panel.fill(self.panel_color)
-        self.building_rect = self.building_panel.get_rect(topleft=(self.width * .84, self.height * .74))
-
+        self.create_building_panel()
         # select panel
-        self.select_panel = pg.Surface((self.width * .3, self.height * .2), pg.SRCALPHA)
-        self.select_panel.fill(self.panel_color)
-        self.select_rect = self.select_panel.get_rect(topleft=(self.width * .35, self.height * .79))
-        self.select_panel_visible = False
+        self.create_select_panel()
 
-        self.activate_town_center_button = pg.Surface((self.width * .1, self.height * .05), pg.SRCALPHA)
-        self.activate_town_center_button.fill((0, 0, 200, 175))
-        self.activate_town_center_rect = self.activate_town_center_button.get_rect(topleft=(self.width * .5,
-                                                                                            self.height * .84))
-
-        self.current_town_center_panel = pg.Surface((self.width * .1, self.height * .05), pg.SRCALPHA)
-        self.current_town_center_panel.fill((150, 255, 0, 175))
-        self.current_town_center_rect = self.current_town_center_panel.get_rect(topleft=(self.width * .85,
-                                                                                         self.height * .1))
-
-        self.deselect_town_center_button = pg.Surface((self.width * .02, self.height * .02), pg.SRCALPHA)
-        self.deselect_town_center_button.fill((255, 0, 0, 175))
-        self.deselect_town_center_rect = self.current_town_center_panel.get_rect(topleft=(self.width * .96,
-                                                                                          self.height * .1))
+        self.create_current_towncenter_panel()
+        self.create_activate_towncenter_button()
+        self.create_deactivate_towncenter_button()
 
         self.images = load_images()
         self.tiles = self.populate_build_hud()
@@ -53,6 +31,43 @@ class HUD:
 
         self.town_exists = False
         self.town_center_selected = False
+
+        self.mouse_pos = None
+        self.mouse_action = None
+
+    def create_resources_panel(self):
+        self.resources_panel = pg.Surface((self.width, self.height * .02), pg.SRCALPHA)
+        self.resources_panel.fill(self.panel_color)
+        self.resources_rect = self.resources_panel.get_rect(topleft=(0, 0))
+
+    def create_building_panel(self):
+        self.building_panel = pg.Surface((self.width * .15, self.height * .25), pg.SRCALPHA)
+        self.building_panel.fill(self.panel_color)
+        self.building_rect = self.building_panel.get_rect(topleft=(self.width * .84, self.height * .74))
+
+    def create_select_panel(self):
+        self.select_panel = pg.Surface((self.width * .3, self.height * .2), pg.SRCALPHA)
+        self.select_panel.fill(self.panel_color)
+        self.select_rect = self.select_panel.get_rect(topleft=(self.width * .35, self.height * .79))
+        self.select_panel_visible = False
+
+    def create_current_towncenter_panel(self):
+        self.current_town_center_panel = pg.Surface((self.width * .1, self.height * .05), pg.SRCALPHA)
+        self.current_town_center_panel.fill((150, 255, 0, 175))
+        self.current_town_center_rect = self.current_town_center_panel.get_rect(topleft=(self.width * .85,
+                                                                                         self.height * .1))
+
+    def create_activate_towncenter_button(self):
+        self.activate_town_center_button = pg.Surface((self.width * .1, self.height * .05), pg.SRCALPHA)
+        self.activate_town_center_button.fill((0, 0, 200, 175))
+        self.activate_town_center_rect = self.activate_town_center_button.get_rect(topleft=(self.width * .5,
+                                                                                            self.height * .84))
+
+    def create_deactivate_towncenter_button(self):
+        self.deselect_town_center_button = pg.Surface((self.width * .02, self.height * .02), pg.SRCALPHA)
+        self.deselect_town_center_button.fill((255, 0, 0, 175))
+        self.deselect_town_center_rect = self.current_town_center_panel.get_rect(topleft=(self.width * .96,
+                                                                                          self.height * .1))
 
     def populate_build_hud(self):
         render_pos = [self.width * .84 + 10, self.height * .74 + 10]
@@ -86,48 +101,52 @@ class HUD:
                 render_pos[0] += img_scale.get_width() + 10
         return tiles
 
-    def update(self):
-        mouse_pos = pg.mouse.get_pos()
-        mouse_action = pg.mouse.get_pressed()
-
-        if mouse_action[2]:
-            self.structure_to_build = None
-
-        # check to see if the user selected the current town center
+    def check_activate_towncenter(self):
         if self.selected_building is not None:
             if self.selected_building.name == 'towncenter':
-                if self.activate_town_center_rect.collidepoint(mouse_pos):
-                    if mouse_action[0]:
+                if self.activate_town_center_rect.collidepoint(self.mouse_pos):
+                    if self.mouse_action[0]:
                         self.parent.active_town_center = self.selected_building
 
-        # check to see if the user wants to deselect the current town center
+    def check_deselect_towncenter(self):
         if self.parent.active_town_center is not None:
-            if self.deselect_town_center_rect.collidepoint(mouse_pos):
-                if mouse_action[0]:
+            if self.deselect_town_center_rect.collidepoint(self.mouse_pos):
+                if self.mouse_action[0]:
                     self.parent.active_town_center = None
                     self.structure_to_build = None
 
-        # only update build tiles based on affordability if a town center is active
+    def update_build_tiles(self):
         if self.parent.active_town_center is not None:
             for tile in self.tiles:
                 if self.parent.active_town_center.resourcemanager.is_affordable(tile['name']):
                     tile['affordable'] = True
                 else:
                     tile['affordable'] = False
-                if tile['rect'].collidepoint(mouse_pos) and tile['affordable']:
-                    if mouse_action[0]:
+                if tile['rect'].collidepoint(self.mouse_pos) and tile['affordable']:
+                    if self.mouse_action[0]:
                         self.structure_to_build = tile
                         self.parent.selected_building = None
                         self.selected_building = None
                         self.select_panel_visible = False
 
-    def draw(self, screen):
+    def check_deselect_structure_to_build(self):
+        if self.mouse_action[2]:
+            self.structure_to_build = None
 
-        # if there is a building selected for placement, draw it by the mouse
-        if self.structure_to_build is not None:
-            img = self.structure_to_build['image'].copy()
-            img.set_alpha(100)
+    def update(self):
+        self.mouse_pos = pg.mouse.get_pos()
+        self.mouse_action = pg.mouse.get_pressed()
 
+        # check if user wants to unselect a structure they were going to build
+        self.check_deselect_structure_to_build()
+        # check to see if the user selected the current town center
+        self.check_activate_towncenter()
+        # check to see if the user wants to deselect the current town center
+        self.check_deselect_towncenter()
+        # only update build tiles based on affordability if a town center is active
+        self.update_build_tiles()
+
+    def draw_select_panel(self, screen):
         # select hud
         if self.select_panel_visible:
             if self.selected_building is not None:
@@ -135,7 +154,7 @@ class HUD:
                 screen.blit(self.select_panel, (self.width * .35, self.height * .79))
                 # img = self.images[self.selected_building['tile']].copy()
                 img = self.selected_building.image
-                img_scale = self.scale_image(img, h=h*.75)
+                img_scale = self.scale_image(img, h=h * .75)
                 screen.blit(img_scale, (self.width * .35 + 10,
                                         self.height * .79 + 40))
                 draw_text(screen, self.selected_building.name, 40, (255, 255, 255),
@@ -144,7 +163,8 @@ class HUD:
                 if self.selected_building.name != 'towncenter':
                     x = self.width * .5
                     y = self.height * .84
-                    draw_text(screen, f'Workers: {len(self.selected_building.workers)} / {self.selected_building.workers_needed}',
+                    draw_text(screen,
+                              f'Workers: {len(self.selected_building.workers)} / {self.selected_building.workers_needed}',
                               20, (255, 255, 255), (x, y))
                     y += 20
                     for item in self.selected_building.storage:
@@ -157,11 +177,12 @@ class HUD:
                 # if a town center is selected and the World doesn't currently have an active one,
                 # draw a button for making it the active town center
                 elif self.selected_building.name == 'towncenter' and (self.parent.active_town_center is None or
-                                                                self.selected_building is not self.parent.active_town_center):
+                                                                      self.selected_building is not self.parent.active_town_center):
                     screen.blit(self.activate_town_center_button, (self.width * .5, self.height * .84))
                     draw_text(screen, 'Select', 30, (255, 255, 255),
                               self.activate_town_center_rect.topleft)
-                elif (self.selected_building.name == 'towncenter') and (self.selected_building is self.parent.active_town_center):
+                elif (self.selected_building.name == 'towncenter') and (
+                        self.selected_building is self.parent.active_town_center):
                     x = self.width * .5
                     y = self.height * .84
                     draw_text(screen,
@@ -182,6 +203,18 @@ class HUD:
                                         self.height * .79 + 40))
                 draw_text(screen, self.selected_worker.name, 40, (255, 255, 255),
                           self.select_rect.topleft)
+
+                x = self.width * .5
+                y = self.height * .84
+                draw_text(screen, 'Inventory', 20, (255, 255, 255), (x, y))
+                x += 10
+                for name, count in self.selected_worker.inventory.items():
+                    y += 20
+                    draw_text(screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+
+    def draw(self, screen):
+
+        self.draw_select_panel(screen)
 
         # draw active town center panel and deselect button
         if self.parent.active_town_center is not None:
@@ -228,8 +261,6 @@ class HUD:
                 text = f'{resource}: {value}'
                 draw_text(screen, text, 30, (0, 0, 0), (pos, 0))
                 pos += 120
-
-        # draw_text(screen, f'selected worker: {self.selected_worker}', 30, (250, 250, 250), (50, 50))
 
     def scale_image(self, image, w=None, h=None):
         if w is None and h is None:

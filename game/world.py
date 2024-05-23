@@ -9,7 +9,7 @@ import networkx as nx
 from matplotlib.pyplot import plot, savefig, scatter
 
 
-LOADMAP = True
+LOADMAP = False
 MAPNAME = 'map.txt'
 
 CHARMAP = {'tree': 't',
@@ -21,7 +21,8 @@ CHARMAP = {'tree': 't',
            'chopping': 'c',
            'towncenter': 'x',
            'quarry': 'q',
-           'wheatfield': 'h'}
+           'wheatfield': 'v',
+           'house': 'h'}
 
 R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 
@@ -140,6 +141,9 @@ class World:
                         elif self.hud.selected_tile['name'] == 'wheatfield':
                             if valid:
                                 ent = Wheatfield(render_pos, grid_pos, self.active_town_center.resourcemanager)
+                        elif self.hud.selected_tile['name'] == 'house':
+                            if valid:
+                                ent = House(render_pos, grid_pos, self.active_town_center.resourcemanager)
                     if valid and (ent is not None):
                         self.world[grid_pos[0]][grid_pos[1]]['collision'] = True
                         self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0
@@ -153,6 +157,8 @@ class World:
                                 self.active_town_center.num_buildings[self.hud.selected_tile['name']] += 1
                             else:
                                 self.active_town_center.num_buildings[self.hud.selected_tile['name']] = 1
+                            if self.hud.selected_tile['name'] == 'house':
+                                self.active_town_center.housing_capacity += 5
                         else:
                             self.active_town_center.resourcemanager.apply_cost('towncenter')
                             # self.collision_matrix[grid_pos[1]][grid_pos[0]] = 0

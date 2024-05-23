@@ -46,38 +46,19 @@ class Worker:
             self.get_path_to_towncenter()
             self.going_to_towncenter = True
 
-    # random_path = True
-        # for i in range(len(self.world.towns)):
-        #     if len(self.world.towns[i].villagers) < self.world.towns[i].housing_capacity:
-        #         random_path = False
-        #         break
-        #
-        # if random_path:
-        #     self.get_random_path()
-        #
-        # else:
-            # found = False
-            # while not found:
-            #     num = random.randint(0, len(self.world.towns) - 1)
-            #     # num = towns.pop(0)
-            #     if len(self.world.towns[num].villagers) == self.world.towns[num].housing_capacity:
-            #         continue
-            #     found = True
-            #     self.town = self.world.towns[num]
-            #     x, y = self.town.loc
-            #     self.start = (self.tile["grid"][0], self.tile["grid"][1])
-            #     self.end = (x, y)
-            #     self.path = dijkstra_path(self.world.world_network, self.start, self.end)
-            #     self.moving = True
-            #     self.town.villagers.append(self)
-
     def get_path_to_work(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         self.end = self.workplace.loc
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
         self.path_index = 0
         self.moving = True
+
         self.going_to_work = True
+
+        self.arrived_at_work = False
+        self.going_to_towncenter = False
+        self.arrived_at_towncenter = False
+
 
     def get_path_to_towncenter(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
@@ -85,7 +66,12 @@ class Worker:
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
         self.path_index = 0
         self.moving = True
+
         self.going_to_towncenter = True
+
+        self.going_to_work = False
+        self.arrived_at_work = False
+        self.arrived_at_towncenter = False
 
     def get_random_path(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
@@ -94,16 +80,47 @@ class Worker:
         self.path_index = 0
         self.moving = True
 
+        self.going_to_work = False
+        self.arrived_at_work = False
+        self.going_to_towncenter = False
+        self.arrived_at_towncenter = False
+
     def change_tile(self, new_tile):
         self.world.workers[self.tile["grid"][0]][self.tile["grid"][1]] = None
         self.world.workers[new_tile['grid'][0]][new_tile['grid'][1]] = self
         self.tile = self.world.world[new_tile['grid'][0]][new_tile['grid'][1]]
 
     def update(self):
+
+        # if the worker is stationary, check if they have arrived at a workplace or at a town center
         if not self.moving:
-            return
+
+            # if they are at their job and it is full, collect the resources and head to town
+            if self.arrived_at_work:
+                if self.workplace.is_full():
+                    for key, val in self.workplace.storage.items():
+                        if key in self.inventory:
+                            self.inventory[key] += val
+                        else:
+                            self.inventory[key] = val
+                        self.workplace.storage[key] = 0
+                    self.get_path_to_towncenter()
+                    return
+            if self.arrived_at_towncenter:
+                for key, val in self.inventory.items():
+                    self.town.resourcemanager.resources[key] += self.inventory[key]
+                    self.inventory[key] = 0
+                if self.workplace is not None:
+                    self.get_path_to_work()
+                else:
+                    self.going_to_work = False
+                    self.arrived_at_work = False
+                    self.going_to_towncenter = False
+                    self.arrived_at_towncenter = False
+                return
+
         now = pg.time.get_ticks()
-        if now - self.move_timer > 1000:
+        if now - self.move_timer > 500:
             try:
                 new_pos = self.path[self.path_index]
             except:

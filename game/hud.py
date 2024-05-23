@@ -144,6 +144,13 @@ class HUD:
                 y = self.height * .84
                 draw_text(screen, f'Workers: {len(self.examined_tile.workers)} / {self.examined_tile.workers_needed}',
                           20, (255, 255, 255), (x, y))
+                y += 20
+                for item in self.examined_tile.storage:
+                    color = (255, 255, 255) if not self.examined_tile.is_full() else (255, 0, 0)
+                    draw_text(screen,
+                              f'{item}: {self.examined_tile.storage[item]} / {self.examined_tile.capacity}',
+                              20, color, (x, y))
+                    y += 20
 
             # if a town center is selected and the World doesn't currently have an active one,
             # draw a button for making it the active town center

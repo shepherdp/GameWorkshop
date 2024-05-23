@@ -15,7 +15,8 @@ class ResourceManager:
                       'towncenter': {'wood': 10, 'water': 10, 'gold': 10},
                       'road': {'wood': 1},
                       'quarry': {'stone': 3},
-                      'wheatfield': {'stone': 1, 'wood': 5, 'water': 10}
+                      'wheatfield': {'stone': 1, 'wood': 5, 'water': 10},
+                      'house': {'wood': 2, 'stone': 2, 'water': 2}
                       }
 
     def apply_cost(self, bldg):

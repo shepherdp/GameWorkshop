@@ -75,6 +75,7 @@ class World:
             render_pos = self.world[x][y]['render_pos']
             grid_pos = (x, y)
             ent = TownCenter(render_pos, grid_pos, ResourceManager())
+            self.world[x][y]['collision'] = True
             self.towns.append(ent)
             self.buildings[x][y] = ent
             self.entities.append(ent)
@@ -93,6 +94,8 @@ class World:
         render_pos = self.world[grid_pos[0]][grid_pos[1]]['render_pos']
         iso_poly = self.world[grid_pos[0]][grid_pos[1]]['iso_poly']
         collision = self.world[grid_pos[0]][grid_pos[1]]['collision']
+
+        print(self.world[grid_pos[0]][grid_pos[1]])
 
         # can't place blocks on spaces containing workers
         if self.workers[grid_pos[0]][grid_pos[1]] is not None:
@@ -318,18 +321,18 @@ class World:
 
         # red indicator if tile cannot be placed
         if self.temp_tile['collision'] or (self.workers[grid_pos[0]][grid_pos[1]] is not None):
-            pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
+            pg.draw.polygon(self.screen, (255, 0, 0, 100), iso_poly, 3)
         else:
             if self.temp_tile['name'] == 'towncenter':
                 if self.in_any_towncenter_radius(grid_pos):
-                    pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
+                    pg.draw.polygon(self.screen, (255, 0, 0, 100), iso_poly, 3)
                 else:
-                    pg.draw.polygon(self.screen, (0, 255, 0), iso_poly, 3)
+                    pg.draw.polygon(self.screen, (0, 255, 0, 100), iso_poly, 3)
             else:
                 if self.in_towncenter_radius(grid_pos):
-                    pg.draw.polygon(self.screen, (0, 255, 0), iso_poly, 3)
+                    pg.draw.polygon(self.screen, (0, 255, 0, 100), iso_poly, 3)
                 else:
-                    pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
+                    pg.draw.polygon(self.screen, (255, 0, 0, 100), iso_poly, 3)
     def draw_structure_to_build(self, grid_pos):
 
         iso_poly = self.temp_tile['iso_poly']

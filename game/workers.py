@@ -13,7 +13,7 @@ class Worker:
         self.world = world
         self.world.entities.append(self)
         self.name = "worker"
-        image = pg.image.load("assets/graphics/worker.png").convert_alpha()
+        image = pg.image.load("assets/graphics/characters/worker.png").convert_alpha()
         self.image = pg.transform.scale(image, (image.get_width()*2, image.get_height()*2))
         self.tile = tile
         self.moving = False

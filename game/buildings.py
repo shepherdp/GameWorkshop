@@ -12,7 +12,7 @@ JOBNAMES = {'chopping': 'Woodcutter',
 class Building:
 
     def __init__(self, pos, loc, imgname, bldgname, resourcemanager, workers_needed):
-        self.image = pg.image.load(f'assets\\graphics\\{imgname}.png').convert_alpha()
+        self.image = pg.image.load(f'assets\\graphics\\buildings\\{imgname}.png').convert_alpha()
         self.name = bldgname
         self.rect = self.image.get_rect(topleft=pos)
         self.loc = loc

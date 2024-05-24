@@ -12,22 +12,22 @@ def draw_text(screen, text, size, color, pos):
 def load_images():
 
     # world blocks
-    rock = pg.image.load('assets\\graphics\\rock.png').convert_alpha()
-    tree = pg.image.load('assets\\graphics\\tree.png').convert_alpha()
-    grass1 = pg.image.load('assets\\graphics\\grass1.png').convert_alpha()
-    grass2 = pg.image.load('assets\\graphics\\grass2.png').convert_alpha()
+    rock = pg.image.load('assets\\graphics\\terrain\\rock.png').convert_alpha()
+    tree = pg.image.load('assets\\graphics\\terrain\\tree.png').convert_alpha()
+    grass1 = pg.image.load('assets\\graphics\\terrain\\grass1.png').convert_alpha()
+    grass2 = pg.image.load('assets\\graphics\\terrain\\grass2.png').convert_alpha()
+    water = pg.image.load('assets\\graphics\\terrain\\water.png').convert_alpha()
 
     # buildings
-    well = pg.image.load('assets\\graphics\\well.png').convert_alpha()
-    chopping = pg.image.load('assets\\graphics\\choppingblock.png').convert_alpha()
-    block = pg.image.load('assets\\graphics\\testblock.png').convert_alpha()
-    road = pg.image.load('assets\\graphics\\road.png').convert_alpha()
-    water = pg.image.load('assets\\graphics\\water.png').convert_alpha()
-    tc = pg.image.load('assets\\graphics\\towncenter.png').convert_alpha()
-    worker = pg.image.load('assets\\graphics\\worker.png').convert_alpha()
-    quarry = pg.image.load('assets\\graphics\\quarry.png').convert_alpha()
-    wheatfield = pg.image.load('assets\\graphics\\wheatfield.png').convert_alpha()
-    house = pg.image.load('assets\\graphics\\house.png').convert_alpha()
+    well = pg.image.load('assets\\graphics\\buildings\\well.png').convert_alpha()
+    chopping = pg.image.load('assets\\graphics\\buildings\\choppingblock.png').convert_alpha()
+    # block = pg.image.load('assets\\graphics\\buildings\\testblock.png').convert_alpha()
+    road = pg.image.load('assets\\graphics\\buildings\\road.png').convert_alpha()
+    tc = pg.image.load('assets\\graphics\\buildings\\towncenter.png').convert_alpha()
+    worker = pg.image.load('assets\\graphics\\characters\\worker.png').convert_alpha()
+    quarry = pg.image.load('assets\\graphics\\buildings\\quarry.png').convert_alpha()
+    wheatfield = pg.image.load('assets\\graphics\\buildings\\wheatfield.png').convert_alpha()
+    house = pg.image.load('assets\\graphics\\buildings\\house.png').convert_alpha()
 
     # icons
     water_icon = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
@@ -37,7 +37,6 @@ def load_images():
               'tree': tree,
               'well': well,
               'chopping': chopping,
-              'block': block,
               'road': road,
               'water': water,
               'towncenter': tc,

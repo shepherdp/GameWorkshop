@@ -14,9 +14,7 @@ CHARMAP = {'tree': 't',
            'road': '-',
            'water': '^',
            'chopping': 'c',
-           'towncenter': 'x',
-           'b1': 'b1',
-           'b2': 'b2'}
+           'towncenter': 'x'}
 
 R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 

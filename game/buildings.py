@@ -3,6 +3,12 @@
 import pygame as pg
 
 
+JOBNAMES = {'chopping': 'Woodcutter',
+            'quarry': 'Quarryman',
+            'wheatfield': 'Farmer',
+            'well': 'Water Carrier',
+            }
+
 class Building:
 
     def __init__(self, pos, loc, imgname, bldgname, resourcemanager, workers_needed):
@@ -49,6 +55,7 @@ class TownCenter(Building):
                 if len(bldg.workers) < bldg.workers_needed:
                     bldg.workers.append(worker)
                     worker.workplace = bldg
+                    worker.occupation = JOBNAMES[bldg.name]
                     worker.get_path_to_work()
                     break
 
@@ -122,8 +129,3 @@ class House(Building):
 
     def update(self):
         pass
-        # if pg.time.get_ticks() - self.resourcecooldown > 2000:
-        #     if not self.is_full():
-        #         self.storage['wheat'] += 1
-        #     self.resourcemanager.resources['gold'] += 1
-        #     self.resourcecooldown = pg.time.get_ticks()

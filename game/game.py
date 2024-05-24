@@ -21,7 +21,7 @@ class Game:
         self.entities = []
 
         # hud
-        self.hud = HUD(self.width, self.height)
+        self.hud = HUD(self.width, self.height, self.screen)
 
         # world
         self.world = World(self.entities, self.hud, WORLD_W, WORLD_H, self.width, self.height)
@@ -34,15 +34,18 @@ class Game:
     def run(self):
         self.playing = True
         while self.playing:
-            now = pg.time.get_ticks()
-            if now - self.spawncooldown > 10000:
-                x, y = self.world.get_random_position()
-                Worker(self.world.world[x][y], self.world)
-                self.spawncooldown = now
             self.clock.tick(60)
+            self.spawn_worker()
             self.events()
             self.update()
             self.draw()
+
+    def spawn_worker(self):
+        now = pg.time.get_ticks()
+        if now - self.spawncooldown > 10000:
+            x, y = self.world.get_random_position_along_border()
+            Worker(self.world.world[x][y], self.world)
+            self.spawncooldown = now
 
     def events(self):
         for event in pg.event.get():
@@ -62,7 +65,7 @@ class Game:
     def draw(self):
         self.screen.fill((0, 0, 0))
         self.world.draw(self.screen, self.camera)
-        self.hud.draw(self.screen)
+        self.hud.draw()
 
         draw_text(
             self.screen,

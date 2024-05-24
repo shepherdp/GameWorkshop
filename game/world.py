@@ -257,6 +257,8 @@ class World:
                                     for x, y in mask]
                             pg.draw.polygon(screen, (255, 255, 255), mask, 3)
 
+                        # add masks for workers associated with this building
+
                 # draw workers
                 worker = self.workers[x][y]
                 if worker is not None:
@@ -271,6 +273,8 @@ class World:
                                      y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + camera.scroll.y)
                                     for x, y in mask]
                             pg.draw.polygon(screen, (255, 255, 255), mask, 3)
+
+                        # add masks for workplace associated with worker
 
                 if free and self.temp_tile is not None:
                     iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y
@@ -523,6 +527,26 @@ class World:
             if self.world[x][y]['collision']:
                 continue
             found = True
+        return x, y
+
+    def get_random_position_along_border(self):
+        # find a random unoccupied tile on the edge of the map
+        found = False
+        x, y = None, None
+        while not found:
+            num1 = random.randint(0, self.grid_length_x - 1)
+            num2 = random.randint(0, self.grid_length_x - 1)
+
+            if self.world[num1][0]['collision'] and self.world[0][num2]['collision']:
+                continue
+            elif not self.world[num1][0]['collision']:
+                found = True
+                x = num1
+                y = 0
+            elif not self.world[0][num2]['collision']:
+                found = True
+                x = 0
+                y = num2
         return x, y
 
     def dist(self, pos1, pos2):

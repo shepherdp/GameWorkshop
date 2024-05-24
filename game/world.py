@@ -238,6 +238,111 @@ class World:
         else:
             self.handle_select_action(grid_pos)
 
+    def draw_terrain_tile(self, tile, render_pos):
+        if tile != '':
+            self.screen.blit(self.tiles[tile],
+                             (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                              render_pos[1] - (self.tiles[tile].get_height() - TILE_SIZE) + self.camera.scroll.y))
+
+    def highlight_active_towncenter(self, building, render_pos):
+        mask = pg.mask.from_surface(building.image).outline()
+        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                 y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
+                for x, y in mask]
+        pg.draw.polygon(self.screen, (0, 255, 0), mask, 3)
+
+    def highlight_selected_building(self, building, render_pos):
+        mask = pg.mask.from_surface(building.image).outline()
+        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                 y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
+                for x, y in mask]
+        pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
+
+    def draw_building(self, x, y, render_pos):
+        # draw buildings
+        building = self.buildings[x][y]
+        if building is not None:
+            self.screen.blit(building.image,
+                             (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                              render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
+
+            # place outline around active town center
+            if building is self.active_town_center:
+                self.highlight_active_towncenter(building, render_pos)
+
+            # draw white outline around selected object
+            if self.selected_building is not None:
+                if (x, y) == self.selected_building:
+                    self.highlight_selected_building(building, render_pos)
+
+                # add masks for workers associated with this building
+
+    def highlight_selected_worker(self, worker, render_pos):
+        mask = pg.mask.from_surface(worker.image).outline()
+        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                 y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
+                for x, y in mask]
+        pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
+
+    def draw_worker(self, x, y, render_pos):
+        worker = self.workers[x][y]
+        if worker is not None:
+            self.screen.blit(worker.image,
+                             (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                              render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
+
+            if self.selected_worker is not None:
+                if (x == self.selected_worker[0]) and (y == self.selected_worker[1]):
+                    self.highlight_selected_worker(worker, render_pos)
+
+                # add masks for workplace associated with worker
+
+    def draw_goodradius_indicator(self, x, y, iso_poly):
+        if self.in_towncenter_radius(self.world[x][y]['grid']):
+            pg.draw.polygon(self.screen, (255, 255, 255, 255), iso_poly, 3)
+
+    def draw_badradius_indicator(self, x, y, iso_poly):
+        if self.in_any_towncenter_radius(self.world[x][y]['grid']):
+            pg.draw.polygon(self.screen, (255, 0, 0, 255), iso_poly, 3)
+
+    def draw_radius_indicator(self, x, y):
+        iso_poly = [(x + self.grass_tiles.get_width() / 2 + self.camera.scroll.x, y + self.camera.scroll.y) for x, y
+                    in self.world[x][y]['iso_poly']]
+
+        if self.temp_tile['name'] == 'towncenter':
+            self.draw_badradius_indicator(x, y, iso_poly)
+        else:
+            self.draw_goodradius_indicator(x, y, iso_poly)
+
+    def draw_build_indicator(self, grid_pos, iso_poly):
+
+        # red indicator if tile cannot be placed
+        if self.temp_tile['collision'] or (self.workers[grid_pos[0]][grid_pos[1]] is not None):
+            pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
+        else:
+            if self.temp_tile['name'] == 'towncenter':
+                if self.in_any_towncenter_radius(grid_pos):
+                    pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
+                else:
+                    pg.draw.polygon(self.screen, (0, 255, 0), iso_poly, 3)
+            else:
+                if self.in_towncenter_radius(grid_pos):
+                    pg.draw.polygon(self.screen, (0, 255, 0), iso_poly, 3)
+                else:
+                    pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
+    def draw_structure_to_build(self, grid_pos):
+
+        iso_poly = self.temp_tile['iso_poly']
+        iso_poly = [(x + self.grass_tiles.get_width() / 2 + self.camera.scroll.x, y + self.camera.scroll.y) for x, y in
+                    iso_poly]
+
+        self.draw_build_indicator(grid_pos, iso_poly)
+
+        render_pos = self.temp_tile['render_pos']
+        self.screen.blit(self.temp_tile['image'],
+                         (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                          render_pos[1] - (self.temp_tile['image'].get_height() - TILE_SIZE) + self.camera.scroll.y))
+
     def draw(self):
 
         # draw the basic terrain
@@ -250,122 +355,27 @@ class World:
                 render_pos = self.world[x][y]['render_pos']
                 tile = self.world[x][y]['tile']
 
-                free = True
-
-                # if it is not a grass tile, mark it as not free and draw the tile
-                if tile != '':
-                    free = False
-                    self.screen.blit(self.tiles[tile],
-                                (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                                 render_pos[1] - (self.tiles[tile].get_height() - TILE_SIZE) + self.camera.scroll.y))
-
-                # draw buildings
-                building = self.buildings[x][y]
-                if building is not None:
-                    free = False
-                    self.screen.blit(building.image,
-                                (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                                 render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
-
-                    # place outline around active town center
-                    if building is self.active_town_center:
-                        mask = pg.mask.from_surface(building.image).outline()
-                        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                                 y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
-                                for x, y in mask]
-                        pg.draw.polygon(self.screen, (0, 255, 0), mask, 3)
-
-                    # draw white outline around selected object
-                    if self.selected_building is not None:
-                        if (x == self.selected_building[0]) and (y == self.selected_building[1]):
-                            mask = pg.mask.from_surface(building.image).outline()
-                            mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                                     y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
-                                    for x, y in mask]
-                            pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
-
-                        # add masks for workers associated with this building
-
-                # draw workers
-                worker = self.workers[x][y]
-                if worker is not None:
-                    free = False
-                    self.screen.blit(worker.image,
-                                (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                                 render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
-                    if self.selected_worker is not None:
-                        if (x == self.selected_worker[0]) and (y == self.selected_worker[1]):
-                            mask = pg.mask.from_surface(worker.image).outline()
-                            mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                                     y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
-                                    for x, y in mask]
-                            pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
-
-                        # add masks for workplace associated with worker
+                free = all([self.workers[x][y] is None,
+                            self.buildings[x][y] is None,
+                            tile == ''])
 
                 if free and self.temp_tile is not None:
-                    iso_poly = [(x + self.grass_tiles.get_width() / 2 + self.camera.scroll.x, y + self.camera.scroll.y) for x, y
-                                in self.world[x][y]['iso_poly']]
+                    self.draw_radius_indicator(x, y)
 
-                    # if self.active_town_center is not None:
-                    #     if self.in_towncenter_radius(self.world[x][y]['grid']):
-                    #         pg.draw.polygon(screen, (125, 125, 125, 150), iso_poly, 3)
-
-                    if self.temp_tile['name'] == 'towncenter':
-                        if self.in_any_towncenter_radius(self.world[x][y]['grid']):
-                            pg.draw.polygon(self.screen, (125, 0, 0, 150), iso_poly, 3)
-                    else:
-                        if self.in_towncenter_radius(self.world[x][y]['grid']):
-                            pg.draw.polygon(self.screen, (125, 125, 125, 150), iso_poly, 3)
+                # if it is not a grass tile, mark it as not free and draw the tile
+                self.draw_terrain_tile(tile, render_pos)
+                # draw buildings
+                self.draw_building(x, y, render_pos)
+                # draw workers
+                self.draw_worker(x, y, render_pos)
 
         # place a building
         if self.temp_tile is not None:
 
-            mouse_pos = pg.mouse.get_pos()
-            grid_pos = self.mouse_to_grid(mouse_pos[0], mouse_pos[1], self.camera.scroll)
+            self.mouse_pos = pg.mouse.get_pos()
+            grid_pos = self.mouse_to_grid(self.mouse_pos[0], self.mouse_pos[1], self.camera.scroll)
 
-            iso_poly = self.temp_tile['iso_poly']
-            iso_poly = [(x + self.grass_tiles.get_width() / 2 + self.camera.scroll.x, y + self.camera.scroll.y) for x, y in
-                        iso_poly]
-            if self.temp_tile['collision'] or (self.workers[grid_pos[0]][grid_pos[1]] is not None):
-                pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
-            else:
-                if self.temp_tile['name'] == 'towncenter':
-                    if self.in_any_towncenter_radius(grid_pos):
-                        pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
-                    else:
-                        pg.draw.polygon(self.screen, (255, 255, 255), iso_poly, 3)
-                else:
-                    if self.in_towncenter_radius(grid_pos):
-                        pg.draw.polygon(self.screen, (255, 255, 255), iso_poly, 3)
-                    else:
-                        pg.draw.polygon(self.screen, (255, 0, 0), iso_poly, 3)
-
-            render_pos = self.temp_tile['render_pos']
-            self.screen.blit(
-                self.temp_tile['image'],
-                (
-                    render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                    render_pos[1] - (self.temp_tile['image'].get_height() - TILE_SIZE) + self.camera.scroll.y
-                )
-            )
-
-        # for x in range(self.grid_length_x):
-        #     for y in range(self.grid_length_y):
-        #         if (x, y) in self.world_network.nodes:
-        #             iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y
-        #                         in self.world[x][y]['iso_poly']]
-        #             pg.draw.polygon(screen, (0, 0, 50), iso_poly, 3)
-
-        # for x in range(self.grid_length_x):
-        #     for y in range(self.grid_length_y):
-        #         if (x, y) not in self.world_network:
-        #             continue
-        #         render_pos = self.world[x][y]['render_pos']
-        #         tile = self.world[x][y]['tile']
-        #         iso_poly = [(x + self.grass_tiles.get_width() / 2 + camera.scroll.x, y + camera.scroll.y) for x, y
-        #                     in self.world[x][y]['iso_poly']]
-        #         pg.draw.polygon(screen, (0, 0, 150, 150), iso_poly, 3)
+            self.draw_structure_to_build(grid_pos)
 
     def create_world(self):
 

@@ -24,6 +24,7 @@ class Worker:
         self.occupation = 'Wanderer'
 
         self.inventory = {}
+        self.skills = {}
 
         self.going_to_work = False
         self.arrived_at_work = False
@@ -33,7 +34,6 @@ class Worker:
         # pathfinding
         self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
         self.move_timer = pg.time.get_ticks()
-
         self.create_path()
 
     def create_path(self):

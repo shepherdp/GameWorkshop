@@ -20,14 +20,13 @@ class Game:
         # entities
         self.entities = []
 
+        self.camera = Camera(self.width, self.height)
+
         # hud
         self.hud = HUD(self.width, self.height, self.screen)
 
         # world
-        self.world = World(self.entities, self.hud, WORLD_W, WORLD_H, self.width, self.height)
-
-        # camera
-        self.camera = Camera(self.width, self.height)
+        self.world = World(self.entities, self.hud, self.camera, WORLD_W, WORLD_H, self.width, self.height)
 
         self.spawncooldown = pg.time.get_ticks()
 
@@ -40,6 +39,7 @@ class Game:
             self.update()
             self.draw()
 
+    # consider moving this to World class
     def spawn_worker(self):
         now = pg.time.get_ticks()
         if now - self.spawncooldown > 10000:
@@ -64,7 +64,7 @@ class Game:
 
     def draw(self):
         self.screen.fill((0, 0, 0))
-        self.world.draw(self.screen, self.camera)
+        self.world.draw()
         self.hud.draw()
 
         draw_text(

@@ -32,8 +32,6 @@ class HUD:
         self.structure_to_build = None
         self.selected_building = None
         self.selected_worker = None
-
-        self.town_exists = False
         self.town_center_selected = False
 
         self.mouse_pos = None
@@ -153,9 +151,7 @@ class HUD:
     def draw_selected_building_image(self):
         w, h = self.select_rect.width, self.select_rect.height
         self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
-        # img = self.images[self.selected_building['tile']].copy()
-        img = self.selected_building.image
-        img_scale = self.scale_image(img, h=h * .75)
+        img_scale = self.scale_image(self.selected_building.image, h=h * .75)
         self.screen.blit(img_scale, (self.width * .35 + 10,
                                      self.height * .79 + 40))
         draw_text(self.screen, self.selected_building.name, 40, (255, 255, 255),
@@ -201,6 +197,25 @@ class HUD:
             draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
             y += 25
 
+    def draw_selected_worker_image(self):
+        w, h = self.select_rect.width, self.select_rect.height
+        self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
+        img_scale = self.scale_image(self.selected_worker.image, h=h * .75)
+        self.screen.blit(img_scale, (self.width * .35 + 10,
+                                     self.height * .79 + 40))
+        draw_text(self.screen, self.selected_worker.occupation, 40, (255, 255, 255),
+                  self.select_rect.topleft)
+        self.draw_selected_worker_inventory()
+
+    def draw_selected_worker_inventory(self):
+        x = self.width * .5
+        y = self.height * .84
+        draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
+        x += 10
+        for name, count in self.selected_worker.inventory.items():
+            y += 20
+            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+
     def draw_select_panel(self):
         # select hud
         if self.select_panel_visible:
@@ -217,29 +232,51 @@ class HUD:
                 # if a town center is selected and the World doesn't currently have an active one,
                 # draw a button for making it the active town center
                 else:
-                    if self.check_towncenter_inactive():
-                        self.draw_activate_towncenter_button()
-                    else:
+                    if not self.check_towncenter_inactive():
                         self.draw_town_occupancy()
                         self.draw_town_building_counts()
+                    else:
+                        self.draw_activate_towncenter_button()
 
             elif self.selected_worker is not None:
-                w, h = self.select_rect.width, self.select_rect.height
-                self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
-                img = self.selected_worker.image
-                img_scale = self.scale_image(img, h=h * .75)
-                self.screen.blit(img_scale, (self.width * .35 + 10,
-                                        self.height * .79 + 40))
-                draw_text(self.screen, self.selected_worker.occupation, 40, (255, 255, 255),
-                          self.select_rect.topleft)
+                self.draw_selected_worker_image()
 
-                x = self.width * .5
-                y = self.height * .84
-                draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
-                x += 10
-                for name, count in self.selected_worker.inventory.items():
-                    y += 20
-                    draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+    def draw_active_town_center_title(self):
+        self.screen.blit(self.current_town_center_panel, (self.width * .85, self.height * .1))
+        draw_text(self.screen, self.parent.active_town_center.name, 30, (0, 0, 0),
+                  self.current_town_center_rect.topleft)
+
+    def draw_deselect_towncenter_button(self):
+        self.screen.blit(self.deselect_town_center_button, (self.width * .96, self.height * .1))
+        draw_text(self.screen, 'X', 20, (0, 0, 0), self.deselect_town_center_rect.topleft)
+
+    def draw_building_panel(self):
+        self.screen.blit(self.building_panel, (self.width * .84, self.height * .74))
+        self.draw_building_panel_tiles()
+
+    def check_structure_to_build_affordable(self, name):
+        if self.structure_to_build is not None:
+            if self.structure_to_build['name'] == name:
+                self.structure_to_build = None
+
+    def draw_building_panel_tiles(self):
+        for tile in self.tiles:
+
+            # darken the current tile if it isn't affordable
+            if not tile['affordable']:
+                icon = tile['icon'].copy()
+                icon.set_alpha(100)
+                self.screen.blit(icon, tile['rect'].topleft)
+
+                # this section is to make sure that you cannot place another copy of a building when you
+                # run out of resources
+                # when you run out, it does take the building away from your cursor, but it selects the last one
+                # you built
+                self.check_structure_to_build_affordable(tile['name'])
+
+            # place the tile for an affordable building
+            else:
+                self.screen.blit(tile['icon'], tile['rect'].topleft)
 
     def draw(self):
 
@@ -247,39 +284,13 @@ class HUD:
 
         # draw active town center panel and deselect button
         if self.parent.active_town_center is not None:
-            self.screen.blit(self.current_town_center_panel, (self.width * .85, self.height * .1))
-            draw_text(self.screen, self.parent.active_town_center.name, 30, (0, 0, 0),
-                      self.current_town_center_rect.topleft)
-            self.screen.blit(self.deselect_town_center_button, (self.width * .96, self.height * .1))
-            draw_text(self.screen, 'X', 20, (0, 0, 0), self.deselect_town_center_rect.topleft)
+            self.draw_active_town_center_title()
+            self.draw_deselect_towncenter_button()
 
         # only draw build tiles when a town center is active
         if self.parent.active_town_center is not None:
             self.screen.blit(self.building_panel, (self.width * .84, self.height * .74))
-            for tile in self.tiles:
-                # require town center before building other things
-                if not self.town_exists:
-                    if tile['name'] == 'towncenter':
-                        self.screen.blit(tile['icon'], tile['rect'].topleft)
-                    else:
-                        icon = tile['icon'].copy()
-                        icon.set_alpha(100)
-                        self.screen.blit(icon, tile['rect'].topleft)
-                    continue
-                elif not tile['affordable']:
-                    icon = tile['icon'].copy()
-                    icon.set_alpha(100)
-                    self.screen.blit(icon, tile['rect'].topleft)
-
-                    # this section is to make sure that you cannot place another copy of a building when you
-                    # run out of resources
-                    # when you run out, it does take the building away from your cursor, but it selects the last one
-                    # you built
-                    if self.structure_to_build is not None:
-                        if self.structure_to_build['name'] == tile['name']:
-                            self.structure_to_build = None
-                else:
-                    self.screen.blit(tile['icon'], tile['rect'].topleft)
+            self.draw_building_panel_tiles()
 
         self.screen.blit(self.resources_panel, (0, 0))
 

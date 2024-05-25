@@ -149,6 +149,10 @@ class HUD:
         self.mouse_pos = pg.mouse.get_pos()
         self.mouse_action = pg.mouse.get_pressed()
 
+        if self.selected_worker is not None:
+            if self.selected_worker.arrived_at_home or self.selected_worker.arrived_at_work:
+                self.parent.deselect_all()
+
         # check if user wants to unselect a structure they were going to build
         self.check_deselect_structure_to_build()
         # check to see if the user selected the current town center
@@ -159,8 +163,8 @@ class HUD:
         self.update_build_tiles()
 
     def draw_selected_building_image(self):
-        w, h = self.select_rect.width, self.select_rect.height
         self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
+        w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_building.image, h=h * .75)
         self.screen.blit(img_scale, (self.width * .35 + 10,
                                      self.height * .79 + 40))
@@ -205,25 +209,52 @@ class HUD:
             y += 25
 
     def draw_selected_worker_image(self):
-        w, h = self.select_rect.width, self.select_rect.height
         self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
+        w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_worker.image, h=h * .75)
         self.screen.blit(img_scale, (self.width * .35 + 10,
                                      self.height * .79 + 40))
         draw_text(self.screen, self.selected_worker.occupation, 40, (255, 255, 255),
                   self.select_rect.topleft)
 
+        self.draw_selected_worker_inventory()
+
     def draw_selected_worker_inventory(self):
         x = self.width * .5
         y = self.height * .84
-        draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
-        x += 10
-        y += 20
-        draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
-                  (255, 255, 255), (x, y))
-        for name, count in self.selected_worker.inventory.items():
-            y += 20
-            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+
+        draw_text(self.screen, f'go home: {self.selected_worker.going_home}',
+                  20, (255, 255, 255), (x, y))
+        y += 18
+        draw_text(self.screen, f'go work: {self.selected_worker.going_to_work}',
+                  20, (255, 255, 255), (x, y))
+        y += 18
+        draw_text(self.screen, f'go tc: {self.selected_worker.going_to_towncenter}',
+                  20, (255, 255, 255), (x, y))
+        y += 18
+        draw_text(self.screen, f'at home: {self.selected_worker.arrived_at_home}',
+                  20, (255, 255, 255), (x, y))
+        y += 18
+        draw_text(self.screen, f'at work: {self.selected_worker.arrived_at_work}',
+                  20, (255, 255, 255), (x, y))
+        y += 18
+        draw_text(self.screen, f'at tc: {self.selected_worker.arrived_at_towncenter}',
+                  20, (255, 255, 255), (x, y))
+        y += 18
+        draw_text(self.screen, f'visible: {self.select_panel_visible}',
+                  20, (255, 255, 255), (x, y))
+        y += 18
+        draw_text(self.screen, f'selected: {self.selected_worker.selected}',
+                  20, (255, 255, 255), (x, y))
+
+        # draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
+        # x += 10
+        # y += 20
+        # draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
+        #           (255, 255, 255), (x, y))
+        # for name, count in self.selected_worker.inventory.items():
+        #     y += 20
+        #     draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
 
     def draw_selected_building_occupancy(self):
         x = self.width * .5
@@ -244,6 +275,8 @@ class HUD:
     def draw_select_panel(self):
         # select hud
         if self.select_panel_visible:
+
+            # self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
 
             # if a building is selected, draw it on the panel
             if self.selected_building is not None:
@@ -269,7 +302,7 @@ class HUD:
 
             elif self.selected_worker is not None:
                 self.draw_selected_worker_image()
-                self.draw_selected_worker_inventory()
+                # self.draw_selected_worker_inventory()
 
     def draw_active_town_center_title(self):
         self.screen.blit(self.current_town_center_panel, (self.width * .87, self.height * .075))

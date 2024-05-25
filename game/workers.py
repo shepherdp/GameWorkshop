@@ -144,7 +144,7 @@ class Worker:
 
     def move(self):
         now = pg.time.get_ticks()
-        if now - self.move_timer > 1000:
+        if now - self.move_timer > 500:
             # update position in the world
             new_pos = self.path[self.path_index]
             new_tile = self.world.world[new_pos[0]][new_pos[1]]

@@ -80,10 +80,9 @@ class World:
             self.entities.append(ent)
 
     def deselect_all(self):
-        if self.mouse_action[2]:
-            self.deselect_building()
-            self.deselect_worker()
-            self.hud.select_panel_visible = False
+        self.deselect_building()
+        self.deselect_worker()
+        self.hud.select_panel_visible = False
 
     def get_temp_tile(self, grid_pos):
         # grab a copy of the image to place over the tile with the mouse
@@ -301,9 +300,10 @@ class World:
         worker = self.workers[x][y]
         if worker is not None:
             if worker.arrived_at_home or worker.arrived_at_work:
-                if self.selected_worker is worker:
-                        self.deselect_all()
                 return
+                # if self.selected_worker is worker:
+                #     self.deselect_all()
+                # return
             self.screen.blit(worker.image,
                              (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
                               render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y))

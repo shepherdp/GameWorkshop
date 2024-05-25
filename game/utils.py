@@ -32,6 +32,9 @@ def load_images():
     # icons
     water_icon = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
 
+    # buttons
+    deselect_button = pg.image.load('assets\\graphics\\buttons\\deselect_button.png').convert_alpha()
+
 
     images = {'rock': rock,
               'tree': tree,
@@ -46,7 +49,8 @@ def load_images():
               'grass1': grass1,
               'grass2': grass2,
               'house': house,
-              'water_icon': water_icon
+              'water_icon': water_icon,
+              'deselect_button': deselect_button
               }
 
     return images

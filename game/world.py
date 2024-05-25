@@ -75,7 +75,6 @@ class World:
             render_pos = self.world[x][y]['render_pos']
             grid_pos = (x, y)
             ent = TownCenter(render_pos, grid_pos, ResourceManager())
-            self.world[x][y]['collision'] = True
             self.towns.append(ent)
             self.buildings[x][y] = ent
             self.entities.append(ent)
@@ -95,7 +94,9 @@ class World:
         iso_poly = self.world[grid_pos[0]][grid_pos[1]]['iso_poly']
         collision = self.world[grid_pos[0]][grid_pos[1]]['collision']
 
-        print(self.world[grid_pos[0]][grid_pos[1]])
+        # can't place blocks on spaces containing buildings
+        if self.buildings[grid_pos[0]][grid_pos[1]] is not None:
+            collision = True
 
         # can't place blocks on spaces containing workers
         if self.workers[grid_pos[0]][grid_pos[1]] is not None:
@@ -140,7 +141,6 @@ class World:
             self.active_town_center.housing_capacity += 5
 
     def place_entity(self, ent):
-        self.world[ent.loc[0]][ent.loc[1]]['collision'] = True
         self.collision_matrix[ent.loc[1]][ent.loc[0]] = 0
         self.entities.append(ent)
         self.buildings[ent.loc[0]][ent.loc[1]] = ent
@@ -191,10 +191,12 @@ class World:
             self.hud.selected_worker.selected = False
         self.selected_worker = None
         self.hud.selected_worker = None
+        self.hud.select_panel_visible = False
 
     def deselect_building(self):
         self.selected_building = None
         self.hud.selected_building = None
+        self.hud.select_panel_visible = False
 
     def check_select_building(self, grid_pos):
 
@@ -209,6 +211,14 @@ class World:
                     return
                 self.deselect_worker()
 
+            # this part is supposed to let the user double click on a town center and select it
+            # instead of using the button.  it wants to select the town center immediately though.
+            # need to fix this when I do click and drag.
+
+            # if self.hud.selected_building is not None:
+            #     if building.name == 'towncenter' and self.hud.selected_building is building:
+            #         self.active_town_center = building
+
             # update selected building data
             self.selected_building = grid_pos
             self.hud.selected_building = building
@@ -220,7 +230,7 @@ class World:
             self.check_select_worker(grid_pos)
             self.check_select_building(grid_pos)
 
-    def update(self, camera):
+    def update(self):
 
         self.mouse_pos = pg.mouse.get_pos()
         self.mouse_action = pg.mouse.get_pressed()
@@ -241,12 +251,6 @@ class World:
         else:
             self.handle_select_action(grid_pos)
 
-    def draw_terrain_tile(self, tile, render_pos):
-        if tile != '':
-            self.screen.blit(self.tiles[tile],
-                             (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                              render_pos[1] - (self.tiles[tile].get_height() - TILE_SIZE) + self.camera.scroll.y))
-
     def highlight_active_towncenter(self, building, render_pos):
         mask = pg.mask.from_surface(building.image).outline()
         mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
@@ -260,6 +264,19 @@ class World:
                  y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
                 for x, y in mask]
         pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
+
+    def highlight_selected_worker(self, worker, render_pos):
+        mask = pg.mask.from_surface(worker.image).outline()
+        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                 y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
+                for x, y in mask]
+        pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
+
+    def draw_terrain_tile(self, tile, render_pos):
+        if tile != '':
+            self.screen.blit(self.tiles[tile],
+                             (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                              render_pos[1] - (self.tiles[tile].get_height() - TILE_SIZE) + self.camera.scroll.y))
 
     def draw_building(self, x, y, render_pos):
         # draw buildings
@@ -280,16 +297,13 @@ class World:
 
                 # add masks for workers associated with this building
 
-    def highlight_selected_worker(self, worker, render_pos):
-        mask = pg.mask.from_surface(worker.image).outline()
-        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                 y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
-                for x, y in mask]
-        pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
-
     def draw_worker(self, x, y, render_pos):
         worker = self.workers[x][y]
         if worker is not None:
+            if worker.arrived_at_home or worker.arrived_at_work:
+                if self.selected_worker is worker:
+                        self.deselect_all()
+                return
             self.screen.blit(worker.image,
                              (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
                               render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
@@ -300,14 +314,6 @@ class World:
 
                 # add masks for workplace associated with worker
 
-    def draw_goodradius_indicator(self, x, y, iso_poly):
-        if self.in_towncenter_radius(self.world[x][y]['grid']):
-            pg.draw.polygon(self.screen, (255, 255, 255, 255), iso_poly, 3)
-
-    def draw_badradius_indicator(self, x, y, iso_poly):
-        if self.in_any_towncenter_radius(self.world[x][y]['grid']):
-            pg.draw.polygon(self.screen, (255, 0, 0, 255), iso_poly, 3)
-
     def draw_radius_indicator(self, x, y):
         iso_poly = [(x + self.grass_tiles.get_width() / 2 + self.camera.scroll.x, y + self.camera.scroll.y) for x, y
                     in self.world[x][y]['iso_poly']]
@@ -316,6 +322,14 @@ class World:
             self.draw_badradius_indicator(x, y, iso_poly)
         else:
             self.draw_goodradius_indicator(x, y, iso_poly)
+
+    def draw_goodradius_indicator(self, x, y, iso_poly):
+        if self.in_towncenter_radius(self.world[x][y]['grid']):
+            pg.draw.polygon(self.screen, (255, 255, 255, 255), iso_poly, 3)
+
+    def draw_badradius_indicator(self, x, y, iso_poly):
+        if self.in_any_towncenter_radius(self.world[x][y]['grid']):
+            pg.draw.polygon(self.screen, (255, 0, 0, 255), iso_poly, 3)
 
     def draw_build_indicator(self, grid_pos, iso_poly):
 
@@ -333,6 +347,7 @@ class World:
                     pg.draw.polygon(self.screen, (0, 255, 0, 100), iso_poly, 3)
                 else:
                     pg.draw.polygon(self.screen, (255, 0, 0, 100), iso_poly, 3)
+
     def draw_structure_to_build(self, grid_pos):
 
         iso_poly = self.temp_tile['iso_poly']
@@ -478,7 +493,7 @@ class World:
                     # if both the current tile and the neighbor are walkable, add an edge between them
                     if self.world[x][y]['tile'] in ['', 'towncenter'] and \
                             self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
-                        self.world_network.add_edge((x, y), (nbrx, nbry))
+                        self.world_network.add_edge((x, y), (nbrx, nbry), weight=1)
 
     def cart_to_iso(self, x, y):
         # get isometric coordinates from cartesian ones

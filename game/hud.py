@@ -15,6 +15,8 @@ class HUD:
         self.parent = None
         self.panel_color = (198, 155, 93, 175)
 
+        self.images = load_images()
+
         # resources panel
         self.create_resources_panel()
         # building panel
@@ -26,7 +28,6 @@ class HUD:
         self.create_activate_towncenter_button()
         self.create_deactivate_towncenter_button()
 
-        self.images = load_images()
         self.tiles = self.populate_build_hud()
 
         self.structure_to_build = None
@@ -54,10 +55,10 @@ class HUD:
         self.select_panel_visible = False
 
     def create_current_towncenter_panel(self):
-        self.current_town_center_panel = pg.Surface((self.width * .1, self.height * .05), pg.SRCALPHA)
+        self.current_town_center_panel = pg.Surface((self.width * .075, self.height * .04), pg.SRCALPHA)
         self.current_town_center_panel.fill((150, 255, 0, 175))
-        self.current_town_center_rect = self.current_town_center_panel.get_rect(topleft=(self.width * .85,
-                                                                                         self.height * .1))
+        self.current_town_center_rect = self.current_town_center_panel.get_rect(topleft=(self.width * .87,
+                                                                                         self.height * .075))
 
     def create_activate_towncenter_button(self):
         self.activate_town_center_button = pg.Surface((self.width * .1, self.height * .05), pg.SRCALPHA)
@@ -66,10 +67,11 @@ class HUD:
                                                                                             self.height * .84))
 
     def create_deactivate_towncenter_button(self):
-        self.deselect_town_center_button = pg.Surface((self.width * .02, self.height * .02), pg.SRCALPHA)
-        self.deselect_town_center_button.fill((255, 0, 0, 175))
-        self.deselect_town_center_rect = self.current_town_center_panel.get_rect(topleft=(self.width * .96,
-                                                                                          self.height * .1))
+        # self.deselect_town_center_button = pg.Surface((self.width * .02, self.height * .02), pg.SRCALPHA)
+        # self.deselect_town_center_button.fill((255, 0, 0, 175))
+        self.deselect_town_center_button = self.images['deselect_button']
+        self.deselect_town_center_rect = self.deselect_town_center_button.get_rect(topleft=(self.width * .96,
+                                                                                            self.height * .075))
 
     def populate_build_hud(self):
         render_pos = [self.width * .84 + 10, self.height * .74 + 10]
@@ -81,7 +83,7 @@ class HUD:
 
         # elements to leave out of the build panel
         skip = ['block', 'tree', 'rock', 'water', 'worker', 'grass1', 'grass2',
-                'water_icon', 'wood_icon']
+                'water_icon', 'wood_icon', 'deselect_button']
 
         for name, img in self.images.items():
             if name in skip:
@@ -117,6 +119,18 @@ class HUD:
                     self.parent.active_town_center = None
                     self.structure_to_build = None
 
+    def check_deselect_structure_to_build(self):
+        if self.mouse_action[2]:
+            self.structure_to_build = None
+
+    def check_towncenter_inactive(self):
+        return self.parent.active_town_center is None or self.selected_building is not self.parent.active_town_center
+
+    def check_structure_to_build_affordable(self, name):
+        if self.structure_to_build is not None:
+            if self.structure_to_build['name'] == name:
+                self.structure_to_build = None
+
     def update_build_tiles(self):
         if self.parent.active_town_center is not None:
             for tile in self.tiles:
@@ -130,10 +144,6 @@ class HUD:
                         self.parent.selected_building = None
                         self.selected_building = None
                         self.select_panel_visible = False
-
-    def check_deselect_structure_to_build(self):
-        if self.mouse_action[2]:
-            self.structure_to_build = None
 
     def update(self):
         self.mouse_pos = pg.mouse.get_pos()
@@ -174,9 +184,6 @@ class HUD:
                       20, color, (x, y))
             y += 25
 
-    def check_towncenter_inactive(self):
-        return self.parent.active_town_center is None or self.selected_building is not self.parent.active_town_center
-
     def draw_activate_towncenter_button(self):
         self.screen.blit(self.activate_town_center_button, (self.width * .5, self.height * .84))
         draw_text(self.screen, 'Select', 30, (255, 255, 255),
@@ -205,16 +212,34 @@ class HUD:
                                      self.height * .79 + 40))
         draw_text(self.screen, self.selected_worker.occupation, 40, (255, 255, 255),
                   self.select_rect.topleft)
-        self.draw_selected_worker_inventory()
 
     def draw_selected_worker_inventory(self):
         x = self.width * .5
         y = self.height * .84
         draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
         x += 10
+        y += 20
+        draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
+                  (255, 255, 255), (x, y))
         for name, count in self.selected_worker.inventory.items():
             y += 20
             draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+
+    def draw_selected_building_occupancy(self):
+        x = self.width * .5
+        y = self.height * .84
+        draw_text(self.screen,
+                  f'Occupants: {self.selected_building.num_occupants} / {self.selected_building.housing_capacity}',
+                  20, (255, 255, 255), (x, y)
+                  )
+
+    def draw_selected_building_needs(self):
+        x = self.width * .5
+        y = self.height * .84 + 25
+        for name in self.selected_building.needs:
+            draw_text(self.screen, f'{name}: {self.selected_building.storage[name]} / {self.selected_building.needs[name]}',
+                      20, (255, 255, 255), (x, y))
+            y += 25
 
     def draw_select_panel(self):
         # select hud
@@ -226,8 +251,12 @@ class HUD:
 
                 # draw employment and resources for production buildings
                 if self.selected_building.name != 'towncenter':
-                    self.draw_selected_building_employment()
-                    self.draw_selected_building_storage()
+                    if self.selected_building.name == 'house':
+                        self.draw_selected_building_occupancy()
+                        self.draw_selected_building_needs()
+                    else:
+                        self.draw_selected_building_employment()
+                        self.draw_selected_building_storage()
 
                 # if a town center is selected and the World doesn't currently have an active one,
                 # draw a button for making it the active town center
@@ -240,24 +269,19 @@ class HUD:
 
             elif self.selected_worker is not None:
                 self.draw_selected_worker_image()
+                self.draw_selected_worker_inventory()
 
     def draw_active_town_center_title(self):
-        self.screen.blit(self.current_town_center_panel, (self.width * .85, self.height * .1))
+        self.screen.blit(self.current_town_center_panel, (self.width * .87, self.height * .075))
         draw_text(self.screen, self.parent.active_town_center.name, 30, (0, 0, 0),
                   self.current_town_center_rect.topleft)
 
     def draw_deselect_towncenter_button(self):
-        self.screen.blit(self.deselect_town_center_button, (self.width * .96, self.height * .1))
-        draw_text(self.screen, 'X', 20, (0, 0, 0), self.deselect_town_center_rect.topleft)
+        self.screen.blit(self.deselect_town_center_button, (self.width * .96, self.height * .075))
 
     def draw_building_panel(self):
         self.screen.blit(self.building_panel, (self.width * .84, self.height * .74))
         self.draw_building_panel_tiles()
-
-    def check_structure_to_build_affordable(self, name):
-        if self.structure_to_build is not None:
-            if self.structure_to_build['name'] == name:
-                self.structure_to_build = None
 
     def draw_building_panel_tiles(self):
         for tile in self.tiles:

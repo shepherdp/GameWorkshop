@@ -20,8 +20,12 @@ class Worker:
         self.path_index = 0
         self.town = None
         self.workplace = None
+        self.home = None
         self.selected = False
         self.occupation = 'Wanderer'
+
+        self.energy = 100
+        self.energycooldown = pg.time.get_ticks()
 
         self.inventory = {}
         self.skills = {}
@@ -30,6 +34,8 @@ class Worker:
         self.arrived_at_work = False
         self.going_to_towncenter = False
         self.arrived_at_towncenter = False
+        self.going_home = False
+        self.arrived_at_home = False
 
         # pathfinding
         self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
@@ -70,10 +76,26 @@ class Worker:
         self.reset_travel_vars()
         self.going_to_towncenter = True
 
+    def get_path_to_home(self):
+        self.start = (self.tile["grid"][0], self.tile["grid"][1])
+        self.end = self.home.loc
+        self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+        self.path_index = 0
+        self.moving = True
+
+        self.reset_travel_vars()
+        self.going_home = True
+
     def get_random_path(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
-        self.end = self.world.get_random_position()
-        self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+        found = False
+        while not found:
+            self.end = self.world.get_random_position()
+            try:
+                self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+                found = True
+            except:
+                continue
         self.path_index = 0
         self.moving = True
 
@@ -97,21 +119,28 @@ class Worker:
             if self.going_to_work:
                 self.going_to_work = False
                 self.arrived_at_work = True
+            if self.going_home:
+                self.going_home = False
+                self.arrived_at_home = True
 
-            # if not assigned to a town, look for one
-            # if none are available, just keep moving
-            if self.town is None:
-                newtown = self.world.find_town_with_vacancy()
-                if newtown is not None:
-                    self.assign_town(newtown)
-                else:
-                    self.get_random_path()
+        self.check_needs_town()
+
+    def check_needs_town(self):
+        # if not assigned to a town, look for one
+        # if none are available, just keep moving
+        if self.town is None:
+            newtown = self.world.find_town_with_vacancy()
+            if newtown is not None:
+                self.assign_town(newtown)
+            else:
+                self.get_random_path()
 
     def assign_town(self, newtown):
         self.town = newtown
         self.town.villagers.append(self)
         self.get_path_to_towncenter()
         self.going_to_towncenter = True
+        self.town.num_villagers += 1
 
     def move(self):
         now = pg.time.get_ticks()
@@ -132,18 +161,35 @@ class Worker:
 
             # if they are at their job, and it is full, collect the resources and head to town
             if self.arrived_at_work:
-                self.collect_from_work()
-                self.get_path_to_towncenter()
+                if self.collect_from_work():
+                    self.get_path_to_towncenter()
 
             # if they arrived at the town center, sit and wait or drop off goods and return to work
             elif self.arrived_at_towncenter:
                 if self.workplace is not None:
                     self.dropoff_at_towncenter()
-                    self.get_path_to_work()
+                    if self.energy >= 30:
+                        self.get_path_to_work()
+                    else:
+                        self.pickup_home_needs()
+                        self.get_path_to_home()
                 else:
                     self.reset_travel_vars()
+
+            elif self.arrived_at_home:
+                if self.energy == 100:
+                    self.get_path_to_work()
+                else:
+                    now = pg.time.get_ticks()
+                    if now - self.energycooldown > 500:
+                        self.energy += 1
+                        self.energycooldown = now
         else:
+            self.check_needs_town()
             self.move()
+
+    def pickup_home_needs(self):
+        pass
 
     def collect_from_work(self):
         if self.workplace.is_full():
@@ -153,46 +199,20 @@ class Worker:
                 else:
                     self.inventory[key] = val
                 self.workplace.storage[key] = 0
+            self.energy -= 15
+            return True
+        return False
 
     def dropoff_at_towncenter(self):
         for key, val in self.inventory.items():
             self.town.resourcemanager.resources[key] += self.inventory[key]
             self.inventory[key] = 0
+        self.energy -= 15
 
     def reset_travel_vars(self):
         self.going_to_work = False
         self.arrived_at_work = False
         self.going_to_towncenter = False
         self.arrived_at_towncenter = False
-
-# A-star was not reading the map right for some reason.  Should figure that one out.
-    # For now, just using Dijkstra on a networkx graph of all walkable tiles in the game
-
-    # def create_path(self):
-    #     searching_for_path = True
-    #     runs = 0
-    #     while searching_for_path:
-    #         num = random.randint(0, len(self.world.towns) - 1)
-    #         print(num, self.world.towns[num].loc)
-    #         x, y = self.world.towns[num].loc
-    #         self.grid = Grid(matrix=self.world.collision_matrix)
-    #         self.start = self.grid.node(self.tile["grid"][0], self.tile["grid"][1])
-    #         self.end = self.grid.node(x, y)
-    #         finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
-    #         self.path_index = 0
-    #         self.path, runs = finder.find_path(self.start, self.end, self.grid)
-    #         searching_for_path = False
-    #         self.moving = True
-    #     print('Runs:', runs)
-    #     print('Path:', self.path)
-            # x = random.randint(0, self.world.grid_length_x - 1)
-            # y = random.randint(0, self.world.grid_length_y - 1)
-            # dest_tile = self.world.world[x][y]
-            # if not dest_tile["collision"]:
-            #     self.grid = Grid(matrix=self.world.collision_matrix)
-            #     self.start = self.grid.node(self.tile["grid"][0], self.tile["grid"][1])
-            #     self.end = self.grid.node(x, y)
-            #     finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
-            #     self.path_index = 0
-            #     self.path, runs = finder.find_path(self.start, self.end, self.grid)
-            #     searching_for_path = False
+        self.going_home = False
+        self.arrived_at_home = False

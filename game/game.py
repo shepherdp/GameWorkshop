@@ -1,5 +1,6 @@
 import pygame as pg
 import sys
+from networkx import dijkstra_path
 
 from .camera import Camera
 from .hud import HUD
@@ -7,7 +8,7 @@ from .utils import draw_text
 from .workers import Worker
 from .world import World
 
-from .settings import WORLD_W, WORLD_H
+from .settings import WORLD_W, WORLD_H, SHOWFPS
 
 
 class Game:
@@ -43,9 +44,16 @@ class Game:
     def spawn_worker(self):
         now = pg.time.get_ticks()
         if now - self.spawncooldown > 10000:
-            x, y = self.world.get_random_position_along_border()
-            Worker(self.world.world[x][y], self.world)
-            self.spawncooldown = now
+            found = False
+            while not found:
+                x, y = self.world.get_random_position_along_border()
+                try:
+                    dijkstra_path(self.world.world_network, (x, y), self.world.towns[0].loc)
+                except:
+                    continue
+                Worker(self.world.world[x][y], self.world)
+                self.spawncooldown = now
+                found = True
 
     def events(self):
         for event in pg.event.get():
@@ -58,26 +66,27 @@ class Game:
 
     def update(self):
         self.camera.update()
-        for e in self.entities: e.update()
+        for e in self.entities:
+            e.update()
         self.hud.update()
-        self.world.update(self.camera)
+        self.world.update()
 
     def draw(self):
         self.screen.fill((0, 0, 0))
         self.world.draw()
         self.hud.draw()
 
-        draw_text(
-            self.screen,
-            'fps={}'.format(round(self.clock.get_fps())),
-            25,
-            (255, 255, 255),
-            (10, 10)
-        )
+        if SHOWFPS:
+            draw_text(self.screen,
+                      'fps={}'.format(round(self.clock.get_fps())),
+                      25,
+                      (255, 255, 255),
+                      (10, 10))
 
         pg.display.flip()
 
     def quit(self):
-        self.world.write_map()
+        # self.world.write_map()
+        # self.world.write_world_network()
         pg.quit()
         sys.exit()

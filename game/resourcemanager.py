@@ -1,3 +1,5 @@
+# Class that manages resources use, purchases, and sales in a town
+
 from numpy import exp
 
 
@@ -17,7 +19,7 @@ class ResourceManager:
         self.resources = {'wood': 50,
                           'water': 50,
                           'stone': 50,
-                          'gold': 1000,
+                          'gold': 100000,
                           'wheat': 50}
 
         self.costs = {'well': {'wood': 5},
@@ -26,7 +28,9 @@ class ResourceManager:
                       'road': {'wood': 1},
                       'quarry': {'stone': 3},
                       'wheatfield': {'stone': 1, 'wood': 5, 'water': 10},
-                      'house': {'wood': 2, 'stone': 2, 'water': 2}
+                      'house': {'wood': 2, 'stone': 2, 'water': 2},
+                      'workbench': {'wood': 4, 'stone': 1},
+                      'simpletools': {'wood': 40, 'stone': 40}
                       }
 
         self.quantity_demanded = {'wood': 0,
@@ -34,14 +38,14 @@ class ResourceManager:
                                   'water': 0,
                                   'stone': 0}
 
-    def apply_cost(self, bldg):
-        for r, cost in self.costs[bldg].items():
+    def apply_cost(self, item):
+        for r, cost in self.costs[item].items():
             self.resources[r] -= cost
 
-    def is_affordable(self, bldg):
-        if bldg not in self.costs:
+    def is_affordable(self, item):
+        if item not in self.costs:
             return True
-        for r, cost in self.costs[bldg].items():
+        for r, cost in self.costs[item].items():
             if self.resources[r] < cost:
                 return False
         return True

@@ -74,7 +74,7 @@ class World:
             x, y = self.get_random_position()
             render_pos = self.world[x][y]['render_pos']
             grid_pos = (x, y)
-            ent = TownCenter(render_pos, grid_pos, ResourceManager())
+            ent = TownCenter(render_pos, grid_pos, ResourceManager(), self.tiles)
             self.towns.append(ent)
             self.buildings[x][y] = ent
             self.entities.append(ent)

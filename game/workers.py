@@ -13,7 +13,7 @@ class Worker:
         self.world = world
         self.world.entities.append(self)
         self.name = "worker"
-        image = pg.image.load("assets/graphics/characters/worker.png").convert_alpha()
+        image = pg.image.load("assets/graphics/characters/beggar.png").convert_alpha()
         self.image = pg.transform.scale(image, (image.get_width()*2, image.get_height()*2))
         self.tile = tile
         self.moving = False
@@ -23,6 +23,7 @@ class Worker:
         self.home = None
         self.selected = False
         self.occupation = 'Wanderer'
+        self.gold = 5
 
         self.energy = 100
         self.energycooldown = pg.time.get_ticks()
@@ -48,12 +49,9 @@ class Worker:
         if newtown is None:
             self.get_random_path()
         else:
-            self.town = newtown
-            self.moving = True
-            self.town.villagers.append(self)
-            self.get_path_to_towncenter()
-            self.going_to_towncenter = True
+            self.assign_town(newtown)
             self.occupation = 'Beggar'
+            self.get_path_to_towncenter()
 
     def get_path_to_work(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
@@ -64,7 +62,6 @@ class Worker:
 
         self.reset_travel_vars()
         self.going_to_work = True
-
 
     def get_path_to_towncenter(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
@@ -131,7 +128,9 @@ class Worker:
         if self.town is None:
             newtown = self.world.find_town_with_vacancy()
             if newtown is not None:
+                print('Before: ', newtown.num_villagers)
                 self.assign_town(newtown)
+                print('After: ', newtown.num_villagers)
             else:
                 self.get_random_path()
 
@@ -168,7 +167,7 @@ class Worker:
             elif self.arrived_at_towncenter:
                 if self.workplace is not None:
                     self.dropoff_at_towncenter()
-                    if self.energy >= 30:
+                    if self.energy >= 50:
                         self.get_path_to_work()
                     else:
                         self.pickup_home_needs()
@@ -177,6 +176,7 @@ class Worker:
                     self.reset_travel_vars()
 
             elif self.arrived_at_home:
+                self.dropoff_at_home()
                 if self.energy == 100:
                     self.get_path_to_work()
                 else:
@@ -189,24 +189,54 @@ class Worker:
             self.move()
 
     def pickup_home_needs(self):
-        pass
+        needs = self.home.get_needs()
+        if needs:
+            minval = 1000000000
+            minkey = ''
+            for key, val in needs.items():
+                if val < minval:
+                    minkey = key
+            if minkey not in self.inventory:
+                self.inventory[minkey] = 0
+            amount_to_buy = min([self.town.resourcemanager.resources[minkey], needs[minkey]])
+            for i in range(amount_to_buy):
+                price = self.town.get_sell_price(minkey)
+                if self.gold >= price:
+                    self.inventory[minkey] += 1
+                    self.town.resourcemanager.resources[minkey] -= 1
+                    self.gold -= price
+                    self.town.resourcemanager.resources['gold'] += price
+                else:
+                    break
+
+    def dropoff_at_home(self):
+        for key in self.inventory:
+            if key in self.home.needs:
+                self.home.storage[key] += self.inventory[key]
+                self.inventory[key] = 0
 
     def collect_from_work(self):
+
         if self.workplace.is_full():
             for key, val in self.workplace.storage.items():
                 if key in self.inventory:
-                    self.inventory[key] += val
+                    self.inventory[key] += int(val)
                 else:
-                    self.inventory[key] = val
-                self.workplace.storage[key] = 0
+                    self.inventory[key] = int(val)
+                self.workplace.storage[key] -= int(val)
             self.energy -= 15
             return True
         return False
 
     def dropoff_at_towncenter(self):
         for key, val in self.inventory.items():
-            self.town.resourcemanager.resources[key] += self.inventory[key]
-            self.inventory[key] = 0
+            for i in range(val):
+                price = self.town.get_buy_price(key)
+                if self.town.resourcemanager.resources['gold'] >= price:
+                    self.town.resourcemanager.resources[key] += 1
+                    self.inventory[key] -= 1
+                    self.town.resourcemanager.resources['gold'] -= price
+                    self.gold += price
         self.energy -= 15
 
     def reset_travel_vars(self):

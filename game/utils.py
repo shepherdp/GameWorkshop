@@ -24,7 +24,6 @@ def load_images():
     # block = pg.image.load('assets\\graphics\\buildings\\testblock.png').convert_alpha()
     road = pg.image.load('assets\\graphics\\buildings\\road.png').convert_alpha()
     tc = pg.image.load('assets\\graphics\\buildings\\towncenter.png').convert_alpha()
-    worker = pg.image.load('assets\\graphics\\characters\\worker.png').convert_alpha()
     quarry = pg.image.load('assets\\graphics\\buildings\\quarry.png').convert_alpha()
     wheatfield = pg.image.load('assets\\graphics\\buildings\\wheatfield.png').convert_alpha()
     house = pg.image.load('assets\\graphics\\buildings\\house.png').convert_alpha()
@@ -35,6 +34,12 @@ def load_images():
     # buttons
     deselect_button = pg.image.load('assets\\graphics\\buttons\\deselect_button.png').convert_alpha()
 
+    beggar = pg.image.load('assets\\graphics\\characters\\beggar.png').convert_alpha()
+    watercarrier = pg.image.load('assets\\graphics\\characters\\watercarrier.png').convert_alpha()
+    woodcutter = pg.image.load('assets\\graphics\\characters\\woodcutter.png').convert_alpha()
+    farmer = pg.image.load('assets\\graphics\\characters\\farmer.png').convert_alpha()
+    quarryman = pg.image.load('assets\\graphics\\characters\\quarryman.png').convert_alpha()
+
 
     images = {'rock': rock,
               'tree': tree,
@@ -43,7 +48,13 @@ def load_images():
               'road': road,
               'water': water,
               'towncenter': tc,
-              'worker': worker,
+
+              'beggar': beggar,
+              'woodcutter': woodcutter,
+              'watercarrier': watercarrier,
+              'quarryman': quarryman,
+              'farmer': farmer,
+
               'quarry': quarry,
               'wheatfield': wheatfield,
               'grass1': grass1,

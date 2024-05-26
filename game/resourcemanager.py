@@ -1,13 +1,23 @@
-import pygame as pg
+from numpy import exp
+
 
 class ResourceManager:
+
+    price_ranges = {'wood': 10,
+                    'stone': 16,
+                    'water': 10,
+                    'wheat': 12}
+    max_prices = {'wood': 40,
+                  'stone': 50,
+                  'water': 35,
+                  'wheat': 45}
 
     def __init__(self):
 
         self.resources = {'wood': 50,
                           'water': 50,
                           'stone': 50,
-                          'gold': 50,
+                          'gold': 1000,
                           'wheat': 50}
 
         self.costs = {'well': {'wood': 5},
@@ -18,6 +28,11 @@ class ResourceManager:
                       'wheatfield': {'stone': 1, 'wood': 5, 'water': 10},
                       'house': {'wood': 2, 'stone': 2, 'water': 2}
                       }
+
+        self.quantity_demanded = {'wood': 0,
+                                  'wheat': 0,
+                                  'water': 0,
+                                  'stone': 0}
 
     def apply_cost(self, bldg):
         for r, cost in self.costs[bldg].items():
@@ -30,3 +45,22 @@ class ResourceManager:
             if self.resources[r] < cost:
                 return False
         return True
+
+    def get_price(self, item, mode=0):
+        price_range = self.price_ranges[item]
+        max_price = self.max_prices[item]
+        in_stock = self.resources[item]
+        quantity_demanded = self.quantity_demanded[item]
+
+        # mode 0 is town buying from someone
+        if mode == 0:
+            midpoint = quantity_demanded if quantity_demanded > 0 else 1
+            k = 4 / midpoint + .01
+        # mode 1 is town selling to someone
+        elif mode == 1:
+            midpoint = int(quantity_demanded * 1.5) if quantity_demanded > 0 else 1
+            k = 8 / midpoint + .01
+            max_price = int(max_price * 1.5)
+            price_range = int(price_range * 1.5)
+
+        return max_price - (1 / (1 + exp(-k * (in_stock - midpoint)))) * price_range

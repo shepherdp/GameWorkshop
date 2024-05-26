@@ -30,7 +30,7 @@ def load_images():
     road = pg.image.load('..\\assets\\graphics\\road.png').convert_alpha()
     water = pg.image.load('..\\assets\\graphics\\water.png').convert_alpha()
     tc = pg.image.load('..\\assets\\graphics\\towncenter.png').convert_alpha()
-    worker = pg.image.load('..\\assets\\graphics\\worker.png').convert_alpha()
+    worker = pg.image.load('..\\assets\\graphics\\woodcutter.png').convert_alpha()
 
     images = {'b1': b1,
               'b2': b2,

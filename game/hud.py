@@ -15,6 +15,9 @@ class HUD:
         self.parent = None
         self.panel_color = (198, 155, 93, 175)
 
+        self.positions = self.get_positions()
+        self.panel_dimensions = self.get_panel_dimensions()
+
         self.images = load_images()
 
         # resources panel
@@ -38,10 +41,18 @@ class HUD:
         self.mouse_pos = None
         self.mouse_action = None
 
+    def get_positions(self):
+        d = {'resources_panel': (0, 0)}
+        return d
+
+    def get_panel_dimensions(self):
+        d = {'resources_panel': (self.width, self.height * .02)}
+        return d
+
     def create_resources_panel(self):
-        self.resources_panel = pg.Surface((self.width, self.height * .02), pg.SRCALPHA)
+        self.resources_panel = pg.Surface(self.panel_dimensions['resources_panel'], pg.SRCALPHA)
         self.resources_panel.fill(self.panel_color)
-        self.resources_rect = self.resources_panel.get_rect(topleft=(0, 0))
+        self.resources_rect = self.resources_panel.get_rect(topleft=self.positions['resources_panel'])
 
     def create_building_panel(self):
         self.building_panel = pg.Surface((self.width * .15, self.height * .25), pg.SRCALPHA)
@@ -82,11 +93,10 @@ class HUD:
         horizontal_pos = 0
 
         # elements to leave out of the build panel
-        skip = ['block', 'tree', 'rock', 'water', 'worker', 'grass1', 'grass2',
-                'water_icon', 'wood_icon', 'deselect_button']
+        bldgs = ['chopping', 'quarry', 'well', 'wheatfield', 'towncenter', 'house', 'road']
 
         for name, img in self.images.items():
-            if name in skip:
+            if name not in bldgs:
                 continue
             pos = render_pos.copy()
             img_scale = self.scale_image(img, w=surface_w)
@@ -177,16 +187,20 @@ class HUD:
         draw_text(self.screen,
                   f'Workers: {len(self.selected_building.workers)} / {self.selected_building.workers_needed}',
                   20, (255, 255, 255), (x, y))
+        y += 20
+        draw_text(self.screen,
+                  f'Workers in building: {self.selected_building.check_currently_in_building()} / {self.selected_building.workers_needed}',
+                  20, (255, 255, 255), (x, y))
 
     def draw_selected_building_storage(self):
         x = self.width * .5
-        y = self.height * .84 + 25
+        y = self.height * .84 + 40
         for item in self.selected_building.storage:
             color = (255, 255, 255) if not self.selected_building.is_full() else (255, 0, 0)
             draw_text(self.screen,
                       f'{item}: {self.selected_building.storage[item]} / {self.selected_building.capacity}',
                       20, color, (x, y))
-            y += 25
+            y += 20
 
     def draw_activate_towncenter_button(self):
         self.screen.blit(self.activate_town_center_button, (self.width * .5, self.height * .84))
@@ -196,17 +210,22 @@ class HUD:
     def draw_town_occupancy(self):
         x = self.width * .5
         y = self.height * .84
+        # draw_text(self.screen,
+        #           f'Villagers: {len(self.selected_building.villagers)} / {self.selected_building.housing_capacity}',
+        #           20, (255, 255, 255), (x, y)
+        #           )
+        # y -= 20
         draw_text(self.screen,
-                  f'Villagers: {len(self.selected_building.villagers)} / {self.selected_building.housing_capacity}',
+                  f'Villagers: {self.selected_building.num_villagers} / {self.selected_building.housing_capacity}',
                   20, (255, 255, 255), (x, y)
                   )
 
     def draw_town_building_counts(self):
         x = self.width * .5
-        y = self.height * .84 + 25
+        y = self.height * .84 + 20
         for name, count in self.parent.active_town_center.num_buildings.items():
             draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
-            y += 25
+            y += 20
 
     def draw_selected_worker_image(self):
         self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
@@ -223,38 +242,40 @@ class HUD:
         x = self.width * .5
         y = self.height * .84
 
-        draw_text(self.screen, f'go home: {self.selected_worker.going_home}',
-                  20, (255, 255, 255), (x, y))
-        y += 18
-        draw_text(self.screen, f'go work: {self.selected_worker.going_to_work}',
-                  20, (255, 255, 255), (x, y))
-        y += 18
-        draw_text(self.screen, f'go tc: {self.selected_worker.going_to_towncenter}',
-                  20, (255, 255, 255), (x, y))
-        y += 18
-        draw_text(self.screen, f'at home: {self.selected_worker.arrived_at_home}',
-                  20, (255, 255, 255), (x, y))
-        y += 18
-        draw_text(self.screen, f'at work: {self.selected_worker.arrived_at_work}',
-                  20, (255, 255, 255), (x, y))
-        y += 18
-        draw_text(self.screen, f'at tc: {self.selected_worker.arrived_at_towncenter}',
-                  20, (255, 255, 255), (x, y))
-        y += 18
-        draw_text(self.screen, f'visible: {self.select_panel_visible}',
-                  20, (255, 255, 255), (x, y))
-        y += 18
-        draw_text(self.screen, f'selected: {self.selected_worker.selected}',
-                  20, (255, 255, 255), (x, y))
+        # draw_text(self.screen, f'go home: {self.selected_worker.going_home}',
+        #           20, (255, 255, 255), (x, y))
+        # y += 18
+        # draw_text(self.screen, f'go work: {self.selected_worker.going_to_work}',
+        #           20, (255, 255, 255), (x, y))
+        # y += 18
+        # draw_text(self.screen, f'go tc: {self.selected_worker.going_to_towncenter}',
+        #           20, (255, 255, 255), (x, y))
+        # y += 18
+        # draw_text(self.screen, f'at home: {self.selected_worker.arrived_at_home}',
+        #           20, (255, 255, 255), (x, y))
+        # y += 18
+        # draw_text(self.screen, f'at work: {self.selected_worker.arrived_at_work}',
+        #           20, (255, 255, 255), (x, y))
+        # y += 18
+        # draw_text(self.screen, f'at tc: {self.selected_worker.arrived_at_towncenter}',
+        #           20, (255, 255, 255), (x, y))
+        # y += 18
+        # draw_text(self.screen, f'visible: {self.select_panel_visible}',
+        #           20, (255, 255, 255), (x, y))
+        # y += 18
+        # draw_text(self.screen, f'selected: {self.selected_worker.selected}',
+        #           20, (255, 255, 255), (x, y))
 
-        # draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
-        # x += 10
-        # y += 20
-        # draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
-        #           (255, 255, 255), (x, y))
-        # for name, count in self.selected_worker.inventory.items():
-        #     y += 20
-        #     draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+        draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
+                  (255, 255, 255), (x, y))
+        y += 20
+        draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
+        x += 10
+        y += 20
+        draw_text(self.screen, f'Gold: {self.selected_worker.gold}', 20, (255, 255, 255), (x, y))
+        for name, count in self.selected_worker.inventory.items():
+            y += 20
+            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
 
     def draw_selected_building_occupancy(self):
         x = self.width * .5
@@ -263,14 +284,18 @@ class HUD:
                   f'Occupants: {self.selected_building.num_occupants} / {self.selected_building.housing_capacity}',
                   20, (255, 255, 255), (x, y)
                   )
+        y += 20
+        draw_text(self.screen,
+                  f'Occupants in building: {self.selected_building.check_currently_in_building()} / {self.selected_building.housing_capacity}',
+                  20, (255, 255, 255), (x, y))
 
     def draw_selected_building_needs(self):
         x = self.width * .5
-        y = self.height * .84 + 25
+        y = self.height * .84 + 40
         for name in self.selected_building.needs:
             draw_text(self.screen, f'{name}: {self.selected_building.storage[name]} / {self.selected_building.needs[name]}',
                       20, (255, 255, 255), (x, y))
-            y += 25
+            y += 20
 
     def draw_select_panel(self):
         # select hud
@@ -302,7 +327,7 @@ class HUD:
 
             elif self.selected_worker is not None:
                 self.draw_selected_worker_image()
-                # self.draw_selected_worker_inventory()
+                self.draw_selected_worker_inventory()
 
     def draw_active_town_center_title(self):
         self.screen.blit(self.current_town_center_panel, (self.width * .87, self.height * .075))

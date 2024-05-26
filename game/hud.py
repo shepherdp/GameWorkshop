@@ -15,8 +15,9 @@ class HUD:
         self.parent = None
         self.panel_color = (198, 155, 93, 175)
 
-        self.positions = self.get_positions()
-        self.panel_dimensions = self.get_panel_dimensions()
+        self.panel_positions = {}
+        self.panel_dimensions = {}
+        self.get_panel_positions_and_dimensions()
 
         self.images = load_images()
 
@@ -41,18 +42,26 @@ class HUD:
         self.mouse_pos = None
         self.mouse_action = None
 
-    def get_positions(self):
-        d = {'resources_panel': (0, 0)}
-        return d
-
-    def get_panel_dimensions(self):
-        d = {'resources_panel': (self.width, self.height * .02)}
-        return d
+    def get_panel_positions_and_dimensions(self):
+        self.panel_positions = {'resources_panel': (0, 0),
+                                # 'select_panel': (self.width * .35, self.height * .79)}
+                                'select_panel': (self.width * .02, self.height * .05)}
+        self.panel_dimensions = {'resources_panel': (self.width, self.height * .02),
+                                 # 'select_panel': (self.width * .2, self.height * .2),
+                                 'select_panel': (self.width * .2, self.height * .9),
+                                 'activate_town_center_button': (self.width * .1, self.height * .05)}
+        self.panel_positions['activate_town_center_button'] = (self.panel_positions['select_panel'][0] + .5 * self.panel_dimensions['select_panel'][0],
+                                                               self.panel_positions['select_panel'][1] + .05 * self.panel_dimensions['select_panel'][1])
+        self.panel_positions['selected_building'] = (self.panel_positions['select_panel'][0] + .02 * self.panel_dimensions['select_panel'][0],
+                                                     self.panel_positions['select_panel'][1] + .03 * self.panel_dimensions['select_panel'][1])
+        for i in range(1, 10):
+            self.panel_positions[f'selected_text_{i}'] = (self.panel_positions['select_panel'][0] + .4 * self.panel_dimensions['select_panel'][0],
+                                                            self.panel_positions['select_panel'][1] + .03 * self.panel_dimensions['select_panel'][1] + (.02 * i) * self.panel_dimensions['select_panel'][1])
 
     def create_resources_panel(self):
         self.resources_panel = pg.Surface(self.panel_dimensions['resources_panel'], pg.SRCALPHA)
         self.resources_panel.fill(self.panel_color)
-        self.resources_rect = self.resources_panel.get_rect(topleft=self.positions['resources_panel'])
+        self.resources_rect = self.resources_panel.get_rect(topleft=self.panel_positions['resources_panel'])
 
     def create_building_panel(self):
         self.building_panel = pg.Surface((self.width * .15, self.height * .25), pg.SRCALPHA)
@@ -60,9 +69,9 @@ class HUD:
         self.building_rect = self.building_panel.get_rect(topleft=(self.width * .84, self.height * .74))
 
     def create_select_panel(self):
-        self.select_panel = pg.Surface((self.width * .3, self.height * .2), pg.SRCALPHA)
+        self.select_panel = pg.Surface(self.panel_dimensions['select_panel'], pg.SRCALPHA)
         self.select_panel.fill(self.panel_color)
-        self.select_rect = self.select_panel.get_rect(topleft=(self.width * .35, self.height * .79))
+        self.select_rect = self.select_panel.get_rect(topleft=self.panel_positions['select_panel'])
         self.select_panel_visible = False
 
     def create_current_towncenter_panel(self):
@@ -72,10 +81,9 @@ class HUD:
                                                                                          self.height * .075))
 
     def create_activate_towncenter_button(self):
-        self.activate_town_center_button = pg.Surface((self.width * .1, self.height * .05), pg.SRCALPHA)
+        self.activate_town_center_button = pg.Surface(self.panel_dimensions['activate_town_center_button'], pg.SRCALPHA)
         self.activate_town_center_button.fill((0, 0, 200, 175))
-        self.activate_town_center_rect = self.activate_town_center_button.get_rect(topleft=(self.width * .5,
-                                                                                            self.height * .84))
+        self.activate_town_center_rect = self.activate_town_center_button.get_rect(topleft=self.panel_positions['activate_town_center_button'])
 
     def create_deactivate_towncenter_button(self):
         self.deselect_town_center_button = self.images['deselect_button']
@@ -171,111 +179,86 @@ class HUD:
         self.update_build_tiles()
 
     def draw_selected_building_image(self):
-        # self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
         w, h = self.select_rect.width, self.select_rect.height
-        img_scale = self.scale_image(self.selected_building.image, h=h * .75)
-        self.screen.blit(img_scale, (self.width * .35 + 10,
-                                     self.height * .79 + 40))
+        img_scale = self.scale_image(self.selected_building.image, h=h * .1)
+        self.screen.blit(img_scale, self.panel_positions['selected_building'])
         draw_text(self.screen, self.selected_building.name, 40, (255, 255, 255),
-                  self.select_rect.topleft)
+                  [i + 5 for i in self.select_rect.topleft])
 
     def draw_selected_building_employment(self):
-        x = self.width * .5
-        y = self.height * .84
         draw_text(self.screen,
                   f'Workers: {len(self.selected_building.workers)} / {self.selected_building.workers_needed}',
-                  20, (255, 255, 255), (x, y))
-        y += 20
+                  20, (255, 255, 255), self.panel_positions[f'selected_text_1'])
         draw_text(self.screen,
                   f'Workers in building: {self.selected_building.check_currently_in_building()} / {self.selected_building.workers_needed}',
-                  20, (255, 255, 255), (x, y))
+                  20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
 
     def draw_selected_building_storage(self):
-        x = self.width * .5
-        y = self.height * .84 + 40
+        i = 3
         for item in self.selected_building.storage:
             color = (255, 255, 255) if not self.selected_building.is_full() else (255, 0, 0)
             draw_text(self.screen,
                       f'{item}: {self.selected_building.storage[item]} / {self.selected_building.capacity}',
-                      20, color, (x, y))
-            y += 20
+                      20, color, self.panel_positions[f'selected_text_{i}'])
+            i += 1
 
     def draw_activate_towncenter_button(self):
-        self.screen.blit(self.activate_town_center_button, (self.width * .5, self.height * .84))
+        self.screen.blit(self.activate_town_center_button, self.panel_positions['activate_town_center_button'])
         draw_text(self.screen, 'Select', 30, (255, 255, 255),
                   self.activate_town_center_rect.topleft)
 
     def draw_town_occupancy(self):
-        x = self.width * .5
-        y = self.height * .84
-        # draw_text(self.screen,
-        #           f'Villagers: {len(self.selected_building.villagers)} / {self.selected_building.housing_capacity}',
-        #           20, (255, 255, 255), (x, y)
-        #           )
-        # y -= 20
+
         draw_text(self.screen,
                   f'Villagers: {self.selected_building.num_villagers} / {self.selected_building.housing_capacity}',
-                  20, (255, 255, 255), (x, y)
-                  )
+                  20, (255, 255, 255), self.panel_positions['selected_text_1'])
 
     def draw_town_building_counts(self):
-        x = self.width * .5
-        y = self.height * .84 + 20
+        i = 2
         for name, count in self.parent.active_town_center.num_buildings.items():
-            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
-            y += 20
+            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), self.panel_positions[f'selected_text_{i}'])
+            i += 1
 
     def draw_selected_worker_image(self):
-        # self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
         w, h = self.select_rect.width, self.select_rect.height
-        img_scale = self.scale_image(self.selected_worker.image, h=h * .75)
-        self.screen.blit(img_scale, (self.width * .35 + 10,
-                                     self.height * .79 + 40))
+        img_scale = self.scale_image(self.selected_worker.image, h=h * .1)
+        self.screen.blit(img_scale, self.panel_positions[f'selected_building'])
         draw_text(self.screen, self.selected_worker.occupation, 40, (255, 255, 255),
-                  self.select_rect.topleft)
+                  [i + 5 for i in self.select_rect.topleft])
 
         self.draw_selected_worker_inventory()
 
     def draw_selected_worker_inventory(self):
-        x = self.width * .5
-        y = self.height * .84
-
         draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
-                  (255, 255, 255), (x, y))
-        y += 20
-        draw_text(self.screen, 'Inventory', 20, (255, 255, 255), (x, y))
-        x += 10
-        y += 20
-        draw_text(self.screen, f'Gold: {self.selected_worker.gold}', 20, (255, 255, 255), (x, y))
+                  (255, 255, 255), self.panel_positions[f'selected_text_1'])
+        draw_text(self.screen, 'Inventory', 20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
+        draw_text(self.screen, f'Gold: {self.selected_worker.gold}', 20, (255, 255, 255), self.panel_positions[f'selected_text_3'])
+        i = 4
         for name, count in self.selected_worker.inventory.items():
-            y += 20
-            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), (x, y))
+            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), self.panel_positions[f'selected_text_{i}'])
+            i += 1
 
     def draw_selected_building_occupancy(self):
-        x = self.width * .5
-        y = self.height * .84
         draw_text(self.screen,
                   f'Occupants: {self.selected_building.num_occupants} / {self.selected_building.housing_capacity}',
-                  20, (255, 255, 255), (x, y)
+                  20, (255, 255, 255), self.panel_positions[f'selected_text_1']
                   )
-        y += 20
         draw_text(self.screen,
                   f'Occupants in building: {self.selected_building.check_currently_in_building()} / {self.selected_building.housing_capacity}',
-                  20, (255, 255, 255), (x, y))
+                  20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
 
     def draw_selected_building_needs(self):
-        x = self.width * .5
-        y = self.height * .84 + 40
+        i = 3
         for name in self.selected_building.needs:
             draw_text(self.screen, f'{name}: {self.selected_building.storage[name]} / {self.selected_building.needs[name]}',
-                      20, (255, 255, 255), (x, y))
-            y += 20
+                      20, (255, 255, 255), self.panel_positions[f'selected_text_{i}'])
+            i += 1
 
     def draw_select_panel(self):
         # select hud
         if self.select_panel_visible:
 
-            self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
+            self.screen.blit(self.select_panel, self.panel_positions['select_panel'])
 
             # if a building is selected, draw it on the panel
             if self.selected_building is not None:

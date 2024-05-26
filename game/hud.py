@@ -78,8 +78,6 @@ class HUD:
                                                                                             self.height * .84))
 
     def create_deactivate_towncenter_button(self):
-        # self.deselect_town_center_button = pg.Surface((self.width * .02, self.height * .02), pg.SRCALPHA)
-        # self.deselect_town_center_button.fill((255, 0, 0, 175))
         self.deselect_town_center_button = self.images['deselect_button']
         self.deselect_town_center_rect = self.deselect_town_center_button.get_rect(topleft=(self.width * .96,
                                                                                             self.height * .075))
@@ -173,7 +171,7 @@ class HUD:
         self.update_build_tiles()
 
     def draw_selected_building_image(self):
-        self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
+        # self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
         w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_building.image, h=h * .75)
         self.screen.blit(img_scale, (self.width * .35 + 10,
@@ -228,7 +226,7 @@ class HUD:
             y += 20
 
     def draw_selected_worker_image(self):
-        self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
+        # self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
         w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_worker.image, h=h * .75)
         self.screen.blit(img_scale, (self.width * .35 + 10,
@@ -241,30 +239,6 @@ class HUD:
     def draw_selected_worker_inventory(self):
         x = self.width * .5
         y = self.height * .84
-
-        # draw_text(self.screen, f'go home: {self.selected_worker.going_home}',
-        #           20, (255, 255, 255), (x, y))
-        # y += 18
-        # draw_text(self.screen, f'go work: {self.selected_worker.going_to_work}',
-        #           20, (255, 255, 255), (x, y))
-        # y += 18
-        # draw_text(self.screen, f'go tc: {self.selected_worker.going_to_towncenter}',
-        #           20, (255, 255, 255), (x, y))
-        # y += 18
-        # draw_text(self.screen, f'at home: {self.selected_worker.arrived_at_home}',
-        #           20, (255, 255, 255), (x, y))
-        # y += 18
-        # draw_text(self.screen, f'at work: {self.selected_worker.arrived_at_work}',
-        #           20, (255, 255, 255), (x, y))
-        # y += 18
-        # draw_text(self.screen, f'at tc: {self.selected_worker.arrived_at_towncenter}',
-        #           20, (255, 255, 255), (x, y))
-        # y += 18
-        # draw_text(self.screen, f'visible: {self.select_panel_visible}',
-        #           20, (255, 255, 255), (x, y))
-        # y += 18
-        # draw_text(self.screen, f'selected: {self.selected_worker.selected}',
-        #           20, (255, 255, 255), (x, y))
 
         draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
                   (255, 255, 255), (x, y))
@@ -301,7 +275,7 @@ class HUD:
         # select hud
         if self.select_panel_visible:
 
-            # self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
+            self.screen.blit(self.select_panel, (self.width * .35, self.height * .79))
 
             # if a building is selected, draw it on the panel
             if self.selected_building is not None:

@@ -246,3 +246,6 @@ class Worker:
         self.arrived_at_towncenter = False
         self.going_home = False
         self.arrived_at_home = False
+
+    def is_visible(self):
+        return not (self.arrived_at_home or self.arrived_at_work)

@@ -257,12 +257,40 @@ class World:
                 for x, y in mask]
         pg.draw.polygon(self.screen, (0, 255, 0), mask, 3)
 
+    def highlight_worker(self, worker, color):
+        x, y = worker.tile['grid']
+        render_pos = self.world[x][y]['render_pos']
+        mask = pg.mask.from_surface(worker.image).outline()
+        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                 y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
+                for x, y in mask]
+        pg.draw.polygon(self.screen, color, mask, 3)
+
     def highlight_selected_building(self, building, render_pos):
         mask = pg.mask.from_surface(building.image).outline()
         mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
                  y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
                 for x, y in mask]
         pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
+        if building.name == 'house':
+            # get all occupants and highlight them
+            for w in building.occupants:
+                if w.is_visible():
+                    self.highlight_worker(w, (0, 0, 255))
+        elif building.name in ['chopping', 'well', 'wheatfield', 'quarry']:
+            # get all workers and highlight them
+            for w in building.workers:
+                if w.is_visible():
+                    self.highlight_worker(w, (0, 0, 255))
+
+    def highlight_building(self, building, color):
+        x, y = building.loc
+        render_pos = self.world[x][y]['render_pos']
+        mask = pg.mask.from_surface(building.image).outline()
+        mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                 y + render_pos[1] - (building.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
+                for x, y in mask]
+        pg.draw.polygon(self.screen, color, mask, 3)
 
     def highlight_selected_worker(self, worker, render_pos):
         mask = pg.mask.from_surface(worker.image).outline()
@@ -270,6 +298,12 @@ class World:
                  y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
                 for x, y in mask]
         pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
+        if worker.workplace is not None:
+            # get workplace and highlight it
+            self.highlight_building(worker.workplace, (0, 0, 255))
+        if worker.home is not None:
+            # get house and highlight it
+            self.highlight_building(worker.home, (0, 0, 255))
 
     def draw_terrain_tile(self, tile, render_pos):
         if tile != '':

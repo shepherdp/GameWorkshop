@@ -45,18 +45,22 @@ class HUD:
     def get_panel_positions_and_dimensions(self):
         self.panel_positions = {'resources_panel': (0, 0),
                                 # 'select_panel': (self.width * .35, self.height * .79)}
-                                'select_panel': (self.width * .02, self.height * .05)}
+                                'select_panel': (self.width * .01, self.height * .03)}
         self.panel_dimensions = {'resources_panel': (self.width, self.height * .02),
                                  # 'select_panel': (self.width * .2, self.height * .2),
-                                 'select_panel': (self.width * .2, self.height * .9),
-                                 'activate_town_center_button': (self.width * .1, self.height * .05)}
+                                 'select_panel': (self.width * .2, self.height * .96),
+                                 'activate_town_center_button': (self.width * .07, self.height * .05)}
         self.panel_positions['activate_town_center_button'] = (self.panel_positions['select_panel'][0] + .5 * self.panel_dimensions['select_panel'][0],
                                                                self.panel_positions['select_panel'][1] + .05 * self.panel_dimensions['select_panel'][1])
         self.panel_positions['selected_building'] = (self.panel_positions['select_panel'][0] + .02 * self.panel_dimensions['select_panel'][0],
                                                      self.panel_positions['select_panel'][1] + .03 * self.panel_dimensions['select_panel'][1])
+        self.panel_dimensions['building_panel'] = (.96 * self.panel_dimensions['select_panel'][0],
+                                                   .38 * self.panel_dimensions['select_panel'][1])
+        self.panel_positions['building_panel'] = (self.panel_positions['select_panel'][0] + .02 * self.panel_dimensions['select_panel'][0],
+                                                  self.panel_positions['select_panel'][1] + .6 * self.panel_dimensions['select_panel'][1])
         for i in range(1, 10):
             self.panel_positions[f'selected_text_{i}'] = (self.panel_positions['select_panel'][0] + .4 * self.panel_dimensions['select_panel'][0],
-                                                            self.panel_positions['select_panel'][1] + .03 * self.panel_dimensions['select_panel'][1] + (.02 * i) * self.panel_dimensions['select_panel'][1])
+                                                          self.panel_positions['select_panel'][1] + .03 * self.panel_dimensions['select_panel'][1] + (.02 * i) * self.panel_dimensions['select_panel'][1])
 
     def create_resources_panel(self):
         self.resources_panel = pg.Surface(self.panel_dimensions['resources_panel'], pg.SRCALPHA)
@@ -64,9 +68,9 @@ class HUD:
         self.resources_rect = self.resources_panel.get_rect(topleft=self.panel_positions['resources_panel'])
 
     def create_building_panel(self):
-        self.building_panel = pg.Surface((self.width * .15, self.height * .25), pg.SRCALPHA)
-        self.building_panel.fill(self.panel_color)
-        self.building_rect = self.building_panel.get_rect(topleft=(self.width * .84, self.height * .74))
+        self.building_panel = pg.Surface(self.panel_dimensions['building_panel'], pg.SRCALPHA)
+        self.building_panel.fill((155, 200, 100, 175))
+        self.building_rect = self.building_panel.get_rect(topleft=self.panel_positions['building_panel'])
 
     def create_select_panel(self):
         self.select_panel = pg.Surface(self.panel_dimensions['select_panel'], pg.SRCALPHA)
@@ -91,7 +95,9 @@ class HUD:
                                                                                             self.height * .075))
 
     def populate_build_hud(self):
-        render_pos = [self.width * .84 + 10, self.height * .74 + 10]
+        # render_pos = [self.width * .84 + 10, self.height * .74 + 10]
+        render_pos = list(self.panel_positions['building_panel'])
+        render_pos[1] += .02 * self.panel_dimensions['building_panel'][1]
         surface_w = self.building_panel.get_width() // 5
         leftpos = render_pos[0]
 
@@ -295,7 +301,7 @@ class HUD:
         self.screen.blit(self.deselect_town_center_button, (self.width * .96, self.height * .075))
 
     def draw_building_panel(self):
-        self.screen.blit(self.building_panel, (self.width * .84, self.height * .74))
+        self.screen.blit(self.building_panel, self.panel_positions['building_panel'])
         self.draw_building_panel_tiles()
 
     def draw_building_panel_tiles(self):
@@ -328,7 +334,7 @@ class HUD:
 
         # only draw build tiles when a town center is active
         if self.parent.active_town_center is not None:
-            self.screen.blit(self.building_panel, (self.width * .84, self.height * .74))
+            self.screen.blit(self.building_panel, self.panel_positions['building_panel'])
             self.draw_building_panel_tiles()
 
         self.screen.blit(self.resources_panel, (0, 0))

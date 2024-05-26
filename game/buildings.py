@@ -58,8 +58,8 @@ class Building:
 
 class TownCenter(Building):
 
-    def __init__(self, pos, loc, manager, worker_imgs):
-        super().__init__(pos, loc, 'towncenter', 'towncenter', manager, 0)
+    def __init__(self, pos, loc, resourcemanager, techmanager, worker_imgs):
+        super().__init__(pos, loc, 'towncenter', 'towncenter', resourcemanager, 0)
         self.buildings = []
         self.num_buildings = {}
         self.villagers = []
@@ -67,6 +67,7 @@ class TownCenter(Building):
         self.num_employed = 0
         self.housing_capacity = 0
         self.imgs = worker_imgs
+        self.techmanager = techmanager
 
     def get_unemployment_rate(self):
         return self.num_employed / self.num_villagers
@@ -124,6 +125,8 @@ class TownCenter(Building):
                         if bldg.percent_employed < 1:
                             self.assign_worker_to_building(w, bldg)
                             break
+
+        self.techmanager.update_research_progress()
 
         # if pg.time.get_ticks() - self.resourcecooldown > 2000:
         #     self.resourcemanager.resources['wood'] += 2

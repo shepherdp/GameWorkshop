@@ -128,9 +128,7 @@ class Worker:
         if self.town is None:
             newtown = self.world.find_town_with_vacancy()
             if newtown is not None:
-                print('Before: ', newtown.num_villagers)
                 self.assign_town(newtown)
-                print('After: ', newtown.num_villagers)
             else:
                 self.get_random_path()
 
@@ -167,7 +165,7 @@ class Worker:
             elif self.arrived_at_towncenter:
                 if self.workplace is not None:
                     self.dropoff_at_towncenter()
-                    if self.energy >= 50:
+                    if self.energy >= 25:
                         self.get_path_to_work()
                     else:
                         self.pickup_home_needs()
@@ -199,7 +197,7 @@ class Worker:
             if minkey not in self.inventory:
                 self.inventory[minkey] = 0
             amount_to_buy = min([self.town.resourcemanager.resources[minkey], needs[minkey]])
-            for i in range(amount_to_buy):
+            for i in range(int(amount_to_buy)):
                 price = self.town.get_sell_price(minkey)
                 if self.gold >= price:
                     self.inventory[minkey] += 1

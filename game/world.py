@@ -5,6 +5,7 @@ from .settings import TILE_SIZE
 from .buildings import *
 from .utils import draw_text, load_images
 from .resourcemanager import ResourceManager
+from .techmanager import TechManager
 import networkx as nx
 from matplotlib.pyplot import plot, savefig, scatter
 
@@ -74,7 +75,7 @@ class World:
             x, y = self.get_random_position()
             render_pos = self.world[x][y]['render_pos']
             grid_pos = (x, y)
-            ent = TownCenter(render_pos, grid_pos, ResourceManager(), self.tiles)
+            ent = TownCenter(render_pos, grid_pos, ResourceManager(), TechManager(), self.tiles)
             self.towns.append(ent)
             self.buildings[x][y] = ent
             self.entities.append(ent)
@@ -112,7 +113,7 @@ class World:
 
     def create_towncenter(self, grid_pos):
         if not self.in_any_towncenter_radius(grid_pos):
-            ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager())
+            ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles)
             self.towns.append(ent)
             return ent
 
@@ -201,27 +202,28 @@ class World:
 
         # check if there is a building in this position
         building = self.buildings[grid_pos[0]][grid_pos[1]]
-        if self.mouse_action[0] and (building is not None):
+        if self.mouse_action[0]:
+            if building is not None:
 
             # if there is a selected worker, check if it is over the building
             # return if so, otherwise deselect it
-            if self.selected_worker is not None:
-                if self.selected_worker == grid_pos:
-                    return
-                self.deselect_worker()
+                if self.selected_worker is not None:
+                    if self.selected_worker == grid_pos:
+                        return
+                    self.deselect_worker()
 
-            # this part is supposed to let the user double click on a town center and select it
-            # instead of using the button.  it wants to select the town center immediately though.
-            # need to fix this when I do click and drag.
+                # this part is supposed to let the user double click on a town center and select it
+                # instead of using the button.  it wants to select the town center immediately though.
+                # need to fix this when I do click and drag.
 
-            # if self.hud.selected_building is not None:
-            #     if building.name == 'towncenter' and self.hud.selected_building is building:
-            #         self.active_town_center = building
+                # if self.hud.selected_building is not None:
+                #     if building.name == 'towncenter' and self.hud.selected_building is building:
+                #         self.active_town_center = building
 
-            # update selected building data
-            self.selected_building = grid_pos
-            self.hud.selected_building = building
-            self.hud.select_panel_visible = True
+                # update selected building data
+                self.selected_building = grid_pos
+                self.hud.selected_building = building
+                self.hud.select_panel_visible = True
 
     def handle_select_action(self, grid_pos):
         # make sure user didn't click on a visible panel or outside the screen
@@ -551,12 +553,18 @@ class World:
     def can_place_tile(self, grid_pos):
         # check if mouse is on resources or building panel
         mouse_on_panel = False
-        for rect in [self.hud.resources_rect, self.hud.building_rect]:
-            if rect.collidepoint(pg.mouse.get_pos()):
+        self.mouse_pos = pg.mouse.get_pos()
+        for rect in [self.hud.resources_rect]:
+            if rect.collidepoint(self.mouse_pos):
                 mouse_on_panel = True
 
         # only check if mouse is over select panel when it is showing
-        if self.hud.select_panel_visible and self.hud.select_rect.collidepoint(pg.mouse.get_pos()):
+        if self.hud.select_panel_visible:
+            if self.hud.select_rect.collidepoint(self.mouse_pos):
+                mouse_on_panel = True
+
+        if self.active_town_center is not None:
+            if self.hud.town_actions_rect.collidepoint(self.mouse_pos):
                 mouse_on_panel = True
 
         # check if mouse is outside of the map

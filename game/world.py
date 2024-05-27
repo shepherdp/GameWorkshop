@@ -56,6 +56,7 @@ class World:
 
         self.collision_matrix = self.create_collision_matrix()
         self.create_world_network()
+        self.create_road_network()
 
         self.towns = []
         # choose a random spot on the map to place one initial town center
@@ -149,6 +150,8 @@ class World:
         self.entities.append(ent)
         self.buildings[ent.loc[0]][ent.loc[1]] = ent
 
+        print('placed entity: ', self.buildings[ent.loc[0]][ent.loc[1]], 'at location ', ent.loc)
+
         # if the building is not a town center, assign it to the currently active one
         if self.hud.structure_to_build['name'] != 'towncenter':
             self.add_building_to_town(ent)
@@ -172,6 +175,8 @@ class World:
                         ent = self.create_town_building(grid_pos)
                 if ent is not None:
                     self.place_entity(ent)
+                    if ent.name == 'road':
+                        self.update_road_network(grid_pos)
 
     def check_select_worker(self, grid_pos):
         worker = self.workers[grid_pos[0]][grid_pos[1]]
@@ -554,6 +559,26 @@ class World:
                             self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
                         self.world_network.add_edge((x, y), (nbrx, nbry), weight=1)
 
+    def create_road_network(self):
+        self.road_network = nx.Graph()
+
+    def update_road_network(self, pos):
+        print('Updating road network')
+        self.road_network.add_node((pos[0], pos[1]))
+        print(self.road_network.nodes)
+        nbrs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        for i in range(len(self.buildings)):
+            for j in range(len(self.buildings[i])):
+                if self.buildings[i][j] is not None:
+                    print(f'{self.buildings[i][j]} {(i, j)}')
+        for nbr in nbrs:
+            if 0 <= pos[0] + nbr[0] < self.grid_length_x and 0 <= pos[1] + nbr[1] < self.grid_length_y:
+                print('nbr is good: ', pos[0] + nbr[0], ',', pos[1] + nbr[1])
+                print('nbr bldg: ', self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]])
+                if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]] is not None:
+                    if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]].name == 'road':
+                        self.road_network.add_edge(pos, (pos[0] + nbr[0], pos[1] + nbr[1]))
+
     def cart_to_iso(self, x, y):
         # get isometric coordinates from cartesian ones
         iso_x = x - y
@@ -622,6 +647,35 @@ class World:
 
         # nx.draw_networkx(self.world_network, with_labels=True)
         savefig('world_network.png')
+
+    def write_road_network(self):
+        xs = []
+        ys = []
+        colors = []
+        for x in range(self.grid_length_x):
+            for y in range(self.grid_length_y):
+                if (x, y) in self.road_network.nodes:
+                    color = (.5, .5, 0)
+                    # scatter([y], [self.grid_length_x - 1 - x], c=(color,))
+                else:
+                    color = (1., 1., 1.)
+                    # scatter([y], [self.grid_length_x - 1 - x], c=(color,))
+                xs.append(self.grid_length_x - 1 - x)
+                ys.append(y)
+                colors.append(color)
+        scatter(xs, ys, c=colors)
+
+        for n1, n2 in self.road_network.edges:
+            x1, y1 = n1
+            x1 = self.grid_length_x - 1 - x1
+            x2, y2 = n2
+            x2 = self.grid_length_x - 1 - x2
+
+            plot([y1, y2], [x1, x2], 'k')
+
+        # nx.draw_networkx(self.world_network, with_labels=True)
+        print(self.road_network.edges)
+        savefig('road_network.png')
 
     def write_map(self):
         f = open('map.txt', 'w')

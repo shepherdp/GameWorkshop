@@ -125,6 +125,7 @@ class TownCenter(Building):
         if w.workplace is None:
             self.num_employed += 1
         else:
+            # make sure worker doesn't show up in two buildings
             w.workplace.workers.remove(w)
         w.workplace = b
         w.workplace.update_percent_employed()

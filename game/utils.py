@@ -26,6 +26,7 @@ def load_images():
     tc = pg.image.load('assets\\graphics\\buildings\\towncenter.png').convert_alpha()
     quarry = pg.image.load('assets\\graphics\\buildings\\quarry.png').convert_alpha()
     wheatfield = pg.image.load('assets\\graphics\\buildings\\wheatfield.png').convert_alpha()
+    workbench = pg.image.load('assets\\graphics\\buildings\\workbench.png').convert_alpha()
     house = pg.image.load('assets\\graphics\\buildings\\house.png').convert_alpha()
 
     # icons
@@ -61,6 +62,7 @@ def load_images():
 
               'quarry': quarry,
               'wheatfield': wheatfield,
+              'workbench': workbench,
               'grass1': grass1,
               'grass2': grass2,
               'house': house,

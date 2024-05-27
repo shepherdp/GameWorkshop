@@ -37,6 +37,8 @@ class Worker:
         self.arrived_at_towncenter = False
         self.going_home = False
         self.arrived_at_home = False
+        self.collecting_for_work = False
+        self.collected_for_work = False
 
         # pathfinding
         self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
@@ -108,15 +110,19 @@ class Worker:
     def check_end_of_path(self):
         # if worker reaches the destination, stop if it is a building and make a new random path if they
         # are still just wandering
+        # print('a')
         if self.path_index == len(self.path) - 1:
             self.moving = False
             if self.going_to_towncenter:
+                # print('b')
                 self.going_to_towncenter = False
                 self.arrived_at_towncenter = True
             if self.going_to_work:
+                # print('c')
                 self.going_to_work = False
                 self.arrived_at_work = True
             if self.going_home:
+                # print('d')
                 self.going_home = False
                 self.arrived_at_home = True
 
@@ -131,6 +137,19 @@ class Worker:
                 self.assign_town(newtown)
             else:
                 self.get_random_path()
+
+    def check_work_needs_goods(self):
+        # print('checking', self.going_to_towncenter, self.going_home, self.going_to_work, self.arrived_at_towncenter,
+        #       self.arrived_at_home, self.arrived_at_work, self.collecting_for_work)
+        if self.collected_for_work or self.collecting_for_work:
+            return
+        if self.workplace.needs_goods():
+            # print('xxx')
+            self.collecting_for_work = True
+            if not self.going_to_towncenter:
+                self.reset_travel_vars()
+                self.going_to_towncenter = True
+                self.get_path_to_towncenter()
 
     def assign_town(self, newtown):
         self.town = newtown
@@ -158,22 +177,50 @@ class Worker:
 
             # if they are at their job, and it is full, collect the resources and head to town
             if self.arrived_at_work:
+                # print('I arrived at work')
+                if self.collected_for_work:
+                    for item in self.workplace.consumption:
+                        self.workplace.storage[item] += self.inventory[item]
+                        self.inventory[item] = 0
+                        self.collected_for_work = False
                 if self.collect_from_work():
                     self.get_path_to_towncenter()
 
             # if they arrived at the town center, sit and wait or drop off goods and return to work
             elif self.arrived_at_towncenter:
+                # print('I arrived at the town center')
                 if self.workplace is not None:
-                    self.dropoff_at_towncenter()
-                    if self.energy >= 25:
-                        self.get_path_to_work()
+                    if not self.collecting_for_work:
+                        self.dropoff_at_towncenter()
+
+                        # only leave town center if all goods are sold
+                        if sum([val for val in self.inventory.values()]) == 0:
+                            if self.energy >= 25:
+                                self.get_path_to_work()
+                            else:
+                                self.pickup_home_needs()
+                                self.get_path_to_home()
                     else:
-                        self.pickup_home_needs()
-                        self.get_path_to_home()
+                        # print('here', self.going_to_towncenter, self.going_home, self.going_to_work, self.arrived_at_towncenter,
+                        #       self.arrived_at_home, self.arrived_at_work)
+                        if not self.collected_for_work:
+                            goods = self.workplace.goods_needed()
+                            for g in goods:
+                                if g in self.inventory:
+                                    self.inventory[g] += min([self.town.resourcemanager.resources[g], goods[g]])
+                                else:
+                                    self.inventory[g] = min([self.town.resourcemanager.resources[g], goods[g]])
+                                self.town.resourcemanager.resources[g] -= min([self.town.resourcemanager.resources[g], goods[g]])
+                            self.collected_for_work = True
+                            self.collecting_for_work = False
+                            self.get_path_to_work()
+                        # print(self.going_to_towncenter, self.going_home, self.going_to_work, self.arrived_at_towncenter,
+                        #       self.arrived_at_home, self.arrived_at_work)
                 else:
                     self.reset_travel_vars()
 
             elif self.arrived_at_home:
+                # print('I arrived at home')
                 self.dropoff_at_home()
                 if self.energy == 100:
                     self.get_path_to_work()
@@ -184,6 +231,8 @@ class Worker:
                         self.energycooldown = now
         else:
             self.check_needs_town()
+            if self.workplace is not None:
+                self.check_work_needs_goods()
             self.move()
 
     def pickup_home_needs(self):
@@ -216,12 +265,12 @@ class Worker:
     def collect_from_work(self):
 
         if self.workplace.is_full():
-            for key, val in self.workplace.storage.items():
+            for key in self.workplace.production:
                 if key in self.inventory:
-                    self.inventory[key] += int(val)
+                    self.inventory[key] += int(self.workplace.storage[key])
                 else:
-                    self.inventory[key] = int(val)
-                self.workplace.storage[key] -= int(val)
+                    self.inventory[key] = int(self.workplace.storage[key])
+                self.workplace.storage[key] -= int(self.workplace.storage[key])
             self.energy -= 15
             return True
         return False

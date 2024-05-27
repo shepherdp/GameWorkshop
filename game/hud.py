@@ -183,7 +183,7 @@ class HUD:
         tiles = {}
 
         i = 0
-        for name in ['towncenter', 'well', 'chopping', 'quarry', 'wheatfield', 'house', 'road']:
+        for name in ['towncenter', 'well', 'chopping', 'quarry', 'wheatfield', 'house', 'road', 'workbench']:
             pos = render_pos.copy()
             img = self.images[name]
             img_scale = self.scale_image(img, w=surface_w)
@@ -435,6 +435,20 @@ class HUD:
         self.draw_selected_worker_inventory()
 
     def draw_selected_worker_inventory(self):
+        # draw_text(self.screen, f'Work {self.selected_worker.going_to_work}', 20,
+        #           (255, 255, 255), self.panel_positions[f'selected_text_1'])
+        # draw_text(self.screen, f'Home {self.selected_worker.going_home}', 20,
+        #           (255, 255, 255), self.panel_positions[f'selected_text_2'])
+        # draw_text(self.screen, f'TC {self.selected_worker.going_to_towncenter}', 20,
+        #           (255, 255, 255), self.panel_positions[f'selected_text_3'])
+        # draw_text(self.screen, f'Collecting {self.selected_worker.collecting_for_work}', 20,
+        #           (255, 255, 255), self.panel_positions[f'selected_text_4'])
+        # draw_text(self.screen, f'Moving {self.selected_worker.moving}', 20,
+        #           (255, 255, 255), self.panel_positions[f'selected_text_5'])
+        # draw_text(self.screen, f'pathidx {self.selected_worker.path_index}', 20,
+        #           (255, 255, 255), self.panel_positions[f'selected_text_6'])
+        # draw_text(self.screen, f'path {self.selected_worker.path}', 20,
+        #           (255, 255, 255), self.panel_positions[f'selected_text_7'])
         draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
                   (255, 255, 255), self.panel_positions[f'selected_text_1'])
         draw_text(self.screen, 'Inventory', 20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
@@ -443,6 +457,26 @@ class HUD:
         for name, count in self.selected_worker.inventory.items():
             draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), self.panel_positions[f'selected_text_{i}'])
             i += 1
+        current_task = 'Wandering'
+        if self.selected_worker.going_to_work:
+            current_task = 'Going to work'
+            if self.selected_worker.collected_for_work:
+                current_task += ' with supplies'
+        if self.selected_worker.going_home:
+            current_task = 'Going home'
+            if sum(self.selected_worker.inventory.values()) > 0:
+                current_task += ' with goods'
+        if self.selected_worker.going_to_towncenter:
+            current_task = 'Going to town center'
+            if sum(self.selected_worker.inventory.values()) > 0:
+                current_task += ' with goods'
+        if self.selected_worker.arrived_at_work:
+            current_task = 'Working'
+        if self.selected_worker.arrived_at_home:
+            current_task = 'Resting'
+        if self.selected_worker.arrived_at_towncenter:
+            current_task = 'Trading'
+        draw_text(self.screen, f'{current_task}', 20, (255, 255, 255), self.panel_positions[f'selected_text_{i}'])
 
     def draw_selected_building_occupancy(self):
         draw_text(self.screen,
@@ -544,6 +578,10 @@ class HUD:
             # place the tile for an affordable building
             else:
                 self.screen.blit(tile['icon'], tile['rect'].topleft)
+
+            if tile['name'] in self.parent.active_town_center.num_buildings:
+                draw_text(self.screen, str(self.parent.active_town_center.num_buildings[tile['name']]),
+                          25, (0, 0, 0), tile['rect'].topleft)
 
     def draw(self):
 

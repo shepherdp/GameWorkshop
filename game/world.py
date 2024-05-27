@@ -66,6 +66,7 @@ class World:
         self.selected_building = None
         self.selected_worker = None
         self.active_town_center = None
+        self.highlights = []
 
         self.mouse_pos = None
         self.mouse_action = None
@@ -128,6 +129,8 @@ class World:
             return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
         elif self.hud.structure_to_build['name'] == 'wheatfield':
             return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+        elif self.hud.structure_to_build['name'] == 'workbench':
+            return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
         elif self.hud.structure_to_build['name'] == 'house':
             return House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
 
@@ -172,9 +175,12 @@ class World:
     def check_select_worker(self, grid_pos):
         worker = self.workers[grid_pos[0]][grid_pos[1]]
         if self.mouse_action[0] and (worker is not None):
+            if not worker.is_visible():
+                return
             # if another worker was already selected, deselect them
             if self.hud.selected_worker is not None:
-                self.hud.selected_worker.selected = False
+                self.deselect_worker()
+                # self.hud.selected_worker.selected = False
 
             # set selected worker data
             self.selected_worker = grid_pos
@@ -192,11 +198,13 @@ class World:
         self.selected_worker = None
         self.hud.selected_worker = None
         self.hud.select_panel_visible = False
+        self.highlights = []
 
     def deselect_building(self):
         self.selected_building = None
         self.hud.selected_building = None
         self.hud.select_panel_visible = False
+        self.highlights = []
 
     def check_select_building(self, grid_pos):
 
@@ -278,12 +286,14 @@ class World:
             # get all occupants and highlight them
             for w in building.occupants:
                 if w.is_visible():
-                    self.highlight_worker(w, (0, 0, 255))
+                    self.highlights.append(w.tile['grid'])
+                    # self.highlight_worker(w, (0, 0, 255))
         elif building.name in ['chopping', 'well', 'wheatfield', 'quarry']:
             # get all workers and highlight them
             for w in building.workers:
                 if w.is_visible():
-                    self.highlight_worker(w, (0, 0, 255))
+                    self.highlights.append(w.tile['grid'])
+                    # self.highlight_worker(w, (0, 0, 255))
 
     def highlight_building(self, building, color):
         x, y = building.loc
@@ -302,10 +312,12 @@ class World:
         pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
         if worker.workplace is not None:
             # get workplace and highlight it
-            self.highlight_building(worker.workplace, (0, 0, 255))
+            self.highlights.append(worker.workplace.loc)
+            # self.highlight_building(worker.workplace, (0, 0, 255))
         if worker.home is not None:
             # get house and highlight it
-            self.highlight_building(worker.home, (0, 0, 255))
+            self.highlights.append(worker.home.loc)
+            # self.highlight_building(worker.home, (0, 0, 255))
 
     def draw_terrain_tile(self, tile, render_pos):
         if tile != '':
@@ -325,6 +337,9 @@ class World:
             if building is self.active_town_center:
                 self.highlight_active_towncenter(building, render_pos)
 
+            if building.loc in self.highlights:
+                self.highlight_building(building, (0, 0, 255))
+
             # draw white outline around selected object
             if self.selected_building is not None:
                 if (x, y) == self.selected_building:
@@ -337,6 +352,8 @@ class World:
         if worker is not None:
             if worker.arrived_at_home or worker.arrived_at_work:
                 return
+            if worker.arrived_at_towncenter and not worker.moving:
+                return
                 # if self.selected_worker is worker:
                 #     self.deselect_all()
                 # return
@@ -347,6 +364,9 @@ class World:
             if self.selected_worker is not None:
                 if (x == self.selected_worker[0]) and (y == self.selected_worker[1]):
                     self.highlight_selected_worker(worker, render_pos)
+
+            if worker.tile['grid'] in self.highlights:
+                self.highlight_worker(worker, (0, 0, 255))
 
                 # add masks for workplace associated with worker
 

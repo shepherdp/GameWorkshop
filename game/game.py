@@ -18,8 +18,12 @@ class Game:
         self.clock = clock
         self.width, self.height = self.screen.get_size()
 
+        # self.spawning = True
+
         # entities
         self.entities = []
+
+        self.num_characters = 0
 
         self.camera = Camera(self.width, self.height)
 
@@ -42,8 +46,12 @@ class Game:
 
     # consider moving this to World class
     def spawn_worker(self):
+        # if not self.spawning:
+        #     return
         now = pg.time.get_ticks()
         if now - self.spawncooldown > 10000:
+            if self.num_characters > sum([i.housing_capacity for i in self.world.towns]) + 3:
+                return
             found = False
             while not found:
                 x, y = self.world.get_random_position_along_border()
@@ -54,6 +62,8 @@ class Game:
                 Worker(self.world.world[x][y], self.world)
                 self.spawncooldown = now
                 found = True
+                self.num_characters += 1
+                # self.spawning = False
 
     def events(self):
         for event in pg.event.get():

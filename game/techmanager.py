@@ -37,6 +37,7 @@ class TechManager:
     def increment_research(self, techname):
         if self.current_research[techname] == 90:
             self.technologies.append(techname)
+            self.update_unlock_status()
             return True
         else:
             self.current_research[techname] += 10

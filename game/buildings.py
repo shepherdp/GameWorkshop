@@ -7,12 +7,14 @@ JOBNAMES = {'chopping': 'Woodcutter',
             'quarry': 'Quarryman',
             'wheatfield': 'Farmer',
             'well': 'Water Carrier',
+            'workbench': 'Tool Maker'
             }
 
 JOBIMGS = {'chopping': 'woodcutter',
             'quarry': 'quarryman',
             'wheatfield': 'farmer',
             'well': 'watercarrier',
+            'workbench': 'farmer'
             }
 
 USERATES = {'water': .4,
@@ -36,11 +38,13 @@ class Building:
         self.percent_employed = 0.
         self.storage = {}
         self.production = {}
+        self.consumption = {}
         self.capacity = 10
         self.currently_in_building = 0
 
     def is_full(self):
-        return sum(self.storage.values()) + sum(self.production.values()) > self.capacity
+        d = {key: val for key, val in self.storage.items() if key in self.production}
+        return sum(d.values()) + sum(self.production.values()) > self.capacity
 
     def update_percent_employed(self):
         self.percent_employed = round(len(self.workers) / self.workers_needed, 2)
@@ -50,11 +54,45 @@ class Building:
             if not self.is_full():
                 for r in self.production:
                     self.storage[r] += self.production[r] * self.percent_employed
+            else:
+                # top off any remaining capacity space to avoid fractional leftovers
+                for r in self.production:
+                    self.storage[r] = self.capacity
+            self.storage = {key: round(self.storage[key], 2) for key in self.storage}
             # self.resourcemanager.resources['gold'] += 1
             self.resourcecooldown = pg.time.get_ticks()
 
     def check_currently_in_building(self):
         return len([w for w in self.workers if w.arrived_at_work])
+
+class BaseProductionBuilding(Building):
+
+    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers):
+        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers)
+
+    def needs_goods(self):
+        return False
+
+class RefinedProductionBuilding(BaseProductionBuilding):
+
+    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers):
+        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers)
+
+    def needs_goods(self):
+        return any([self.storage[key] < self.consumption[key] * 10 for key in self.consumption])
+
+    def goods_needed(self):
+        return {key: int(self.consumption[key] * 10 - self.storage[key]) + 1 for key in self.consumption}
+
+class Housing(Building):
+
+    def __init__(self):
+        pass
+
+class TownBuilding(Building):
+
+    def __init__(self):
+        pass
 
 class TownCenter(Building):
 
@@ -75,6 +113,11 @@ class TownCenter(Building):
     def update_quantity_demanded(self):
         for key in ['wood', 'water']:
             self.resourcemanager.quantity_demanded[key] = 4 * self.num_villagers
+        for key in self.resourcemanager.quantity_demanded:
+            if key not in ['wood', 'water']:
+                self.resourcemanager.quantity_demanded[key] = self.num_villagers
+            else:
+                self.resourcemanager.quantity_demanded[key] += self.num_villagers
 
     def assign_worker_to_building(self, w, b):
         b.workers.append(w)
@@ -134,12 +177,34 @@ class TownCenter(Building):
         #     self.resourcemanager.resources['gold'] += 2
         #     self.resourcecooldown = pg.time.get_ticks()
 
-class ChoppingBlock(Building):
+class ChoppingBlock(BaseProductionBuilding):
 
     def __init__(self, pos, loc, manager):
         super().__init__(pos, loc, 'choppingblock', 'chopping', manager, 2)
         self.storage = {'wood': 0}
         self.production = {'wood': 1}
+
+class Workbench(RefinedProductionBuilding):
+
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'workbench', 'workbench', manager, 2)
+        self.storage = {'simpletools': 0, 'wood': 1, 'stone': 1}
+        self.production = {'simpletools': 1}
+        self.consumption = {'wood': .1, 'stone': .1}
+
+    def update(self):
+        if pg.time.get_ticks() - self.resourcecooldown > 2000:
+            if not self.is_full():
+                if all([self.storage[key] > self.consumption[key] for key in self.consumption]):
+                    for key in self.consumption:
+                        self.storage[key] -= self.consumption[key]
+                    for key in self.production:
+                        self.storage[key] += self.production[key]
+                self.storage = {key: round(self.storage[key], 2) for key in self.storage}
+
+            # self.resourcemanager.resources['gold'] += 1
+            self.resourcecooldown = pg.time.get_ticks()
+
 
     # def update(self):
     #     if pg.time.get_ticks() - self.resourcecooldown > 2000:
@@ -148,7 +213,7 @@ class ChoppingBlock(Building):
     #         # self.resourcemanager.resources['gold'] += 1
     #         self.resourcecooldown = pg.time.get_ticks()
 
-class Well(Building):
+class Well(BaseProductionBuilding):
 
     def __init__(self, pos, loc, manager):
         super().__init__(pos, loc, 'well', 'well', manager, 1)
@@ -167,7 +232,7 @@ class Road(Building):
     def __init__(self, pos, loc, manager):
         super().__init__(pos, loc, 'road', 'road', manager, 0)
 
-class Quarry(Building):
+class Quarry(BaseProductionBuilding):
 
     def __init__(self, pos, loc, manager):
         super().__init__(pos, loc, 'quarry', 'quarry', manager, 2)

@@ -8,11 +8,13 @@ class ResourceManager:
     price_ranges = {'wood': 10,
                     'stone': 16,
                     'water': 10,
-                    'wheat': 12}
+                    'wheat': 12,
+                    'simpletools': 50}
     max_prices = {'wood': 40,
                   'stone': 50,
                   'water': 35,
-                  'wheat': 45}
+                  'wheat': 45,
+                  'simpletools': 100}
 
     def __init__(self):
 
@@ -20,7 +22,8 @@ class ResourceManager:
                           'water': 50,
                           'stone': 50,
                           'gold': 100000,
-                          'wheat': 50}
+                          'wheat': 50,
+                          'simpletools': 0}
 
         self.costs = {'well': {'wood': 5},
                       'chopping': {'wood': 3, 'water': 2},
@@ -36,7 +39,8 @@ class ResourceManager:
         self.quantity_demanded = {'wood': 0,
                                   'wheat': 0,
                                   'water': 0,
-                                  'stone': 0}
+                                  'stone': 0,
+                                  'simpletools': 0}
 
     def apply_cost(self, item):
         for r, cost in self.costs[item].items():

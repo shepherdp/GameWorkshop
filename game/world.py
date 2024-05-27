@@ -115,6 +115,7 @@ class World:
     def create_towncenter(self, grid_pos):
         if not self.in_any_towncenter_radius(grid_pos):
             ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles)
+            ent.techmanager.technologies = self.active_town_center.techmanager.technologies.copy()
             self.towns.append(ent)
             return ent
 
@@ -229,6 +230,8 @@ class World:
                 #         self.active_town_center = building
 
                 # update selected building data
+                if self.selected_building is not None:
+                    self.deselect_building()
                 self.selected_building = grid_pos
                 self.hud.selected_building = building
                 self.hud.select_panel_visible = True
@@ -286,13 +289,13 @@ class World:
             # get all occupants and highlight them
             for w in building.occupants:
                 if w.is_visible():
-                    self.highlights.append(w.tile['grid'])
+                    self.highlights.append(w)
                     # self.highlight_worker(w, (0, 0, 255))
         elif building.name in ['chopping', 'well', 'wheatfield', 'quarry']:
             # get all workers and highlight them
             for w in building.workers:
                 if w.is_visible():
-                    self.highlights.append(w.tile['grid'])
+                    self.highlights.append(w)
                     # self.highlight_worker(w, (0, 0, 255))
 
     def highlight_building(self, building, color):
@@ -312,11 +315,11 @@ class World:
         pg.draw.polygon(self.screen, (255, 255, 255), mask, 3)
         if worker.workplace is not None:
             # get workplace and highlight it
-            self.highlights.append(worker.workplace.loc)
+            self.highlights.append(worker.workplace)
             # self.highlight_building(worker.workplace, (0, 0, 255))
         if worker.home is not None:
             # get house and highlight it
-            self.highlights.append(worker.home.loc)
+            self.highlights.append(worker.home)
             # self.highlight_building(worker.home, (0, 0, 255))
 
     def draw_terrain_tile(self, tile, render_pos):
@@ -337,7 +340,7 @@ class World:
             if building is self.active_town_center:
                 self.highlight_active_towncenter(building, render_pos)
 
-            if building.loc in self.highlights:
+            if building in self.highlights:
                 self.highlight_building(building, (0, 0, 255))
 
             # draw white outline around selected object
@@ -365,7 +368,7 @@ class World:
                 if (x == self.selected_worker[0]) and (y == self.selected_worker[1]):
                     self.highlight_selected_worker(worker, render_pos)
 
-            if worker.tile['grid'] in self.highlights:
+            if worker in self.highlights:
                 self.highlight_worker(worker, (0, 0, 255))
 
                 # add masks for workplace associated with worker

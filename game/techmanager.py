@@ -14,10 +14,7 @@ TECH_PREREQS = {'simpletools': [],
                 'agriculture': ['simpletools']}
 
 TECH_TIMES = {'simpletools': 10000 // 10,
-              'agriculture': 140000 // 10}
-
-TECH_COSTS = {'simpletools': {},
-              'agriculture': {}}
+              'agriculture': 14000 // 10}
 
 class TechManager:
 
@@ -50,7 +47,9 @@ class TechManager:
                 self.building_unlock_status[key] = True
         for key in self.tech_unlock_status:
             # self.tech_unlock_status[key] = True
-            if all([i in self.technologies for i in TECH_PREREQS[key]]):
+            if key in self.technologies:
+                self.tech_unlock_status[key] = False
+            elif all([i in self.technologies for i in TECH_PREREQS[key]]):
                 self.tech_unlock_status[key] = True
 
     def update_research_progress(self):

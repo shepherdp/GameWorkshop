@@ -47,7 +47,8 @@ class Building:
         return sum(d.values()) + sum(self.production.values()) > self.capacity
 
     def update_percent_employed(self):
-        self.percent_employed = round(len(self.workers) / self.workers_needed, 2)
+        if self.name != 'road':
+            self.percent_employed = round(len(self.workers) / self.workers_needed, 2)
 
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
@@ -164,7 +165,7 @@ class TownCenter(Building):
             # assign villagers to workplaces if any are needed
             if w.workplace is None:
                 for bldg in self.buildings:
-                    if bldg.name != 'house':
+                    if bldg.name not in ['house', 'road']:
                         if bldg.percent_employed < 1:
                             self.assign_worker_to_building(w, bldg)
                             break
@@ -246,7 +247,7 @@ class Quarry(BaseProductionBuilding):
     #         # self.resourcemanager.resources['gold'] += 1
     #         self.resourcecooldown = pg.time.get_ticks()
 
-class Wheatfield(Building):
+class Wheatfield(BaseProductionBuilding):
 
     def __init__(self, pos, loc, manager):
         super().__init__(pos, loc, 'wheatfield', 'wheatfield', manager, 2)

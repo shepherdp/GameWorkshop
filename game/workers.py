@@ -190,9 +190,9 @@ class Worker:
             elif self.arrived_at_towncenter:
                 # print('I arrived at the town center')
                 if self.workplace is not None:
-                    if not self.collecting_for_work:
+                    if sum(self.inventory.values()) > 0:
                         self.dropoff_at_towncenter()
-
+                    if not self.collecting_for_work:
                         # only leave town center if all goods are sold
                         if sum([val for val in self.inventory.values()]) == 0:
                             if self.energy >= 25:

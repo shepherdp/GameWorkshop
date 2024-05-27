@@ -35,6 +35,7 @@ def load_images():
 
     # tech icons
     simpletools_icon = pg.image.load('assets\\graphics\\icons\\simple_tools_icon.png').convert_alpha()
+    agriculture_icon = pg.image.load('assets\\graphics\\icons\\agriculture_icon.png').convert_alpha()
 
     # buttons
     deselect_button = pg.image.load('assets\\graphics\\buttons\\deselect_button.png').convert_alpha()
@@ -69,6 +70,7 @@ def load_images():
               'water_icon': water_icon,
               'stone_icon': stone_icon,
               'simpletools': simpletools_icon,
+              'agriculture': agriculture_icon,
               'deselect_button': deselect_button
               }
 

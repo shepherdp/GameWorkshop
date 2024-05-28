@@ -176,11 +176,19 @@ class Worker:
     def move(self):
         now = pg.time.get_ticks()
         if now - self.animationtimer > 100:
+            self.offsets[0] += self.offset_amounts[0]
+            self.offsets[1] += self.offset_amounts[1]
+            print(self.tile['render_pos'][0] + self.offsets[0], self.tile['render_pos'][0] + self.offsets[0])
             self.animationtimer = pg.time.get_ticks()
         if now - self.move_timer > 500:
+            print('changing tile')
             # update position in the world
             new_pos = self.path[self.path_index]
             new_tile = self.world.world[new_pos[0]][new_pos[1]]
+            print(self.tile['render_pos'], new_tile['render_pos'])
+            self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 5
+            self.offset_amounts[1] = (new_tile['render_pos'][1] - self.tile['render_pos'][1]) / 5
+            self.offsets = [0, 0]
             self.change_tile(new_tile)
             self.path_index += 1
             self.move_timer = now

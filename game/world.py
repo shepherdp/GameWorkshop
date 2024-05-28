@@ -7,7 +7,7 @@ from .utils import draw_text, load_images
 from .resourcemanager import ResourceManager
 from .techmanager import TechManager
 import networkx as nx
-from matplotlib.pyplot import plot, savefig, scatter
+from matplotlib.pyplot import plot, savefig, scatter, cla
 
 
 LOADMAP = False
@@ -285,7 +285,8 @@ class World:
 
     def highlight_worker(self, worker, color):
         x, y = worker.tile['grid']
-        render_pos = self.world[x][y]['render_pos']
+        render_pos = [self.world[x][y]['render_pos'][0] + worker.offsets[0],
+                      self.world[x][y]['render_pos'][1] + worker.offsets[1]]
         mask = pg.mask.from_surface(worker.image).outline()
         mask = [(x + render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
                  y + render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y)
@@ -374,12 +375,13 @@ class World:
                 #     self.deselect_all()
                 # return
             self.screen.blit(worker.image,
-                             (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                              render_pos[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
+                             (render_pos[0] + worker.offsets[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                              render_pos[1] + worker.offsets[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
 
             if self.selected_worker is not None:
                 if (x == self.selected_worker[0]) and (y == self.selected_worker[1]):
-                    self.highlight_selected_worker(worker, render_pos)
+                    self.highlight_selected_worker(worker, [render_pos[0] + worker.offsets[0],
+                                                            render_pos[1] + worker.offsets[1]])
 
             if worker in self.highlights:
                 self.highlight_worker(worker, (0, 0, 255))
@@ -632,6 +634,9 @@ class World:
             return False
 
     def write_world_network(self):
+        xs = []
+        ys = []
+        colors = []
         for x, y in self.world_network.nodes:
             color = ''
             if self.buildings[x][y] is not None:
@@ -642,19 +647,26 @@ class World:
                 color = (0, 1, 1)
             elif self.world[x][y]['tile'] == 'rock':
                 color = (0, 0, 0)
+            xs.append(x)
+            ys.append(self.grid_length_y - 1 - y)
+            colors.append(color)
 
-            scatter([y], [self.grid_length_x - 1 - x], c=(color,))
+        scatter(xs, ys, c=colors)
 
         for n1, n2 in self.world_network.edges:
             x1, y1 = n1
-            x1 = self.grid_length_x - 1 - x1
+            # x1 = self.grid_length_x - 1 - x1
+            y1 = self.grid_length_y - y1 - 1
             x2, y2 = n2
-            x2 = self.grid_length_x - 1 - x2
+            # x2 = self.grid_length_x - 1 - x2
+            y2 = self.grid_length_y - y2 - 1
 
-            plot([y1, y2], [x1, x2], 'k')
+            plot([x1, x2], [y1, y2], 'k')
+
 
         # nx.draw_networkx(self.world_network, with_labels=True)
         savefig('world_network.png')
+        cla()
 
     def write_road_network(self):
         xs = []
@@ -669,19 +681,25 @@ class World:
                 else:
                     color = (1., 1., 1.)
                     # scatter([y], [self.grid_length_x - 1 - x], c=(color,))
-                xs.append(self.grid_length_x - 1 - x)
-                ys.append(y)
+                # xs.append(self.grid_length_x - 1 - x)
+                xs.append(x)
+                ys.append(self.grid_length_y - 1 - y)
+                # ys.append(y)
                 colors.append(color)
+        # scatter(ys, xs, c=colors)
         scatter(xs, ys, c=colors)
 
         for n1, n2 in self.road_network.edges:
             x1, y1 = n1
-            x1 = self.grid_length_x - 1 - x1
+            y1 = self.grid_length_y - 1 - y1
+            # x1 = self.grid_length_x - 1 - x1
             x2, y2 = n2
-            x2 = self.grid_length_x - 1 - x2
+            y2 = self.grid_length_y - 1 - y2
+            # x2 = self.grid_length_x - 1 - x2
 
             print((x1, y1), (x2, y2))
 
+            # plot([y1, y2], [x1, x2], 'k')
             plot([x1, x2], [y1, y2], 'k')
 
         # nx.draw_networkx(self.world_network, with_labels=True)

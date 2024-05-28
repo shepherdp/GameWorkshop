@@ -26,6 +26,9 @@ class Worker:
         self.occupation = 'Wanderer'
         self.gold = 5
         self.just_sold = []
+        self.offsets = [0, 0]
+        self.offset_amounts = [0, 0]
+        self.animationtimer = pg.time.get_ticks()
 
         self.energy = 100
         self.energycooldown = pg.time.get_ticks()
@@ -172,6 +175,8 @@ class Worker:
 
     def move(self):
         now = pg.time.get_ticks()
+        if now - self.animationtimer > 100:
+            self.animationtimer = pg.time.get_ticks()
         if now - self.move_timer > 500:
             # update position in the world
             new_pos = self.path[self.path_index]

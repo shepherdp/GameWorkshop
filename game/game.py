@@ -83,6 +83,7 @@ class Game:
 
     def draw(self):
         self.screen.fill((0, 0, 0))
+        # self.screen.fill((179, 255, 255))
         self.world.draw()
         self.hud.draw()
 

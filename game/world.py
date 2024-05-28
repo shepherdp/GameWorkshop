@@ -117,7 +117,13 @@ class World:
         if not self.in_any_towncenter_radius(grid_pos):
             ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles)
             ent.techmanager.technologies = self.active_town_center.techmanager.technologies.copy()
+            # check to see if merchants need a target town
+            for town in self.towns:
+                m = town.get_stranded_merchant()
+                if m is not None:
+                    m.targettown = ent
             self.towns.append(ent)
+
             return ent
 
     def create_town_building(self, grid_pos):
@@ -131,6 +137,8 @@ class World:
             return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
         elif self.hud.structure_to_build['name'] == 'wheatfield':
             return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+        elif self.hud.structure_to_build['name'] == 'market':
+            return Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
         elif self.hud.structure_to_build['name'] == 'workbench':
             return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
         elif self.hud.structure_to_build['name'] == 'house':
@@ -150,7 +158,7 @@ class World:
         self.entities.append(ent)
         self.buildings[ent.loc[0]][ent.loc[1]] = ent
 
-        print('placed entity: ', self.buildings[ent.loc[0]][ent.loc[1]], 'at location ', ent.loc)
+        # print('placed entity: ', self.buildings[ent.loc[0]][ent.loc[1]], 'at location ', ent.loc)
 
         # if the building is not a town center, assign it to the currently active one
         if self.hud.structure_to_build['name'] != 'towncenter':
@@ -656,6 +664,7 @@ class World:
             for y in range(self.grid_length_y):
                 if (x, y) in self.road_network.nodes:
                     color = (.5, .5, 0)
+                    print('Node: ', (x, y))
                     # scatter([y], [self.grid_length_x - 1 - x], c=(color,))
                 else:
                     color = (1., 1., 1.)
@@ -671,7 +680,9 @@ class World:
             x2, y2 = n2
             x2 = self.grid_length_x - 1 - x2
 
-            plot([y1, y2], [x1, x2], 'k')
+            print((x1, y1), (x2, y2))
+
+            plot([x1, x2], [y1, y2], 'k')
 
         # nx.draw_networkx(self.world_network, with_labels=True)
         print(self.road_network.edges)

@@ -8,7 +8,8 @@ BLDG_PREREQS = {'chopping': [],
                 'workbench': ['simpletools'],
                 'towncenter': [],
                 'house': [],
-                'road': []}
+                'road': [],
+                'market': []}
 
 TECH_PREREQS = {'simpletools': [],
                 'agriculture': ['simpletools']}

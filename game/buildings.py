@@ -7,14 +7,16 @@ JOBNAMES = {'chopping': 'Woodcutter',
             'quarry': 'Quarryman',
             'wheatfield': 'Farmer',
             'well': 'Water Carrier',
-            'workbench': 'Tool Maker'
+            'workbench': 'Tool Maker',
+            'market': 'Merchant'
             }
 
 JOBIMGS = {'chopping': 'woodcutter',
             'quarry': 'quarryman',
             'wheatfield': 'farmer',
             'well': 'watercarrier',
-            'workbench': 'farmer'
+            'workbench': 'farmer',
+            'market': 'merchant'
             }
 
 USERATES = {'water': .4,
@@ -113,12 +115,27 @@ class TownCenter(Building):
 
     def update_quantity_demanded(self):
         for key in ['wood', 'water']:
-            self.resourcemanager.quantity_demanded[key] = 4 * self.num_villagers
+            self.resourcemanager.quantity_demanded[key] = 4 * self.num_villagers + 2
         for key in self.resourcemanager.quantity_demanded:
             if key not in ['wood', 'water']:
-                self.resourcemanager.quantity_demanded[key] = self.num_villagers
+                self.resourcemanager.quantity_demanded[key] = self.num_villagers + 2
             else:
-                self.resourcemanager.quantity_demanded[key] += self.num_villagers
+                self.resourcemanager.quantity_demanded[key] += self.num_villagers + 2
+
+    def get_current_demand(self):
+        d = []
+        for item in self.resourcemanager.resources:
+            if item == 'gold':
+                continue
+            d.append([self.resourcemanager.quantity_demanded[item] - self.resourcemanager.resources[item], item])
+        return sorted(d, reverse=True)
+
+    def get_stranded_merchant(self):
+        if 'market' in self.num_buildings:
+            for b in self.buildings:
+                if b.name == 'market':
+                    if b.workers[0].targettown is None:
+                        return b.workers[0]
 
     def assign_worker_to_building(self, w, b):
         b.workers.append(w)
@@ -130,6 +147,8 @@ class TownCenter(Building):
         w.workplace = b
         w.workplace.update_percent_employed()
         w.occupation = JOBNAMES[b.name]
+        if w.occupation == 'Merchant':
+            w.gold = 500
         pg.transform.scale(self.imgs[JOBIMGS[b.name]],
                            (self.imgs[JOBIMGS[b.name]].get_width() * 2,
                             self.imgs[JOBIMGS[b.name]].get_height() * 2))
@@ -173,11 +192,11 @@ class TownCenter(Building):
 
         self.techmanager.update_research_progress()
 
-        # if pg.time.get_ticks() - self.resourcecooldown > 2000:
-        #     self.resourcemanager.resources['wood'] += 2
-        #     self.resourcemanager.resources['water'] += 2
-        #     self.resourcemanager.resources['gold'] += 2
-        #     self.resourcecooldown = pg.time.get_ticks()
+        if pg.time.get_ticks() - self.resourcecooldown > 10000:
+            self.resourcemanager.resources['wood'] = max([self.resourcemanager.resources['wood'] - 2, 0])
+            self.resourcemanager.resources['water'] = max([self.resourcemanager.resources['water'] - 2, 0])
+            self.resourcemanager.resources['stone'] = max([self.resourcemanager.resources['stone'] - 2, 0])
+            self.resourcecooldown = pg.time.get_ticks()
 
 class ChoppingBlock(BaseProductionBuilding):
 
@@ -294,3 +313,11 @@ class House(Building):
             self.resourcecooldown = now
             for key in self.storage:
                 self.storage[key] = max([0, self.storage[key] - self.needs[key] * USERATES[key]])
+
+class Market(Building):
+
+    def __init__(self, pos, loc, manager):
+        super().__init__(pos, loc, 'market', 'market', manager, 1)
+
+    def needs_goods(self):
+        return False

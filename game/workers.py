@@ -19,11 +19,13 @@ class Worker:
         self.moving = False
         self.path_index = 0
         self.town = None
+        self.targettown = None
         self.workplace = None
         self.home = None
         self.selected = False
         self.occupation = 'Wanderer'
         self.gold = 5
+        self.just_sold = []
 
         self.energy = 100
         self.energycooldown = pg.time.get_ticks()
@@ -68,6 +70,16 @@ class Worker:
     def get_path_to_towncenter(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         self.end = self.town.loc
+        self.path = dijkstra_path(self.world.world_network, self.start, self.end)
+        self.path_index = 0
+        self.moving = True
+
+        self.reset_travel_vars()
+        self.going_to_towncenter = True
+
+    def get_path_to_targettown(self):
+        self.start = (self.tile["grid"][0], self.tile["grid"][1])
+        self.end = self.targettown.loc
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
         self.path_index = 0
         self.moving = True
@@ -170,7 +182,145 @@ class Worker:
 
             self.check_end_of_path()
 
+    def sell_all_to_towncenter(self):
+        canafford = True
+        self.just_sold = []
+        for item in self.inventory:
+            if not canafford:
+                break
+            for i in range(self.inventory[item]):
+                if item not in self.just_sold:
+                    self.just_sold.append(item)
+                price = int(self.town.resourcemanager.get_price(item, mode=1))
+                canafford = self.town.resourcemanager.resources['gold'] >= price
+                if canafford:
+                    self.town.resourcemanager.resources['gold'] -= price
+                    self.gold += price
+                    self.town.resourcemanager.resources[item] += 1
+                    self.inventory[item] -= 1
+                else:
+                    break
+
+    def sell_all_to_targettown(self):
+        canafford = True
+        self.just_sold = []
+        # print('selling everything to other town')
+        for item in self.inventory:
+            if not canafford:
+                # print('out of money')
+                break
+            # print('selling', item)
+            for i in range(self.inventory[item]):
+                if item not in self.just_sold:
+                    self.just_sold.append(item)
+                price = int(self.targettown.resourcemanager.get_price(item, mode=1))
+                canafford = self.targettown.resourcemanager.resources['gold'] >= price
+                if canafford:
+                    # print('selling one for', price)
+                    self.targettown.resourcemanager.resources['gold'] -= price
+                    self.gold += price
+                    self.targettown.resourcemanager.resources[item] += 1
+                    self.inventory[item] -= 1
+                else:
+                    break
+            # print('done selling', item)
+
+    def buy_from_towncenter(self):
+        print('getting demand from other town center')
+        target_demand = self.targettown.get_current_demand()
+        print(target_demand)
+        print(self.just_sold)
+        for _, item in target_demand:
+            if _ <= 0 or item in self.just_sold:
+                continue
+            for i in range(5):
+                price = int(self.town.resourcemanager.get_price(item, mode=0))
+                if self.gold >= price and self.targettown.resourcemanager.resources[item] > 0:
+                    if item in self.inventory:
+                        self.inventory[item] += 1
+                    else:
+                        self.inventory[item] = 1
+                    self.gold -= price
+                    self.town.resourcemanager.resources['gold'] += price
+                    self.town.resourcemanager.resources[item] -= 1
+                else:
+                    break
+
+    def buy_from_targettown(self):
+        # print('getting demand from own town center')
+        target_demand = self.town.get_current_demand()
+        # print(target_demand)
+        for _, item in target_demand:
+            if _ <= 0 or item in self.just_sold:
+                continue
+            for i in range(5):
+                price = int(self.targettown.resourcemanager.get_price(item, mode=0))
+                if self.gold >= price and self.targettown.resourcemanager.resources[item] > 0:
+                    if item in self.inventory:
+                        self.inventory[item] += 1
+                    else:
+                        self.inventory[item] = 1
+                    self.gold -= price
+                    self.targettown.resourcemanager.resources['gold'] += price
+                    self.targettown.resourcemanager.resources[item] -= 1
+                else:
+                    break
+
+    def update_merchant(self):
+        # print('Im here')
+        if not self.moving:
+            # print('a')
+            if self.arrived_at_work:
+                # print('b')
+                self.sell_all_to_towncenter()
+                # print('c', self.targettown)
+                if self.targettown is not None:
+                    # print('d')
+                    self.buy_from_towncenter()
+                    # print('e')
+                    self.get_path_to_targettown()
+                    # print('f')
+                else:
+                    if len(self.world.towns) > 1:
+                        self.targettown = self.world.towns[1]
+            elif self.arrived_at_towncenter:
+                # print('g')
+                self.sell_all_to_targettown()
+                self.buy_from_targettown()
+                # print('h')
+                if self.energy <= 25:
+                    # print('i')
+                    self.pickup_home_needs()
+                    # print('j')
+                    self.get_path_to_home()
+                    # print('k')
+                else:
+                    # print('l')
+                    self.get_path_to_work()
+                    # print('m')
+            elif self.arrived_at_home:
+                # print('n')
+                self.dropoff_at_home()
+                # print('o')
+                if self.energy == 100:
+                    # print('p')
+                    self.get_path_to_work()
+                    # print('q')
+                else:
+                    # print('r')
+                    now = pg.time.get_ticks()
+                    if now - self.energycooldown > 500:
+                        self.energy += 1
+                        self.energycooldown = now
+        else:
+            # print('s')
+            self.move()
+
     def update(self):
+
+        if self.occupation == 'Merchant':
+            self.update_merchant()
+            return
 
         # if the worker is stationary, check if they have arrived at a workplace or at a town center
         if not self.moving:

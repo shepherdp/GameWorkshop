@@ -142,36 +142,36 @@ class HUD:
         self.deselect_town_center_rect = self.deselect_town_center_button.get_rect(topleft=(self.width * .96,
                                                                                             self.height * .075))
 
-    def get_tile_dict(self):
-        render_pos = list(self.panel_positions['building_panel'])
-        render_pos[0] += .05 * self.panel_dimensions['building_panel'][0]
-        render_pos[1] += .05 * self.panel_dimensions['building_panel'][1]
-        surface_w = self.building_panel.get_width() // 5
-        leftpos = render_pos[0]
-        horizontalpos = 0
-        tiles = {}
-        surface_h = surface_w
-
-        for i in range(4):
-            for j in range(4):
-                pos = render_pos.copy()
-                img = pg.Surface((surface_w, surface_h), pg.SRCALPHA)
-                img.fill((0, 0, 0))
-                rect = img.get_rect(topleft=pos)
-                tiles.append({'name': '',
-                              'icon': img,
-                              'image': img,
-                              'rect': rect,
-                              'affordable': True,
-                              'unlocked': False}
-                             )
-                horizontalpos += 1
-                if not horizontalpos % 4:
-                    render_pos[0] = leftpos
-                    render_pos[1] += surface_h + 10
-                else:
-                    render_pos[0] += surface_w + 10
-        return tiles
+    # def get_tile_dict(self):
+    #     render_pos = list(self.panel_positions['building_panel'])
+    #     render_pos[0] += .05 * self.panel_dimensions['building_panel'][0]
+    #     render_pos[1] += .05 * self.panel_dimensions['building_panel'][1]
+    #     surface_w = self.building_panel.get_width() // 5
+    #     leftpos = render_pos[0]
+    #     horizontalpos = 0
+    #     tiles = {}
+    #     surface_h = surface_w
+    #
+    #     for i in range(4):
+    #         for j in range(4):
+    #             pos = render_pos.copy()
+    #             img = pg.Surface((surface_w, surface_h), pg.SRCALPHA)
+    #             img.fill((0, 0, 0))
+    #             rect = img.get_rect(topleft=pos)
+    #             tiles.append({'name': '',
+    #                           'icon': img,
+    #                           'image': img,
+    #                           'rect': rect,
+    #                           'affordable': True,
+    #                           'unlocked': False}
+    #                          )
+    #             horizontalpos += 1
+    #             if not horizontalpos % 4:
+    #                 render_pos[0] = leftpos
+    #                 render_pos[1] += surface_h + 10
+    #             else:
+    #                 render_pos[0] += surface_w + 10
+    #     return tiles
 
     def get_buildtile_dict(self):
         render_pos = list(self.panel_positions['building_panel'])
@@ -183,7 +183,8 @@ class HUD:
         tiles = {}
 
         i = 0
-        for name in ['towncenter', 'well', 'chopping', 'quarry', 'wheatfield', 'house', 'road', 'workbench']:
+        for name in ['towncenter', 'well', 'chopping', 'quarry', 'wheatfield',
+                     'house', 'road', 'workbench', 'market']:
             pos = render_pos.copy()
             img = self.images[name]
             img_scale = self.scale_image(img, w=surface_w)
@@ -247,7 +248,7 @@ class HUD:
         horizontal_pos = 0
 
         # elements to leave out of the build panel
-        bldgs = ['chopping', 'quarry', 'well', 'wheatfield', 'towncenter', 'house', 'road']
+        bldgs = ['chopping', 'quarry', 'well', 'wheatfield', 'towncenter', 'house', 'road', 'market']
 
         for name, img in self.images.items():
             if name not in bldgs:
@@ -589,7 +590,7 @@ class HUD:
 
         # draw resource amounts at top of screen
         if self.parent.active_town_center is not None:
-            pos = self.width - 720
+            pos = self.width * .4
             for resource, value in self.parent.active_town_center.resourcemanager.resources.items():
                 text = f'{resource}: {value}'
                 draw_text(self.screen, text, 30, (0, 0, 0), (pos, 0))

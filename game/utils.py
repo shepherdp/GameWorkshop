@@ -28,6 +28,7 @@ def load_images():
     wheatfield = pg.image.load('assets\\graphics\\buildings\\wheatfield.png').convert_alpha()
     workbench = pg.image.load('assets\\graphics\\buildings\\workbench.png').convert_alpha()
     house = pg.image.load('assets\\graphics\\buildings\\house.png').convert_alpha()
+    market = pg.image.load('assets\\graphics\\buildings\\market.png').convert_alpha()
 
     # icons
     water_icon = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
@@ -45,6 +46,7 @@ def load_images():
     woodcutter = pg.image.load('assets\\graphics\\characters\\woodcutter.png').convert_alpha()
     farmer = pg.image.load('assets\\graphics\\characters\\farmer.png').convert_alpha()
     quarryman = pg.image.load('assets\\graphics\\characters\\quarryman.png').convert_alpha()
+    merchant = pg.image.load('assets\\graphics\\characters\\merchant.png').convert_alpha()
 
 
     images = {'rock': rock,
@@ -54,12 +56,14 @@ def load_images():
               'road': road,
               'water': water,
               'towncenter': tc,
+              'market': market,
 
               'beggar': beggar,
               'woodcutter': woodcutter,
               'watercarrier': watercarrier,
               'quarryman': quarryman,
               'farmer': farmer,
+              'merchant': merchant,
 
               'quarry': quarry,
               'wheatfield': wheatfield,

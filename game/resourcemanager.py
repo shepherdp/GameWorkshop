@@ -33,6 +33,7 @@ class ResourceManager:
                       'wheatfield': {'stone': 1, 'wood': 5, 'water': 10},
                       'house': {'wood': 2, 'stone': 2, 'water': 2},
                       'workbench': {'wood': 4, 'stone': 1},
+                      'market': {'wood': 10, 'stone': 10},
                       'simpletools': {'wood': 40, 'stone': 40},
                       'agriculture': {'wood': 50, 'simpletools': 20, 'water': 20}
                       }

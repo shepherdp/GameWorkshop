@@ -83,7 +83,6 @@ class Game:
 
     def draw(self):
         self.screen.fill((0, 0, 0))
-        # self.screen.fill((179, 255, 255))
         self.world.draw()
         self.hud.draw()
 
@@ -96,9 +95,19 @@ class Game:
 
         pg.display.flip()
 
+    def save(self):
+        f = open('savefile.txt', 'w')
+        f.write('CAMERA\n')
+        f.write(self.camera.get_state_for_savefile())
+        f.write('ENTITIES\n')
+        f.write('WORLD\n')
+        f.write('HUD\n')
+        f.close()
+
     def quit(self):
         # self.world.write_map()
         # self.world.write_world_network()
         # self.world.write_road_network()
+        self.save()
         pg.quit()
         sys.exit()

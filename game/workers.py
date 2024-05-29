@@ -24,6 +24,7 @@ class Worker:
         self.home = None
         self.selected = False
         self.occupation = 'Wanderer'
+        self.skills = {}
         self.gold = 5
         self.just_sold = []
         self.offsets = [0, 0]
@@ -32,6 +33,7 @@ class Worker:
 
         self.energy = 100
         self.energycooldown = pg.time.get_ticks()
+        self.skillcooldown = pg.time.get_ticks()
 
         self.inventory = {}
         self.skills = {}
@@ -178,14 +180,14 @@ class Worker:
         if now - self.animationtimer > 100:
             self.offsets[0] += self.offset_amounts[0]
             self.offsets[1] += self.offset_amounts[1]
-            print(self.tile['render_pos'][0] + self.offsets[0], self.tile['render_pos'][0] + self.offsets[0])
+            # print(self.tile['render_pos'][0] + self.offsets[0], self.tile['render_pos'][0] + self.offsets[0])
             self.animationtimer = pg.time.get_ticks()
         if now - self.move_timer > 500:
-            print('changing tile')
+            # print('changing tile')
             # update position in the world
             new_pos = self.path[self.path_index]
             new_tile = self.world.world[new_pos[0]][new_pos[1]]
-            print(self.tile['render_pos'], new_tile['render_pos'])
+            # print(self.tile['render_pos'], new_tile['render_pos'])
             self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 5
             self.offset_amounts[1] = (new_tile['render_pos'][1] - self.tile['render_pos'][1]) / 5
             self.offsets = [0, 0]
@@ -330,6 +332,12 @@ class Worker:
             self.move()
 
     def update(self):
+
+        if self.occupation:
+            now = pg.time.get_ticks()
+            if now - self.skillcooldown > 10000:
+                self.skillcooldown = now
+                self.skills[self.occupation] += 1
 
         if self.occupation == 'Merchant':
             self.update_merchant()

@@ -147,6 +147,8 @@ class TownCenter(Building):
         w.workplace = b
         w.workplace.update_percent_employed()
         w.occupation = JOBNAMES[b.name]
+        if JOBNAMES[b.name] not in w.skills:
+            w.skills[JOBNAMES[b.name]] = 0
         if w.occupation == 'Merchant':
             w.gold = 500
         pg.transform.scale(self.imgs[JOBIMGS[b.name]],

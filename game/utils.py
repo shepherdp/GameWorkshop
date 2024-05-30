@@ -31,12 +31,15 @@ def load_images():
     market = pg.image.load('assets\\graphics\\buildings\\market.png').convert_alpha()
 
     # icons
-    water_icon = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
-    stone_icon = pg.image.load('assets\\graphics\\icons\\stone_icon.png').convert_alpha()
+    water = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
+    stone = pg.image.load('assets\\graphics\\icons\\stone_icon.png').convert_alpha()
+    wood = pg.image.load('assets\\graphics\\icons\\wood_icon.png').convert_alpha()
+    wheat = pg.image.load('assets\\graphics\\icons\\wheat_icon.png').convert_alpha()
+    simpletools = pg.image.load('assets\\graphics\\icons\\simpletools_icon.png').convert_alpha()
 
     # tech icons
-    simpletools_icon = pg.image.load('assets\\graphics\\icons\\simple_tools_icon.png').convert_alpha()
-    agriculture_icon = pg.image.load('assets\\graphics\\icons\\agriculture_icon.png').convert_alpha()
+    simpletools_tech_icon = pg.image.load('assets\\graphics\\icons\\simpletools_tech_icon.png').convert_alpha()
+    agriculture_tech_icon = pg.image.load('assets\\graphics\\icons\\agriculture_icon.png').convert_alpha()
 
     # buttons
     deselect_button = pg.image.load('assets\\graphics\\buttons\\deselect_button.png').convert_alpha()
@@ -65,16 +68,20 @@ def load_images():
               'farmer': farmer,
               'merchant': merchant,
 
+              'water': water,
+              'stone': stone,
+              'wood': wood,
+              'wheat': wheat,
+              'simpletools': simpletools,
+
               'quarry': quarry,
               'wheatfield': wheatfield,
               'workbench': workbench,
               'grass1': grass1,
               'grass2': grass2,
               'house': house,
-              'water_icon': water_icon,
-              'stone_icon': stone_icon,
-              'simpletools': simpletools_icon,
-              'agriculture': agriculture_icon,
+              'simpletools_tech': simpletools_tech_icon,
+              'agriculture': agriculture_tech_icon,
               'deselect_button': deselect_button
               }
 

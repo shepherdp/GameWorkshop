@@ -5,16 +5,16 @@ BLDG_PREREQS = {'chopping': [],
                 'well': [],
                 'quarry': [],
                 'wheatfield': ['agriculture'],
-                'workbench': ['simpletools'],
+                'workbench': ['simpletools_tech'],
                 'towncenter': [],
                 'house': [],
                 'road': [],
                 'market': []}
 
-TECH_PREREQS = {'simpletools': [],
-                'agriculture': ['simpletools']}
+TECH_PREREQS = {'simpletools_tech': [],
+                'agriculture': ['simpletools_tech']}
 
-TECH_TIMES = {'simpletools': 10000 // 10,
+TECH_TIMES = {'simpletools_tech': 10000 // 10,
               'agriculture': 14000 // 10}
 
 class TechManager:

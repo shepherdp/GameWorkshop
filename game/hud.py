@@ -3,7 +3,10 @@ import pygame.transform
 from .utils import draw_text, load_images
 
 
-# need to add code up here to calculate panel positions only once
+BLDG = ['towncenter', 'well', 'chopping', 'quarry', 'wheatfield',
+        'house', 'road', 'workbench', 'market']
+TECH = ['simpletools_tech', 'agriculture']
+RSRC = ['wood', 'stone', 'water', 'wheat', 'simpletools']
 
 class HUD:
 
@@ -41,6 +44,7 @@ class HUD:
         # self.tiles = self.populate_build_hud()
         self.build_tiles = self.get_buildtile_dict()
         self.tech_tiles = self.get_techtile_dict()
+        self.resource_tiles = self.get_resources_tiledict()
 
         self.structure_to_build = None
         self.selected_building = None
@@ -142,37 +146,6 @@ class HUD:
         self.deselect_town_center_rect = self.deselect_town_center_button.get_rect(topleft=(self.width * .96,
                                                                                             self.height * .075))
 
-    # def get_tile_dict(self):
-    #     render_pos = list(self.panel_positions['building_panel'])
-    #     render_pos[0] += .05 * self.panel_dimensions['building_panel'][0]
-    #     render_pos[1] += .05 * self.panel_dimensions['building_panel'][1]
-    #     surface_w = self.building_panel.get_width() // 5
-    #     leftpos = render_pos[0]
-    #     horizontalpos = 0
-    #     tiles = {}
-    #     surface_h = surface_w
-    #
-    #     for i in range(4):
-    #         for j in range(4):
-    #             pos = render_pos.copy()
-    #             img = pg.Surface((surface_w, surface_h), pg.SRCALPHA)
-    #             img.fill((0, 0, 0))
-    #             rect = img.get_rect(topleft=pos)
-    #             tiles.append({'name': '',
-    #                           'icon': img,
-    #                           'image': img,
-    #                           'rect': rect,
-    #                           'affordable': True,
-    #                           'unlocked': False}
-    #                          )
-    #             horizontalpos += 1
-    #             if not horizontalpos % 4:
-    #                 render_pos[0] = leftpos
-    #                 render_pos[1] += surface_h + 10
-    #             else:
-    #                 render_pos[0] += surface_w + 10
-    #     return tiles
-
     def get_buildtile_dict(self):
         render_pos = list(self.panel_positions['building_panel'])
         render_pos[0] += .05 * self.panel_dimensions['building_panel'][0]
@@ -183,8 +156,7 @@ class HUD:
         tiles = {}
 
         i = 0
-        for name in ['towncenter', 'well', 'chopping', 'quarry', 'wheatfield',
-                     'house', 'road', 'workbench', 'market']:
+        for name in BLDG:
             pos = render_pos.copy()
             img = self.images[name]
             img_scale = self.scale_image(img, w=surface_w)
@@ -215,7 +187,7 @@ class HUD:
         tiles = {}
 
         i = 0
-        for name in ['simpletools', 'agriculture']:
+        for name in TECH:
             pos = render_pos.copy()
             img = self.images[name]
             img_scale = self.scale_image(img, w=surface_w)
@@ -236,40 +208,55 @@ class HUD:
 
         return tiles
 
-    def populate_build_hud(self):
-        # render_pos = [self.width * .84 + 10, self.height * .74 + 10]
-        render_pos = list(self.panel_positions['building_panel'])
-        render_pos[0] += .02 * self.panel_dimensions['building_panel'][0]
-        render_pos[1] += .02 * self.panel_dimensions['building_panel'][1]
-        surface_w = self.building_panel.get_width() // 5
+    def get_resources_tiledict(self):
+        render_pos = list(self.panel_positions['select_panel'])
+        render_pos[0] += .05 * self.panel_dimensions['select_panel'][0]
+        render_pos[1] += .15 * self.panel_dimensions['select_panel'][1]
+        surface_w = self.select_panel.get_width() // 10
         leftpos = render_pos[0]
+        horizontalpos = 0
+        tiles = {}
 
-        tiles = []
-        horizontal_pos = 0
-
-        # elements to leave out of the build panel
-        bldgs = ['chopping', 'quarry', 'well', 'wheatfield', 'towncenter', 'house', 'road', 'market']
-
-        for name, img in self.images.items():
-            if name not in bldgs:
-                continue
+        for name in RSRC:
             pos = render_pos.copy()
+            img = self.images[name]
             img_scale = self.scale_image(img, w=surface_w)
             rect = img_scale.get_rect(topleft=pos)
-            tiles.append({'name': name,
-                          'icon': img_scale,
-                          'image': self.images[name],
-                          'rect': rect,
-                          'affordable': True,
-                          'unlocked': False}
-                         )
-            horizontal_pos += 1
-            if not horizontal_pos % 4:
+            tiles[name] = {'name': name,
+                           'icon': img_scale,
+                           'image': self.images[name],
+                           'rect': rect,
+                           'affordable': True,
+                           'unlocked': False,
+                           'textpos': [render_pos[0] + 1.1 * surface_w, render_pos[1]]}
+            horizontalpos += 1
+            if not horizontalpos % 3:
                 render_pos[0] = leftpos
                 render_pos[1] += img_scale.get_height() + 10
             else:
-                render_pos[0] += img_scale.get_width() + 10
+                render_pos[0] += 3 * surface_w
+
         return tiles
+
+        # for i in range(4):
+        #     for j in range(4):
+        #         pos = render_pos.copy()
+        #         img = pg.Surface((surface_w, surface_h), pg.SRCALPHA)
+        #         img.fill((0, 0, 0))
+        #         rect = img.get_rect(topleft=pos)
+        #         tiles[(i, j)] = {'name': '',
+        #                       'icon': img,
+        #                       'image': img,
+        #                       'rect': rect,
+        #                       'affordable': True,
+        #                       'unlocked': False}
+        #         horizontalpos += 1
+        #         if not horizontalpos % 4:
+        #             render_pos[0] = leftpos
+        #             render_pos[1] += surface_h + 10
+        #         else:
+        #             render_pos[0] += surface_w + 10
+        # return tiles
 
     def check_activate_towncenter(self):
         if self.selected_building is not None:
@@ -570,6 +557,31 @@ class HUD:
                 draw_text(self.screen, str(self.parent.active_town_center.num_buildings[tile['name']]),
                           25, (0, 0, 0), tile['rect'].topleft)
 
+    def draw_resource_panel_tiles(self):
+        if self.selected_building is not None:
+            if self.parent.active_town_center is self.selected_building:
+                for key in self.resource_tiles:
+                    tile = self.resource_tiles[key]
+                    self.screen.blit(tile['icon'], tile['rect'].topleft)
+                    draw_text(self.screen, f'{self.parent.active_town_center.resourcemanager.resources[key]}',
+                              20, (255, 255, 255), tile['textpos'])
+            else:
+                for key in self.resource_tiles:
+                    if key in self.selected_building.storage:
+                        tile = self.resource_tiles[key]
+                        self.screen.blit(tile['icon'], tile['rect'].topleft)
+                        draw_text(self.screen, f'{self.selected_building.storage[key]}',
+                                  20, (255, 255, 255), tile['textpos'])
+        if self.selected_worker is not None:
+            for key in self.resource_tiles:
+                if key not in self.selected_worker.inventory:
+                    continue
+                if self.selected_worker.inventory[key] > 0:
+                    tile = self.resource_tiles[key]
+                    self.screen.blit(tile['icon'], tile['rect'].topleft)
+                    draw_text(self.screen, f'{self.selected_worker.inventory[key]}',
+                              20, (255, 255, 255), tile['textpos'])
+
     def draw(self):
 
         self.draw_select_panel()
@@ -578,6 +590,7 @@ class HUD:
         if self.parent.active_town_center is not None:
             self.draw_active_town_center_title()
             self.draw_deselect_towncenter_button()
+            self.draw_resource_panel_tiles()
             self.screen.blit(self.town_actions_panel, self.panel_positions['town_actions_panel'])
             self.draw_buildmode_button()
             self.draw_techmode_button()
@@ -590,11 +603,11 @@ class HUD:
 
         # draw resource amounts at top of screen
         if self.parent.active_town_center is not None:
-            pos = self.width * .4
-            for resource, value in self.parent.active_town_center.resourcemanager.resources.items():
-                text = f'{resource}: {value}'
-                draw_text(self.screen, text, 30, (0, 0, 0), (pos, 0))
-                pos += 120
+            pos = self.width * .85
+            # for resource, value in self.parent.active_town_center.resourcemanager.resources.items():
+            text = f'Gold: {self.parent.active_town_center.resourcemanager.resources['gold']}'
+            draw_text(self.screen, text, 30, (0, 0, 0), (pos, 0))
+            # pos += 120
 
     def scale_image(self, image, w=None, h=None):
         if w is None and h is None:

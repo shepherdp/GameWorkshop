@@ -11,6 +11,8 @@ from .world import World
 from .settings import WORLD_W, WORLD_H, SHOWFPS
 
 
+LOAD = True
+
 class Game:
 
     def __init__(self, screen, clock):
@@ -19,6 +21,9 @@ class Game:
         self.width, self.height = self.screen.get_size()
 
         # self.spawning = True
+
+        if LOAD:
+            self.load()
 
         # entities
         self.entities = []
@@ -99,9 +104,38 @@ class Game:
         f = open('savefile.txt', 'w')
         f.write('CAMERA\n')
         f.write(self.camera.get_state_for_savefile())
-        f.write('ENTITIES\n')
-        f.write('WORLD\n')
         f.write('HUD\n')
+        f.write('WORLD\n')
+        f.write('ENTITIES\n')
+        f.close()
+
+    def load(self):
+        f = open('savefile.txt', 'r')
+        line = f.readline()[:-1]
+        while line != 'HUD':
+            if line == 'CAMERA':
+                line = f.readline()[:-1]
+                continue
+            else:
+                splitline = line.split(',')
+                print(splitline)
+
+                line = f.readline()[:-1]
+        line = f.readline()[:-1]
+        while line != 'WORLD':
+            splitline = line.split(',')
+            print(splitline)
+
+            line = f.readline()[:-1]
+        line = f.readline()[:-1]
+        while line != 'ENTITIES':
+            if not line:
+                break
+            splitline = line.split(',')
+            print(splitline)
+
+            line = f.readline()[:-1]
+
         f.close()
 
     def quit(self):

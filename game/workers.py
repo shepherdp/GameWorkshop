@@ -284,56 +284,37 @@ class Worker:
     def update_merchant(self):
         # print('Im here')
         if not self.moving:
-            # print('a')
             if self.arrived_at_work:
-                # print('b')
                 self.sell_all_to_towncenter()
-                # print('c', self.targettown)
                 if self.targettown is not None:
-                    # print('d')
                     self.buy_from_towncenter()
-                    # print('e')
                     self.get_path_to_targettown()
-                    # print('f')
                 else:
                     if len(self.world.towns) > 1:
                         self.targettown = self.world.towns[1]
             elif self.arrived_at_towncenter:
-                # print('g')
                 self.sell_all_to_targettown()
                 self.buy_from_targettown()
-                # print('h')
                 if self.energy <= 25:
-                    # print('i')
                     self.pickup_home_needs()
-                    # print('j')
                     self.get_path_to_home()
-                    # print('k')
                 else:
-                    # print('l')
                     self.get_path_to_work()
-                    # print('m')
             elif self.arrived_at_home:
-                # print('n')
                 self.dropoff_at_home()
-                # print('o')
                 if self.energy == 100:
-                    # print('p')
                     self.get_path_to_work()
-                    # print('q')
                 else:
-                    # print('r')
                     now = pg.time.get_ticks()
                     if now - self.energycooldown > 500:
                         self.energy += 1
                         self.energycooldown = now
         else:
-            # print('s')
             self.move()
 
     def update(self):
 
-        if self.occupation:
+        if self.occupation not in ['Beggar', 'Wanderer']:
             now = pg.time.get_ticks()
             if now - self.skillcooldown > 10000:
                 self.skillcooldown = now

@@ -6,6 +6,7 @@ from .buildings import *
 from .utils import draw_text, load_images
 from .resourcemanager import ResourceManager
 from .techmanager import TechManager
+from .workers import Worker
 import networkx as nx
 from matplotlib.pyplot import plot, savefig, scatter, cla
 
@@ -30,7 +31,6 @@ R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 class World:
 
     def __init__(self, entities, hud, camera, grid_length_x, grid_length_y, width, height):
-        self.resource_manager = ResourceManager()
         self.entities = entities
         self.hud = hud
         self.screen = self.hud.screen
@@ -39,6 +39,9 @@ class World:
         self.grid_length_y = grid_length_y
         self.width = width
         self.height = height
+
+        self.bldg_ctr = 0
+        self.wrkr_ctr = 0
 
         self.hud.parent = self
 
@@ -77,7 +80,8 @@ class World:
             x, y = self.get_random_position()
             render_pos = self.world[x][y]['render_pos']
             grid_pos = (x, y)
-            ent = TownCenter(render_pos, grid_pos, ResourceManager(), TechManager(), self.tiles)
+            ent = TownCenter(render_pos, grid_pos, ResourceManager(), TechManager(), self.tiles, f'blgd{self.bldg_ctr}')
+            self.bldg_ctr += 1
             self.towns.append(ent)
             self.buildings[x][y] = ent
             self.entities.append(ent)
@@ -115,7 +119,9 @@ class World:
 
     def create_towncenter(self, grid_pos):
         if not self.in_any_towncenter_radius(grid_pos):
-            ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles)
+            ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles,
+                             f'bldg{self.bldg_ctr}')
+            self.bldg_ctr += 1
             ent.techmanager.technologies = self.active_town_center.techmanager.technologies.copy()
             # check to see if merchants need a target town
             for town in self.towns:
@@ -128,21 +134,28 @@ class World:
 
     def create_town_building(self, grid_pos):
         if self.hud.structure_to_build['name'] == 'well':
-            return Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'chopping':
-            return ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'quarry':
-            return Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'road':
-            return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'wheatfield':
-            return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'market':
-            return Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'workbench':
-            return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'house':
-            return House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
 
     def add_building_to_town(self, ent):
         self.active_town_center.buildings.append(ent)
@@ -787,3 +800,12 @@ class World:
         for t in self.towns:
             if len(t.villagers) < t.housing_capacity:
                 return t
+
+    def get_state_for_savefile(self):
+        ret = ''
+        ret += f'x={self.grid_length_x}#'
+        ret += f'y={self.grid_length_y}#'
+        ret += f'perlin={self.perlin_scale}#'
+        ret += f'villagers={','.join([w.id for w in self.entities if isinstance(w, Worker)])}#'
+        ret += '\n'
+        return ret

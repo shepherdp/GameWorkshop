@@ -7,6 +7,7 @@ from .hud import HUD
 from .utils import draw_text
 from .workers import Worker
 from .world import World
+from .buildings import Building
 
 from .settings import WORLD_W, WORLD_H, SHOWFPS
 
@@ -64,10 +65,11 @@ class Game:
                     dijkstra_path(self.world.world_network, (x, y), self.world.towns[0].loc)
                 except:
                     continue
-                Worker(self.world.world[x][y], self.world)
+                Worker(self.world.world[x][y], self.world, f'worker{self.world.wrkr_ctr}')
                 self.spawncooldown = now
                 found = True
                 self.num_characters += 1
+                self.world.wrkr_ctr += 1
                 # self.spawning = False
 
     def events(self):
@@ -104,37 +106,21 @@ class Game:
         f = open('savefile.txt', 'w')
         f.write('CAMERA\n')
         f.write(self.camera.get_state_for_savefile())
-        f.write('HUD\n')
         f.write('WORLD\n')
-        f.write('ENTITIES\n')
+        f.write(self.world.get_state_for_savefile())
+        f.write('WORKERS\n')
+        for w in self.entities:
+            if isinstance(w, Worker):
+                f.write(w.get_state_for_savefile())
+        f.write('BUILDINGS')
+        for b in self.entities:
+            if isinstance(b, Building):
+                f.write(b.get_state_for_savefile())
         f.close()
 
     def load(self):
         f = open('savefile.txt', 'r')
-        line = f.readline()[:-1]
-        while line != 'HUD':
-            if line == 'CAMERA':
-                line = f.readline()[:-1]
-                continue
-            else:
-                splitline = line.split(',')
-                print(splitline)
 
-                line = f.readline()[:-1]
-        line = f.readline()[:-1]
-        while line != 'WORLD':
-            splitline = line.split(',')
-            print(splitline)
-
-            line = f.readline()[:-1]
-        line = f.readline()[:-1]
-        while line != 'ENTITIES':
-            if not line:
-                break
-            splitline = line.split(',')
-            print(splitline)
-
-            line = f.readline()[:-1]
 
         f.close()
 

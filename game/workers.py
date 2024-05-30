@@ -9,7 +9,7 @@ from networkx import dijkstra_path
 
 class Worker:
 
-    def __init__(self, tile, world):
+    def __init__(self, tile, world, unique_id):
         self.world = world
         self.world.entities.append(self)
         self.name = "worker"
@@ -30,6 +30,7 @@ class Worker:
         self.offsets = [0, 0]
         self.offset_amounts = [0, 0]
         self.animationtimer = pg.time.get_ticks()
+        self.id = unique_id
 
         self.energy = 100
         self.energycooldown = pg.time.get_ticks()
@@ -448,3 +449,13 @@ class Worker:
 
     def is_visible(self):
         return not (self.arrived_at_home or self.arrived_at_work)
+
+    def get_state_for_savefile(self):
+        ret = ''
+        ret += f'id={self.id}#'
+        ret += f'name={self.name}#'
+        ret += f'pos={self.tile['grid']}#'
+        ret += f'home={self.home.id}#'
+        ret += f'work={self.workplace.id}#'
+        ret += '\n'
+        return ret

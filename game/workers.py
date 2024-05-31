@@ -39,6 +39,8 @@ class Worker:
         self.inventory = {}
         self.skills = {}
 
+        self.current_task = 'wandering'
+
         self.going_to_work = False
         self.arrived_at_work = False
         self.going_to_towncenter = False
@@ -454,8 +456,42 @@ class Worker:
         ret = ''
         ret += f'id={self.id}#'
         ret += f'name={self.name}#'
-        ret += f'pos={self.tile['grid']}#'
-        ret += f'home={self.home.id}#'
-        ret += f'work={self.workplace.id}#'
+        ret += f'pos=({self.tile['grid'][0]},{self.tile['grid'][1]})#'
+        if self.home is not None:
+            ret += f'home={self.home.id}#'
+        else:
+            ret += 'home=None#'
+        if self.workplace is not None:
+            ret += f'work={self.workplace.id}#'
+        else:
+            ret += 'work=None#'
+        if self.town is not None:
+            ret += f'town={self.town.id}#'
+        else:
+            ret += 'town=None#'
+        ret += f'energy={self.energy}#'
+        ret += f'gold={self.gold}#'
+        ret += f'currenttask={self.current_task}#'
+        ret += f'inventory={','.join([f'{key}:{value}' for key, value in self.inventory.items()])}#'
         ret += '\n'
         return ret
+
+class BasicProductionWorker(Worker):
+
+    def __init__(self):
+        pass
+
+class RefinedProductionWorker(Worker):
+
+    def __init__(self):
+        pass
+
+class Merchant(Worker):
+
+    def __init__(self):
+        pass
+
+class TownWorker(Worker):
+
+    def __init__(self):
+        pass

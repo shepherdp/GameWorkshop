@@ -16,12 +16,12 @@ def load_images():
     tree = pg.image.load('assets\\graphics\\terrain\\tree.png').convert_alpha()
     grass1 = pg.image.load('assets\\graphics\\terrain\\grass1.png').convert_alpha()
     grass2 = pg.image.load('assets\\graphics\\terrain\\grass2.png').convert_alpha()
+    grass3 = pg.image.load('assets\\graphics\\terrain\\grass3.png').convert_alpha()
     water = pg.image.load('assets\\graphics\\terrain\\water.png').convert_alpha()
 
     # buildings
     well = pg.image.load('assets\\graphics\\buildings\\well.png').convert_alpha()
     chopping = pg.image.load('assets\\graphics\\buildings\\choppingblock.png').convert_alpha()
-    # block = pg.image.load('assets\\graphics\\buildings\\testblock.png').convert_alpha()
     road = pg.image.load('assets\\graphics\\buildings\\road.png').convert_alpha()
     tc = pg.image.load('assets\\graphics\\buildings\\towncenter.png').convert_alpha()
     quarry = pg.image.load('assets\\graphics\\buildings\\quarry.png').convert_alpha()
@@ -79,6 +79,7 @@ def load_images():
               'workbench': workbench,
               'grass1': grass1,
               'grass2': grass2,
+              'grass3': grass3,
               'house': house,
               'simpletools_tech': simpletools_tech_icon,
               'agriculture': agriculture_tech_icon,

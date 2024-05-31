@@ -270,8 +270,8 @@ class World:
 
     def update(self):
 
-        self.mouse_pos = pg.mouse.get_pos()
-        self.mouse_action = pg.mouse.get_pressed()
+        # self.mouse_pos = pg.mouse.get_pos()
+        # self.mouse_action = pg.mouse.get_pressed()
         self.temp_tile = None
 
         # if the user left-clicks, deselect anything that is selected
@@ -477,7 +477,7 @@ class World:
         # place a building
         if self.temp_tile is not None:
 
-            self.mouse_pos = pg.mouse.get_pos()
+            # self.mouse_pos = pg.mouse.get_pos()
             grid_pos = self.mouse_to_grid(self.mouse_pos[0], self.mouse_pos[1], self.camera.scroll)
 
             self.draw_structure_to_build(grid_pos)
@@ -508,7 +508,9 @@ class World:
                 world[grid_x].append(world_tile)
 
                 render_pos = world_tile['render_pos']
-                self.grass_tiles.blit(random.choice([self.tiles['grass1'], self.tiles['grass2']]),
+                # grass = [self.tiles['grass1'], self.tiles['grass2'], self.tiles['grass3']]
+                grass = [self.tiles['grass2'], self.tiles['grass3']]
+                self.grass_tiles.blit(random.choice(grass),
                                       (render_pos[0] + self.grass_tiles.get_width() / 2, render_pos[1]))
 
         return world
@@ -532,7 +534,7 @@ class World:
 
         tile = ''
         if not LOADMAP:
-            if (perlin >= 15) or (perlin <= -35):
+            if (perlin >= 20) or (perlin <= -50):
                 tile = 'tree'
             else:
                 if r == 1:
@@ -624,7 +626,7 @@ class World:
     def can_place_tile(self, grid_pos):
         # check if mouse is on resources or building panel
         mouse_on_panel = False
-        self.mouse_pos = pg.mouse.get_pos()
+        # self.mouse_pos = pg.mouse.get_pos()
         for rect in [self.hud.resources_rect]:
             if rect.collidepoint(self.mouse_pos):
                 mouse_on_panel = True

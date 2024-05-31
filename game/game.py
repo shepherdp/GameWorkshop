@@ -46,6 +46,8 @@ class Game:
         while self.playing:
             self.clock.tick(60)
             self.spawn_worker()
+            self.world.mouse_pos = self.hud.mouse_pos = pg.mouse.get_pos()
+            self.world.mouse_action = self.hud.mouse_action = pg.mouse.get_pressed()
             self.events()
             self.update()
             self.draw()
@@ -80,6 +82,15 @@ class Game:
                 if event.key == pg.K_ESCAPE:
                     self.playing = False
                     self.quit()
+
+            # I have to stop checking everything every update in the World class
+            # I need to record button presses here, and then only handle them when necessary in other classes
+            if event.type == pg.MOUSEBUTTONDOWN:
+                # start drag
+                print('click')
+            if event.type == pg.MOUSEBUTTONUP:
+                # end drag
+                print('unclick')
 
     def update(self):
         self.camera.update()

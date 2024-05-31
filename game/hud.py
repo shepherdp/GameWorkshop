@@ -331,8 +331,8 @@ class HUD:
                             self.parent.active_town_center.techmanager.start_research(tile['name'])
 
     def update(self):
-        self.mouse_pos = pg.mouse.get_pos()
-        self.mouse_action = pg.mouse.get_pressed()
+        # self.mouse_pos = pg.mouse.get_pos()
+        # self.mouse_action = pg.mouse.get_pressed()
 
         if self.selected_worker is not None:
             if self.selected_worker.arrived_at_home or self.selected_worker.arrived_at_work:

@@ -37,7 +37,6 @@ class Worker:
         self.skillcooldown = pg.time.get_ticks()
 
         self.inventory = {}
-        self.skills = {}
 
         self.current_task = 'wandering'
 
@@ -190,8 +189,16 @@ class Worker:
             self.animationtimer = pg.time.get_ticks()
         if now - self.move_timer > 500:
             # print('changing tile')
+            # print(self.id)
+            # print(self.path)
+            # print(self.path_index)
             # update position in the world
+            # try:
             new_pos = self.path[self.path_index]
+            # except:
+            #     print(self.path)
+            #     print(self.path_index)
+                # sys.exit()
             new_tile = self.world.world[new_pos[0]][new_pos[1]]
             # print(self.tile['render_pos'], new_tile['render_pos'])
             self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 5
@@ -484,7 +491,9 @@ class Worker:
         ret += f'gttc={self.going_to_towncenter}#'
         ret += f'collected={self.collected_for_work}#'
         ret += f'collecting={self.collecting_for_work}#'
-        if self.name == 'Merchant':
+        ret += f'pathidx={self.path_index}#'
+        ret += f'path={','.join([str(item) for item in self.path[self.path_index:]])}#'
+        if self.occupation == 'Merchant':
             if self.targettown is not None:
                 ret += f'targettown={self.targettown.id}#'
         ret = ret[:-1] + '\n'

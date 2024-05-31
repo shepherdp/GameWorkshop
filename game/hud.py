@@ -355,7 +355,7 @@ class HUD:
         w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_building.image, h=h * .1)
         self.screen.blit(img_scale, self.panel_positions['selected_building'])
-        draw_text(self.screen, self.selected_building.name, 40, (255, 255, 255),
+        draw_text(self.screen, self.selected_building.id, 40, (255, 255, 255),
                   [i + 5 for i in self.select_rect.topleft])
 
     def draw_selected_building_employment(self):
@@ -417,7 +417,7 @@ class HUD:
         w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_worker.image, h=h * .1)
         self.screen.blit(img_scale, self.panel_positions[f'selected_building'])
-        draw_text(self.screen, self.selected_worker.occupation, 40, (255, 255, 255),
+        draw_text(self.screen, self.selected_worker.id, 40, (255, 255, 255),
                   [i + 5 for i in self.select_rect.topleft])
 
         self.draw_selected_worker_inventory()

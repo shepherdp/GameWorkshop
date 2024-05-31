@@ -3,3 +3,5 @@ WORLD_W = 50
 WORLD_H = 50
 
 SHOWFPS = True
+LOAD = True
+SAVE = False

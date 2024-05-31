@@ -32,6 +32,7 @@ class Building:
         self.loc = loc
         self.resourcemanager = resourcemanager
         self.id = unique_id
+        self.town = None
 
         if not self.name == 'towncenter':
             self.resourcemanager.apply_cost(self.name)
@@ -51,11 +52,14 @@ class Building:
         return sum(d.values()) + sum(self.production.values()) > self.capacity
 
     def update_percent_employed(self):
-        if self.name != 'road':
+        if self.workers_needed > 0:
             self.percent_employed = round(len(self.workers) / self.workers_needed, 2)
 
     def update(self):
-        if pg.time.get_ticks() - self.resourcecooldown > 2000:
+        now = pg.time.get_ticks()
+        # print(self.id, self.name, now, self.resourcecooldown)
+        if now - self.resourcecooldown > 2000:
+            # print('updating')
             if not self.is_full():
                 for r in self.production:
                     self.storage[r] += self.production[r] * self.percent_employed
@@ -77,7 +81,15 @@ class Building:
         ret += f'loc={self.loc}#'
         ret += f'pos={self.pos}#'
         ret += f'workers={','.join([w.id for w in self.workers])}#'
-        ret += f'inventory={','.join([f'{key}:{value}' for key, value in self.storage.items()])}#'
+        if self.name != 'towncenter':
+            ret += f'inventory={','.join([f'{key}:{value}' for key, value in self.storage.items()])}#'
+            ret += f'town={self.town}#'
+        else:
+            ret += f'inventory={','.join([f'{key}:{value}' for key, value in self.resourcemanager.resources.items()])}#'
+            ret += f'technologies={','.join(self.techmanager.technologies)}#'
+            ret += f'currentresearch={','.join([f'{key}:{value}' for key, value in self.techmanager.current_research.items()])}#'
+            ret += f'cooldowns={','.join([f'{key}:{value}' for key, value in self.techmanager.researchcooldowns.items()])}#'
+            ret += f'buildings={','.join([b.id for b in self.buildings])}#'
         ret = ret[:-1] + '\n'
         return ret
 

@@ -6,11 +6,12 @@ from .buildings import *
 from .utils import draw_text, load_images
 from .resourcemanager import ResourceManager
 from .techmanager import TechManager
+from .workers import Worker
 import networkx as nx
 from matplotlib.pyplot import plot, savefig, scatter, cla
 
 
-LOADMAP = False
+LOADMAP = True
 MAPNAME = 'map.txt'
 
 CHARMAP = {'tree': 't',
@@ -29,8 +30,8 @@ R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 
 class World:
 
-    def __init__(self, entities, hud, camera, grid_length_x, grid_length_y, width, height):
-        self.resource_manager = ResourceManager()
+    def __init__(self, entities, hud, camera, grid_length_x, grid_length_y, width, height,
+                 savedata=None):
         self.entities = entities
         self.hud = hud
         self.screen = self.hud.screen
@@ -40,9 +41,16 @@ class World:
         self.width = width
         self.height = height
 
+        self.bldg_ctr = 0
+        self.wrkr_ctr = 0
+
         self.hud.parent = self
 
-        self.perlin_scale = grid_length_x / 2
+        if savedata:
+            # LOADMAP = True
+            self.perlin_scale = float(savedata['world']['perlin'])
+        else:
+            self.perlin_scale = grid_length_x / 2
 
         self.grass_tiles = pg.Surface((grid_length_x * TILE_SIZE * 2,
                                        grid_length_y * TILE_SIZE + 2 * TILE_SIZE)
@@ -59,8 +67,12 @@ class World:
         self.create_road_network()
 
         self.towns = []
+
+        print('placing tc')
         # choose a random spot on the map to place one initial town center
-        self.place_towncenter()
+        self.place_towncenter(savedata)
+
+        print('placed tc')
 
         self.temp_tile = None
 
@@ -72,15 +84,37 @@ class World:
         self.mouse_pos = None
         self.mouse_action = None
 
-    def place_towncenter(self):
+        print('done with creating world')
+
+    def place_towncenter(self, savedata):
         if not LOADMAP:
             x, y = self.get_random_position()
             render_pos = self.world[x][y]['render_pos']
             grid_pos = (x, y)
-            ent = TownCenter(render_pos, grid_pos, ResourceManager(), TechManager(), self.tiles)
+            ent = TownCenter(render_pos, grid_pos, ResourceManager(), TechManager(), self.tiles, f'blgd{self.bldg_ctr}')
+            self.bldg_ctr += 1
             self.towns.append(ent)
             self.buildings[x][y] = ent
             self.entities.append(ent)
+        else:
+            if savedata is not None:
+                data = savedata['buildings']
+                for d in data:
+                    if d['name'] == 'towncenter':
+                        print(d)
+                        loc = d['loc'][1:-1].split(',')
+                        x, y = int(loc[0]), int(loc[1])
+                        render = d['pos'][1:-1].split(',')
+                        rx, ry = float(render[0]), float(render[1])
+                        ent = TownCenter((rx, ry), (x, y), ResourceManager(), TechManager(), self.tiles,
+                                         d['id'])
+                        print(x, y)
+                        print(rx, ry)
+                        self.bldg_ctr += 1
+                        self.towns.append(ent)
+                        self.buildings[x][y] = ent
+                        self.entities.append(ent)
+        # sys.exit()
 
     def deselect_all(self):
         self.deselect_building()
@@ -88,6 +122,10 @@ class World:
         self.hud.select_panel_visible = False
 
     def get_temp_tile(self, grid_pos):
+
+        # TODO: this doesn't need to be updated every time, we can just update the grid/rendering position until
+        #  it is built
+
         # grab a copy of the image to place over the tile with the mouse
         img = self.hud.structure_to_build['image'].copy()
         img.set_alpha(100)
@@ -115,7 +153,9 @@ class World:
 
     def create_towncenter(self, grid_pos):
         if not self.in_any_towncenter_radius(grid_pos):
-            ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles)
+            ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles,
+                             f'bldg{self.bldg_ctr}')
+            self.bldg_ctr += 1
             ent.techmanager.technologies = self.active_town_center.techmanager.technologies.copy()
             # check to see if merchants need a target town
             for town in self.towns:
@@ -128,21 +168,28 @@ class World:
 
     def create_town_building(self, grid_pos):
         if self.hud.structure_to_build['name'] == 'well':
-            return Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'chopping':
-            return ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'quarry':
-            return Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'road':
-            return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'wheatfield':
-            return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'market':
-            return Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'workbench':
-            return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif self.hud.structure_to_build['name'] == 'house':
-            return House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager)
+            self.bldg_ctr += 1
+            return House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
 
     def add_building_to_town(self, ent):
         self.active_town_center.buildings.append(ent)
@@ -173,22 +220,23 @@ class World:
         if self.can_place_tile(grid_pos):
             self.get_temp_tile(grid_pos)
 
-            # if right click and the building can be placed, do so
-            if self.mouse_action[0] and not self.temp_tile['collision']:
-                ent = None
-                if self.hud.structure_to_build['name'] == 'towncenter':
-                    ent = self.create_towncenter(grid_pos)
-                else:
-                    if self.in_towncenter_radius(grid_pos):
-                        ent = self.create_town_building(grid_pos)
-                if ent is not None:
-                    self.place_entity(ent)
-                    if ent.name == 'road':
-                        self.update_road_network(grid_pos)
+            if self.mouse_action[0]:
+                # if left click and the building can be placed, do so
+                if not self.temp_tile['collision']:
+                    ent = None
+                    if self.hud.structure_to_build['name'] == 'towncenter':
+                        ent = self.create_towncenter(grid_pos)
+                    else:
+                        if self.in_towncenter_radius(grid_pos):
+                            ent = self.create_town_building(grid_pos)
+                    if ent is not None:
+                        self.place_entity(ent)
+                        if ent.name == 'road':
+                            self.update_road_network(grid_pos)
 
     def check_select_worker(self, grid_pos):
         worker = self.workers[grid_pos[0]][grid_pos[1]]
-        if self.mouse_action[0] and (worker is not None):
+        if (worker is not None):
             if not worker.is_visible():
                 return
             # if another worker was already selected, deselect them
@@ -224,46 +272,49 @@ class World:
 
         # check if there is a building in this position
         building = self.buildings[grid_pos[0]][grid_pos[1]]
-        if self.mouse_action[0]:
-            if building is not None:
+        if building is not None:
 
-            # if there is a selected worker, check if it is over the building
-            # return if so, otherwise deselect it
-                if self.selected_worker is not None:
-                    if self.selected_worker == grid_pos:
-                        return
-                    self.deselect_worker()
+        # if there is a selected worker, check if it is over the building
+        # return if so, otherwise deselect it
+            if self.selected_worker is not None:
+                if self.selected_worker == grid_pos:
+                    return
+                self.deselect_worker()
 
-                # this part is supposed to let the user double click on a town center and select it
-                # instead of using the button.  it wants to select the town center immediately though.
-                # need to fix this when I do click and drag.
+            # this part is supposed to let the user double click on a town center and select it
+            # instead of using the button.  it wants to select the town center immediately though.
+            # need to fix this when I do click and drag.
 
-                # if self.hud.selected_building is not None:
-                #     if building.name == 'towncenter' and self.hud.selected_building is building:
-                #         self.active_town_center = building
+            # if self.hud.selected_building is not None:
+            #     if building.name == 'towncenter' and self.hud.selected_building is building:
+            #         self.active_town_center = building
 
-                # update selected building data
-                if self.selected_building is not None:
-                    self.deselect_building()
-                self.selected_building = grid_pos
-                self.hud.selected_building = building
-                self.hud.select_panel_visible = True
+            # update selected building data
+            if self.selected_building is not None:
+                self.deselect_building()
+            self.selected_building = grid_pos
+            self.hud.selected_building = building
+            self.hud.select_panel_visible = True
 
     def handle_select_action(self, grid_pos):
         # make sure user didn't click on a visible panel or outside the screen
-        if self.can_place_tile(grid_pos):
-            self.check_select_worker(grid_pos)
-            self.check_select_building(grid_pos)
+        if self.mouse_action[0]:
+            if self.can_place_tile(grid_pos):
+                self.check_select_worker(grid_pos)
+                self.check_select_building(grid_pos)
 
     def update(self):
 
-        self.mouse_pos = pg.mouse.get_pos()
-        self.mouse_action = pg.mouse.get_pressed()
+        # self.mouse_pos = pg.mouse.get_pos()
+        # self.mouse_action = pg.mouse.get_pressed()
         self.temp_tile = None
 
         # if the user left-clicks, deselect anything that is selected
         if self.mouse_action[2]:
             self.deselect_all()
+
+        # if not self.mouse_action[0]:
+        #     return
 
         # get grid coordinates of current mouse position
         grid_pos = self.mouse_to_grid(self.mouse_pos[0], self.mouse_pos[1], self.camera.scroll)
@@ -464,7 +515,7 @@ class World:
         # place a building
         if self.temp_tile is not None:
 
-            self.mouse_pos = pg.mouse.get_pos()
+            # self.mouse_pos = pg.mouse.get_pos()
             grid_pos = self.mouse_to_grid(self.mouse_pos[0], self.mouse_pos[1], self.camera.scroll)
 
             self.draw_structure_to_build(grid_pos)
@@ -485,7 +536,13 @@ class World:
                 world_tile = self.grid_to_world(grid_x, grid_y)
 
                 if LOADMAP:
-                    char = R_CHARMAP[matrix[grid_x][grid_y]]
+                    # char = R_CHARMAP[matrix[grid_x][grid_y]]
+                    if matrix[grid_x][grid_y] == 'r':
+                        char = 'rock'
+                    elif matrix[grid_x][grid_y] == 't':
+                        char = 'tree'
+                    else:
+                        char = ''
                     world_tile['tile'] = char
                     if char != '':
                         world_tile['collision'] = True
@@ -495,8 +552,11 @@ class World:
                 world[grid_x].append(world_tile)
 
                 render_pos = world_tile['render_pos']
-                self.grass_tiles.blit(random.choice([self.tiles['grass1'], self.tiles['grass2']]),
+                # grass = [self.tiles['grass1'], self.tiles['grass2'], self.tiles['grass3']]
+                grass = [self.tiles['grass2'], self.tiles['grass3']]
+                self.grass_tiles.blit(random.choice(grass),
                                       (render_pos[0] + self.grass_tiles.get_width() / 2, render_pos[1]))
+        print('created world')
 
         return world
 
@@ -519,7 +579,7 @@ class World:
 
         tile = ''
         if not LOADMAP:
-            if (perlin >= 15) or (perlin <= -35):
+            if (perlin >= 20) or (perlin <= -50):
                 tile = 'tree'
             else:
                 if r == 1:
@@ -611,7 +671,7 @@ class World:
     def can_place_tile(self, grid_pos):
         # check if mouse is on resources or building panel
         mouse_on_panel = False
-        self.mouse_pos = pg.mouse.get_pos()
+        # self.mouse_pos = pg.mouse.get_pos()
         for rect in [self.hud.resources_rect]:
             if rect.collidepoint(self.mouse_pos):
                 mouse_on_panel = True
@@ -711,10 +771,11 @@ class World:
         for x in range(self.grid_length_x):
             string = ''
             for y in range(self.grid_length_y):
-                if self.buildings[x][y] is not None:
-                    string += CHARMAP[self.buildings[x][y].name]
-                else:
-                    string += CHARMAP[self.world[x][y]['tile']]
+                # if self.buildings[x][y] is not None:
+                #     string += CHARMAP[self.buildings[x][y].name]
+                # else:
+                #     string += CHARMAP[self.world[x][y]['tile']]
+                string += CHARMAP[self.world[x][y]['tile']]
                 string += ','
             f.write(string[:-1] + '\n')
 
@@ -787,3 +848,12 @@ class World:
         for t in self.towns:
             if len(t.villagers) < t.housing_capacity:
                 return t
+
+    def get_state_for_savefile(self):
+        ret = ''
+        ret += f'x={self.grid_length_x}#'
+        ret += f'y={self.grid_length_y}#'
+        ret += f'perlin={self.perlin_scale}#'
+        ret += f'villagers={','.join([w.id for w in self.entities if isinstance(w, Worker)])}#'
+        ret += '\n'
+        return ret

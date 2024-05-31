@@ -20,17 +20,17 @@ R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 
 
 def load_images():
-    rock = pg.image.load('..\\assets\\graphics\\rock.png').convert_alpha()
-    tree = pg.image.load('..\\assets\\graphics\\tree.png').convert_alpha()
-    well = pg.image.load('..\\assets\\graphics\\well.png').convert_alpha()
-    b1 = pg.image.load('../assets/graphics/house.png').convert_alpha()
-    b2 = pg.image.load('..\\assets\\graphics\\building2.png').convert_alpha()
-    chopping = pg.image.load('..\\assets\\graphics\\choppingblock.png').convert_alpha()
-    block = pg.image.load('..\\assets\\graphics\\testblock.png').convert_alpha()
-    road = pg.image.load('..\\assets\\graphics\\road.png').convert_alpha()
-    water = pg.image.load('..\\assets\\graphics\\water.png').convert_alpha()
-    tc = pg.image.load('..\\assets\\graphics\\towncenter.png').convert_alpha()
-    worker = pg.image.load('..\\assets\\graphics\\woodcutter.png').convert_alpha()
+    rock = pg.image.load('..\\assets\\graphics\\terrain\\rock.png').convert_alpha()
+    tree = pg.image.load('..\\assets\\graphics\\terrain\\tree.png').convert_alpha()
+    well = pg.image.load('..\\assets\\graphics\\buildings\\well.png').convert_alpha()
+    b1 = pg.image.load('..\\assets\\graphics\\buildings\\house.png').convert_alpha()
+    b2 = pg.image.load('..\\assets\\graphics\\buildings\\building2.png').convert_alpha()
+    chopping = pg.image.load('..\\assets\\graphics\\buildings\\choppingblock.png').convert_alpha()
+    road = pg.image.load('..\\assets\\graphics\\buildings\\road.png').convert_alpha()
+    water = pg.image.load('..\\assets\\graphics\\terrain\\water.png').convert_alpha()
+    tc = pg.image.load('..\\assets\\graphics\\buildings\\towncenter.png').convert_alpha()
+    worker = pg.image.load('..\\assets\\graphics\\buildings\\woodcutter.png').convert_alpha()
+    block = pg.image.load('..\\assets\\graphics\\terrain\\grass1.png').convert_alpha()
 
     images = {'b1': b1,
               'b2': b2,

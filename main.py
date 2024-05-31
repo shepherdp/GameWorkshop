@@ -16,13 +16,13 @@ def main():
 
     game = Game(screen, clock)
 
-    while running:
+    # while running:
 
         # start
 
-        while playing:
+        # while playing:
 
-            game.run()
+    game.run()
 
 if __name__ == '__main__':
     main()

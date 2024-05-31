@@ -24,12 +24,14 @@ USERATES = {'water': .4,
 
 class Building:
 
-    def __init__(self, pos, loc, imgname, bldgname, resourcemanager, workers_needed):
+    def __init__(self, pos, loc, imgname, bldgname, resourcemanager, workers_needed, unique_id):
         self.image = pg.image.load(f'assets\\graphics\\buildings\\{imgname}.png').convert_alpha()
         self.name = bldgname
+        self.pos = pos
         self.rect = self.image.get_rect(topleft=pos)
         self.loc = loc
         self.resourcemanager = resourcemanager
+        self.id = unique_id
 
         if not self.name == 'towncenter':
             self.resourcemanager.apply_cost(self.name)
@@ -68,18 +70,29 @@ class Building:
     def check_currently_in_building(self):
         return len([w for w in self.workers if w.arrived_at_work])
 
+    def get_state_for_savefile(self):
+        ret = ''
+        ret += f'id={self.id}#'
+        ret += f'name={self.name}#'
+        ret += f'loc={self.loc}#'
+        ret += f'pos={self.pos}#'
+        ret += f'workers={','.join([w.id for w in self.workers])}#'
+        ret += f'inventory={','.join([f'{key}:{value}' for key, value in self.storage.items()])}#'
+        ret = ret[:-1] + '\n'
+        return ret
+
 class BaseProductionBuilding(Building):
 
-    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers):
-        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers)
+    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers, unique_id):
+        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers, unique_id)
 
     def needs_goods(self):
         return False
 
 class RefinedProductionBuilding(BaseProductionBuilding):
 
-    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers):
-        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers)
+    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers, unique_id):
+        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers, unique_id)
 
     def needs_goods(self):
         return any([self.storage[key] < self.consumption[key] * 10 for key in self.consumption])
@@ -99,8 +112,8 @@ class TownBuilding(Building):
 
 class TownCenter(Building):
 
-    def __init__(self, pos, loc, resourcemanager, techmanager, worker_imgs):
-        super().__init__(pos, loc, 'towncenter', 'towncenter', resourcemanager, 0)
+    def __init__(self, pos, loc, resourcemanager, techmanager, worker_imgs, unique_id):
+        super().__init__(pos, loc, 'towncenter', 'towncenter', resourcemanager, 0, unique_id)
         self.buildings = []
         self.num_buildings = {}
         self.villagers = []
@@ -202,15 +215,15 @@ class TownCenter(Building):
 
 class ChoppingBlock(BaseProductionBuilding):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'choppingblock', 'chopping', manager, 2)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'choppingblock', 'chopping', manager, 2, unique_id)
         self.storage = {'wood': 0}
         self.production = {'wood': 1}
 
 class Workbench(RefinedProductionBuilding):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'workbench', 'workbench', manager, 2)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'workbench', 'workbench', manager, 2, unique_id)
         self.storage = {'simpletools': 0, 'wood': 1, 'stone': 1}
         self.production = {'simpletools': 1}
         self.consumption = {'wood': .1, 'stone': .1}
@@ -238,8 +251,8 @@ class Workbench(RefinedProductionBuilding):
 
 class Well(BaseProductionBuilding):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'well', 'well', manager, 1)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'well', 'well', manager, 1, unique_id)
         self.storage = {'water': 0}
         self.production = {'water': 1}
 
@@ -252,13 +265,13 @@ class Well(BaseProductionBuilding):
 
 class Road(Building):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'road', 'road', manager, 0)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'road', 'road', manager, 0, unique_id)
 
 class Quarry(BaseProductionBuilding):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'quarry', 'quarry', manager, 2)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'quarry', 'quarry', manager, 2, unique_id)
         self.storage = {'stone': 0}
         self.production = {'stone': 1}
 
@@ -271,8 +284,8 @@ class Quarry(BaseProductionBuilding):
 
 class Wheatfield(BaseProductionBuilding):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'wheatfield', 'wheatfield', manager, 2)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'wheatfield', 'wheatfield', manager, 2, unique_id)
         self.storage = {'wheat': 0}
         self.production = {'wheat': 1}
 
@@ -285,8 +298,8 @@ class Wheatfield(BaseProductionBuilding):
 
 class House(Building):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'house', 'house', manager, 0)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'house', 'house', manager, 0, unique_id)
 
         self.needs = {'wood': 0,
                       'water': 0}
@@ -318,8 +331,8 @@ class House(Building):
 
 class Market(Building):
 
-    def __init__(self, pos, loc, manager):
-        super().__init__(pos, loc, 'market', 'market', manager, 1)
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'market', 'market', manager, 1, unique_id)
 
     def needs_goods(self):
         return False

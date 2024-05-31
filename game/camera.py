@@ -35,4 +35,4 @@ class Camera:
         self.scroll.y += self.dy
 
     def get_state_for_savefile(self):
-        return f'w={self.width},h={self.height},scroll=({self.scroll.x},{self.scroll.y}),dx={self.dx},dy={self.dy}\n'
+        return f'w={self.width}#h={self.height}#scroll=({self.scroll.x},{self.scroll.y})#dx={self.dx}#dy={self.dy}\n'

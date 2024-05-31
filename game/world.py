@@ -11,7 +11,7 @@ import networkx as nx
 from matplotlib.pyplot import plot, savefig, scatter, cla
 
 
-LOADMAP = False
+LOADMAP = True
 MAPNAME = 'map.txt'
 
 CHARMAP = {'tree': 't',
@@ -30,7 +30,8 @@ R_CHARMAP = {item: key for key, item in CHARMAP.items()}
 
 class World:
 
-    def __init__(self, entities, hud, camera, grid_length_x, grid_length_y, width, height):
+    def __init__(self, entities, hud, camera, grid_length_x, grid_length_y, width, height,
+                 savedata=None):
         self.entities = entities
         self.hud = hud
         self.screen = self.hud.screen
@@ -45,7 +46,11 @@ class World:
 
         self.hud.parent = self
 
-        self.perlin_scale = grid_length_x / 2
+        if savedata:
+            # LOADMAP = True
+            self.perlin_scale = float(savedata['world']['perlin'])
+        else:
+            self.perlin_scale = grid_length_x / 2
 
         self.grass_tiles = pg.Surface((grid_length_x * TILE_SIZE * 2,
                                        grid_length_y * TILE_SIZE + 2 * TILE_SIZE)
@@ -62,8 +67,12 @@ class World:
         self.create_road_network()
 
         self.towns = []
+
+        print('placing tc')
         # choose a random spot on the map to place one initial town center
-        self.place_towncenter()
+        self.place_towncenter(savedata)
+
+        print('placed tc')
 
         self.temp_tile = None
 
@@ -75,7 +84,9 @@ class World:
         self.mouse_pos = None
         self.mouse_action = None
 
-    def place_towncenter(self):
+        print('done with creating world')
+
+    def place_towncenter(self, savedata):
         if not LOADMAP:
             x, y = self.get_random_position()
             render_pos = self.world[x][y]['render_pos']
@@ -85,6 +96,25 @@ class World:
             self.towns.append(ent)
             self.buildings[x][y] = ent
             self.entities.append(ent)
+        else:
+            if savedata is not None:
+                data = savedata['buildings']
+                for d in data:
+                    if d['name'] == 'towncenter':
+                        print(d)
+                        loc = d['loc'][1:-1].split(',')
+                        x, y = int(loc[0]), int(loc[1])
+                        render = d['pos'][1:-1].split(',')
+                        rx, ry = float(render[0]), float(render[1])
+                        ent = TownCenter((rx, ry), (x, y), ResourceManager(), TechManager(), self.tiles,
+                                         d['id'])
+                        print(x, y)
+                        print(rx, ry)
+                        self.bldg_ctr += 1
+                        self.towns.append(ent)
+                        self.buildings[x][y] = ent
+                        self.entities.append(ent)
+        # sys.exit()
 
     def deselect_all(self):
         self.deselect_building()
@@ -506,7 +536,13 @@ class World:
                 world_tile = self.grid_to_world(grid_x, grid_y)
 
                 if LOADMAP:
-                    char = R_CHARMAP[matrix[grid_x][grid_y]]
+                    # char = R_CHARMAP[matrix[grid_x][grid_y]]
+                    if matrix[grid_x][grid_y] == 'r':
+                        char = 'rock'
+                    elif matrix[grid_x][grid_y] == 't':
+                        char = 'tree'
+                    else:
+                        char = ''
                     world_tile['tile'] = char
                     if char != '':
                         world_tile['collision'] = True
@@ -520,6 +556,7 @@ class World:
                 grass = [self.tiles['grass2'], self.tiles['grass3']]
                 self.grass_tiles.blit(random.choice(grass),
                                       (render_pos[0] + self.grass_tiles.get_width() / 2, render_pos[1]))
+        print('created world')
 
         return world
 
@@ -734,10 +771,11 @@ class World:
         for x in range(self.grid_length_x):
             string = ''
             for y in range(self.grid_length_y):
-                if self.buildings[x][y] is not None:
-                    string += CHARMAP[self.buildings[x][y].name]
-                else:
-                    string += CHARMAP[self.world[x][y]['tile']]
+                # if self.buildings[x][y] is not None:
+                #     string += CHARMAP[self.buildings[x][y].name]
+                # else:
+                #     string += CHARMAP[self.world[x][y]['tile']]
+                string += CHARMAP[self.world[x][y]['tile']]
                 string += ','
             f.write(string[:-1] + '\n')
 

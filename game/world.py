@@ -92,6 +92,10 @@ class World:
         self.hud.select_panel_visible = False
 
     def get_temp_tile(self, grid_pos):
+
+        # TODO: this doesn't need to be updated every time, we can just update the grid/rendering position until
+        #  it is built
+
         # grab a copy of the image to place over the tile with the mouse
         img = self.hud.structure_to_build['image'].copy()
         img.set_alpha(100)
@@ -186,22 +190,23 @@ class World:
         if self.can_place_tile(grid_pos):
             self.get_temp_tile(grid_pos)
 
-            # if right click and the building can be placed, do so
-            if self.mouse_action[0] and not self.temp_tile['collision']:
-                ent = None
-                if self.hud.structure_to_build['name'] == 'towncenter':
-                    ent = self.create_towncenter(grid_pos)
-                else:
-                    if self.in_towncenter_radius(grid_pos):
-                        ent = self.create_town_building(grid_pos)
-                if ent is not None:
-                    self.place_entity(ent)
-                    if ent.name == 'road':
-                        self.update_road_network(grid_pos)
+            if self.mouse_action[0]:
+                # if left click and the building can be placed, do so
+                if not self.temp_tile['collision']:
+                    ent = None
+                    if self.hud.structure_to_build['name'] == 'towncenter':
+                        ent = self.create_towncenter(grid_pos)
+                    else:
+                        if self.in_towncenter_radius(grid_pos):
+                            ent = self.create_town_building(grid_pos)
+                    if ent is not None:
+                        self.place_entity(ent)
+                        if ent.name == 'road':
+                            self.update_road_network(grid_pos)
 
     def check_select_worker(self, grid_pos):
         worker = self.workers[grid_pos[0]][grid_pos[1]]
-        if self.mouse_action[0] and (worker is not None):
+        if (worker is not None):
             if not worker.is_visible():
                 return
             # if another worker was already selected, deselect them
@@ -237,36 +242,36 @@ class World:
 
         # check if there is a building in this position
         building = self.buildings[grid_pos[0]][grid_pos[1]]
-        if self.mouse_action[0]:
-            if building is not None:
+        if building is not None:
 
-            # if there is a selected worker, check if it is over the building
-            # return if so, otherwise deselect it
-                if self.selected_worker is not None:
-                    if self.selected_worker == grid_pos:
-                        return
-                    self.deselect_worker()
+        # if there is a selected worker, check if it is over the building
+        # return if so, otherwise deselect it
+            if self.selected_worker is not None:
+                if self.selected_worker == grid_pos:
+                    return
+                self.deselect_worker()
 
-                # this part is supposed to let the user double click on a town center and select it
-                # instead of using the button.  it wants to select the town center immediately though.
-                # need to fix this when I do click and drag.
+            # this part is supposed to let the user double click on a town center and select it
+            # instead of using the button.  it wants to select the town center immediately though.
+            # need to fix this when I do click and drag.
 
-                # if self.hud.selected_building is not None:
-                #     if building.name == 'towncenter' and self.hud.selected_building is building:
-                #         self.active_town_center = building
+            # if self.hud.selected_building is not None:
+            #     if building.name == 'towncenter' and self.hud.selected_building is building:
+            #         self.active_town_center = building
 
-                # update selected building data
-                if self.selected_building is not None:
-                    self.deselect_building()
-                self.selected_building = grid_pos
-                self.hud.selected_building = building
-                self.hud.select_panel_visible = True
+            # update selected building data
+            if self.selected_building is not None:
+                self.deselect_building()
+            self.selected_building = grid_pos
+            self.hud.selected_building = building
+            self.hud.select_panel_visible = True
 
     def handle_select_action(self, grid_pos):
         # make sure user didn't click on a visible panel or outside the screen
-        if self.can_place_tile(grid_pos):
-            self.check_select_worker(grid_pos)
-            self.check_select_building(grid_pos)
+        if self.mouse_action[0]:
+            if self.can_place_tile(grid_pos):
+                self.check_select_worker(grid_pos)
+                self.check_select_building(grid_pos)
 
     def update(self):
 
@@ -277,6 +282,9 @@ class World:
         # if the user left-clicks, deselect anything that is selected
         if self.mouse_action[2]:
             self.deselect_all()
+
+        # if not self.mouse_action[0]:
+        #     return
 
         # get grid coordinates of current mouse position
         grid_pos = self.mouse_to_grid(self.mouse_pos[0], self.mouse_pos[1], self.camera.scroll)

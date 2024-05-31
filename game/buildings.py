@@ -27,6 +27,7 @@ class Building:
     def __init__(self, pos, loc, imgname, bldgname, resourcemanager, workers_needed, unique_id):
         self.image = pg.image.load(f'assets\\graphics\\buildings\\{imgname}.png').convert_alpha()
         self.name = bldgname
+        self.pos = pos
         self.rect = self.image.get_rect(topleft=pos)
         self.loc = loc
         self.resourcemanager = resourcemanager
@@ -74,7 +75,10 @@ class Building:
         ret += f'id={self.id}#'
         ret += f'name={self.name}#'
         ret += f'loc={self.loc}#'
-        ret += '\n'
+        ret += f'pos={self.pos}#'
+        ret += f'workers={','.join([w.id for w in self.workers])}#'
+        ret += f'inventory={','.join([f'{key}:{value}' for key, value in self.storage.items()])}#'
+        ret = ret[:-1] + '\n'
         return ret
 
 class BaseProductionBuilding(Building):

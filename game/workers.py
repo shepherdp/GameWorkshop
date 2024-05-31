@@ -137,14 +137,17 @@ class Worker:
                 # print('b')
                 self.going_to_towncenter = False
                 self.arrived_at_towncenter = True
+                self.current_task = 'At Town Center'
             if self.going_to_work:
                 # print('c')
                 self.going_to_work = False
                 self.arrived_at_work = True
+                self.current_task = 'Working'
             if self.going_home:
                 # print('d')
                 self.going_home = False
                 self.arrived_at_home = True
+                self.current_task = 'Resting'
 
         self.check_needs_town()
 
@@ -285,33 +288,31 @@ class Worker:
                     break
 
     def update_merchant(self):
-        # print('Im here')
-        if not self.moving:
-            if self.arrived_at_work:
-                self.sell_all_to_towncenter()
-                if self.targettown is not None:
-                    self.buy_from_towncenter()
-                    self.get_path_to_targettown()
-                else:
-                    if len(self.world.towns) > 1:
-                        self.targettown = self.world.towns[1]
-            elif self.arrived_at_towncenter:
-                self.sell_all_to_targettown()
-                self.buy_from_targettown()
-                if self.energy <= 25:
-                    self.pickup_home_needs()
-                    self.get_path_to_home()
-                else:
-                    self.get_path_to_work()
-            elif self.arrived_at_home:
-                self.dropoff_at_home()
-                if self.energy == 100:
-                    self.get_path_to_work()
-                else:
-                    now = pg.time.get_ticks()
-                    if now - self.energycooldown > 500:
-                        self.energy += 1
-                        self.energycooldown = now
+        if self.arrived_at_work:
+            self.sell_all_to_towncenter()
+            if self.targettown is not None:
+                self.buy_from_towncenter()
+                self.get_path_to_targettown()
+            else:
+                if len(self.world.towns) > 1:
+                    self.targettown = self.world.towns[1]
+        elif self.arrived_at_towncenter:
+            self.sell_all_to_targettown()
+            self.buy_from_targettown()
+            if self.energy <= 25:
+                self.pickup_home_needs()
+                self.get_path_to_home()
+            else:
+                self.get_path_to_work()
+        elif self.arrived_at_home:
+            self.dropoff_at_home()
+            if self.energy == 100:
+                self.get_path_to_work()
+            else:
+                now = pg.time.get_ticks()
+                if now - self.energycooldown > 500:
+                    self.energy += 1
+                    self.energycooldown = now
         else:
             self.move()
 
@@ -323,12 +324,12 @@ class Worker:
                 self.skillcooldown = now
                 self.skills[self.occupation] += 1
 
-        if self.occupation == 'Merchant':
-            self.update_merchant()
-            return
-
         # if the worker is stationary, check if they have arrived at a workplace or at a town center
         if not self.moving:
+
+            if self.occupation == 'Merchant':
+                self.update_merchant()
+                return
 
             # if they are at their job, and it is full, collect the resources and head to town
             if self.arrived_at_work:
@@ -427,6 +428,7 @@ class Worker:
                     self.inventory[key] = int(self.workplace.storage[key])
                 self.workplace.storage[key] -= int(self.workplace.storage[key])
             self.energy -= 15
+            self.current_task = 'Taking goods to Town Center'
             return True
         return False
 
@@ -473,7 +475,19 @@ class Worker:
         ret += f'gold={self.gold}#'
         ret += f'currenttask={self.current_task}#'
         ret += f'inventory={','.join([f'{key}:{value}' for key, value in self.inventory.items()])}#'
-        ret += '\n'
+        ret += f'skills={','.join([f'{key}:{value}' for key, value in self.skills.items()])}#'
+        ret += f'aaw={self.arrived_at_work}#'
+        ret += f'aah={self.arrived_at_home}#'
+        ret += f'aatc={self.arrived_at_towncenter}#'
+        ret += f'gtw={self.going_to_work}#'
+        ret += f'gh={self.going_home}#'
+        ret += f'gttc={self.going_to_towncenter}#'
+        ret += f'collected={self.collected_for_work}#'
+        ret += f'collecting={self.collecting_for_work}#'
+        if self.name == 'Merchant':
+            if self.targettown is not None:
+                ret += f'targettown={self.targettown.id}#'
+        ret = ret[:-1] + '\n'
         return ret
 
 class BasicProductionWorker(Worker):

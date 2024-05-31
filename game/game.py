@@ -123,7 +123,7 @@ class Game:
         for w in self.entities:
             if isinstance(w, Worker):
                 f.write(w.get_state_for_savefile())
-        f.write('BUILDINGS')
+        f.write('BUILDINGS\n')
         for b in self.entities:
             if isinstance(b, Building):
                 f.write(b.get_state_for_savefile())
@@ -131,7 +131,44 @@ class Game:
 
     def load(self):
         f = open('savefile.txt', 'r')
+        line = f.readline()[:-1]
+        if line != 'CAMERA':
+            raise Exception('BAD SAVE FILE FORMAT')
+        line = f.readline()[:-1]
+        splitline = line.split('#')
+        for pair in splitline:
+            pair = pair.split('=')
+            print(pair)
+        line = f.readline()[:-1]
+        if line != 'WORLD':
+            raise Exception('BAD SAVE FILE FORMAT')
+        line = f.readline()[:-1]
+        splitline = line.split('#')
+        for pair in splitline:
+            print(pair, end=' ')
+            pair = pair.split('=')
+            print(pair)
+        line = f.readline()[:-1]
+        if line != 'WORKERS':
+            raise Exception('BAD SAVE FILE FORMAT')
+        line = f.readline()[:-1]
+        while line != 'BUILDINGS':
+            splitline = line.split('#')
+            for pair in splitline:
+                print(pair, end=' ')
+                pair = pair.split('=')
+                print(pair)
 
+            line = f.readline()[:-1]
+
+        line = f.readline()[:-1]
+        while line:
+            splitline = line.split('#')
+            for pair in splitline:
+                print(pair, end=' ')
+                pair = pair.split('=')
+                print(pair)
+            line = f.readline()[:-1]
 
         f.close()
 

@@ -206,6 +206,7 @@ class World:
             w.energy = energy
             if town != 'None':
                 w.town = towns[town]
+                w.town.villagers.append(w)
             if home != 'None':
                 w.home = bldgs[home]
                 w.home.occupants.append(w)

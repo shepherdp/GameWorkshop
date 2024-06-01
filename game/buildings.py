@@ -198,6 +198,7 @@ class TownCenter(Building):
     def update(self):
 
         # assign villagers to houses if any are needed
+        # print([(w.id, w.workplace) for w in self.villagers if w.workplace is None])
         for w in self.villagers:
             if w.home is None:
                 for bldg in self.buildings:
@@ -208,10 +209,13 @@ class TownCenter(Building):
                             break
             # assign villagers to workplaces if any are needed
             if w.workplace is None:
+                print('Looking for work for ', w.id)
                 for bldg in self.buildings:
                     if bldg.name not in ['house', 'road']:
-                        if bldg.percent_employed < 1:
+                        print('checking ', bldg.id)
+                        if len(bldg.workers) < bldg.workers_needed:
                             self.assign_worker_to_building(w, bldg)
+                            print('got em')
                             break
 
         self.techmanager.update_research_progress()

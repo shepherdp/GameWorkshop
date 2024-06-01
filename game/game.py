@@ -9,10 +9,8 @@ from .workers import Worker
 from .world import World
 from .buildings import Building
 
-from .settings import WORLD_W, WORLD_H, SHOWFPS
+from .settings import WORLD_W, WORLD_H, SHOWFPS, LOAD, SAVE
 
-
-LOAD = True
 
 class Game:
 
@@ -45,8 +43,6 @@ class Game:
                            savedata=savedata)
 
         self.spawncooldown = pg.time.get_ticks()
-
-
 
     def run(self):
         self.playing = True
@@ -174,9 +170,10 @@ class Game:
         return savedata
 
     def quit(self):
-        self.world.write_map()
-        # self.world.write_world_network()
-        # self.world.write_road_network()
-        self.save()
+        if SAVE:
+            self.world.write_map()
+            # self.world.write_world_network()
+            # self.world.write_road_network()
+            self.save()
         pg.quit()
         sys.exit()

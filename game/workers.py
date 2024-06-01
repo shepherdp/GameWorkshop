@@ -37,7 +37,6 @@ class Worker:
         self.skillcooldown = pg.time.get_ticks()
 
         self.inventory = {}
-        self.skills = {}
 
         self.current_task = 'wandering'
 
@@ -60,12 +59,16 @@ class Worker:
         newtown = self.world.find_town_with_vacancy()
         if newtown is None:
             self.get_random_path()
+            # print('GOT NEW PATH', self.path)
+            # print(self.moving)
         else:
             self.assign_town(newtown)
             self.occupation = 'Beggar'
+            self.current_task = 'Going to town'
             self.get_path_to_towncenter()
 
     def get_path_to_work(self):
+        # print('creating path to work')
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         self.end = self.workplace.loc
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
@@ -74,8 +77,10 @@ class Worker:
 
         self.reset_travel_vars()
         self.going_to_work = True
+        self.current_task = 'Going to work'
 
     def get_path_to_towncenter(self):
+        # print('creating path to town')
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         self.end = self.town.loc
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
@@ -84,8 +89,10 @@ class Worker:
 
         self.reset_travel_vars()
         self.going_to_towncenter = True
+        self.current_task = 'Going to town center'
 
     def get_path_to_targettown(self):
+        # print('creating path to target town')
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         self.end = self.targettown.loc
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
@@ -94,8 +101,10 @@ class Worker:
 
         self.reset_travel_vars()
         self.going_to_towncenter = True
+        self.current_task = 'Going to other town'
 
     def get_path_to_home(self):
+        # print('creating path to home')
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         self.end = self.home.loc
         self.path = dijkstra_path(self.world.world_network, self.start, self.end)
@@ -104,10 +113,14 @@ class Worker:
 
         self.reset_travel_vars()
         self.going_home = True
+        self.current_task = 'Going home'
+        if sum([value for key, value in self.inventory.items()]) > 0:
+            self.current_task += ' with goods'
 
     def get_random_path(self):
         self.start = (self.tile["grid"][0], self.tile["grid"][1])
         found = False
+        # print('getting random path')
         while not found:
             self.end = self.world.get_random_position()
             try:
@@ -117,6 +130,7 @@ class Worker:
                 continue
         self.path_index = 0
         self.moving = True
+        self.current_task = 'Wandering'
 
         self.reset_travel_vars()
 
@@ -133,6 +147,8 @@ class Worker:
         # print('a')
         if self.path_index == len(self.path) - 1:
             self.moving = False
+            if self.workplace is None:
+                self.get_random_path()
             if self.going_to_towncenter:
                 # print('b')
                 self.going_to_towncenter = False
@@ -158,25 +174,23 @@ class Worker:
             newtown = self.world.find_town_with_vacancy()
             if newtown is not None:
                 self.assign_town(newtown)
-            else:
-                self.get_random_path()
+                self.current_task = 'Going to town'
 
     def check_work_needs_goods(self):
-        # print('checking', self.going_to_towncenter, self.going_home, self.going_to_work, self.arrived_at_towncenter,
-        #       self.arrived_at_home, self.arrived_at_work, self.collecting_for_work)
         if self.collected_for_work or self.collecting_for_work:
             return
         if self.workplace.needs_goods():
-            # print('xxx')
             self.collecting_for_work = True
             if not self.going_to_towncenter:
                 self.reset_travel_vars()
                 self.going_to_towncenter = True
+                self.current_task = 'Picking up goods for work'
                 self.get_path_to_towncenter()
 
     def assign_town(self, newtown):
         self.town = newtown
         self.town.villagers.append(self)
+        self.current_task = 'Going to town'
         self.get_path_to_towncenter()
         self.going_to_towncenter = True
         self.town.num_villagers += 1
@@ -189,8 +203,9 @@ class Worker:
             # print(self.tile['render_pos'][0] + self.offsets[0], self.tile['render_pos'][0] + self.offsets[0])
             self.animationtimer = pg.time.get_ticks()
         if now - self.move_timer > 500:
-            # print('changing tile')
-            # update position in the world
+            # print('MOVING', self.path_index, self.path, self.moving)
+            # print('current position: ', self.tile['grid'])
+            # print('new position: ', self.path[self.path_index])
             new_pos = self.path[self.path_index]
             new_tile = self.world.world[new_pos[0]][new_pos[1]]
             # print(self.tile['render_pos'], new_tile['render_pos'])
@@ -225,32 +240,24 @@ class Worker:
     def sell_all_to_targettown(self):
         canafford = True
         self.just_sold = []
-        # print('selling everything to other town')
         for item in self.inventory:
             if not canafford:
-                # print('out of money')
                 break
-            # print('selling', item)
             for i in range(self.inventory[item]):
                 if item not in self.just_sold:
                     self.just_sold.append(item)
                 price = int(self.targettown.resourcemanager.get_price(item, mode=1))
                 canafford = self.targettown.resourcemanager.resources['gold'] >= price
                 if canafford:
-                    # print('selling one for', price)
                     self.targettown.resourcemanager.resources['gold'] -= price
                     self.gold += price
                     self.targettown.resourcemanager.resources[item] += 1
                     self.inventory[item] -= 1
                 else:
                     break
-            # print('done selling', item)
 
     def buy_from_towncenter(self):
-        print('getting demand from other town center')
         target_demand = self.targettown.get_current_demand()
-        print(target_demand)
-        print(self.just_sold)
         for _, item in target_demand:
             if _ <= 0 or item in self.just_sold:
                 continue
@@ -268,9 +275,7 @@ class Worker:
                     break
 
     def buy_from_targettown(self):
-        # print('getting demand from own town center')
         target_demand = self.town.get_current_demand()
-        # print(target_demand)
         for _, item in target_demand:
             if _ <= 0 or item in self.just_sold:
                 continue
@@ -304,6 +309,7 @@ class Worker:
                 self.get_path_to_home()
             else:
                 self.get_path_to_work()
+                self.current_task = 'Returning from trading'
         elif self.arrived_at_home:
             self.dropoff_at_home()
             if self.energy == 100:
@@ -314,6 +320,7 @@ class Worker:
                     self.energy += 1
                     self.energycooldown = now
         else:
+            # print('about to move!')
             self.move()
 
     def update(self):
@@ -333,18 +340,18 @@ class Worker:
 
             # if they are at their job, and it is full, collect the resources and head to town
             if self.arrived_at_work:
-                # print('I arrived at work')
                 if self.collected_for_work:
+                    self.current_task = 'Working'
                     for item in self.workplace.consumption:
                         self.workplace.storage[item] += self.inventory[item]
                         self.inventory[item] = 0
                         self.collected_for_work = False
                 if self.collect_from_work():
                     self.get_path_to_towncenter()
+                    self.current_task = 'Taking goods to town'
 
             # if they arrived at the town center, sit and wait or drop off goods and return to work
             elif self.arrived_at_towncenter:
-                # print('I arrived at the town center')
                 if self.workplace is not None:
                     if sum(self.inventory.values()) > 0:
                         self.dropoff_at_towncenter()
@@ -357,8 +364,6 @@ class Worker:
                                 self.pickup_home_needs()
                                 self.get_path_to_home()
                     else:
-                        # print('here', self.going_to_towncenter, self.going_home, self.going_to_work, self.arrived_at_towncenter,
-                        #       self.arrived_at_home, self.arrived_at_work)
                         if not self.collected_for_work:
                             goods = self.workplace.goods_needed()
                             for g in goods:
@@ -370,13 +375,11 @@ class Worker:
                             self.collected_for_work = True
                             self.collecting_for_work = False
                             self.get_path_to_work()
-                        # print(self.going_to_towncenter, self.going_home, self.going_to_work, self.arrived_at_towncenter,
-                        #       self.arrived_at_home, self.arrived_at_work)
+                            self.current_task = 'Taking goods to work'
                 else:
                     self.reset_travel_vars()
 
             elif self.arrived_at_home:
-                # print('I arrived at home')
                 self.dropoff_at_home()
                 if self.energy == 100:
                     self.get_path_to_work()
@@ -428,7 +431,6 @@ class Worker:
                     self.inventory[key] = int(self.workplace.storage[key])
                 self.workplace.storage[key] -= int(self.workplace.storage[key])
             self.energy -= 15
-            self.current_task = 'Taking goods to Town Center'
             return True
         return False
 
@@ -484,7 +486,9 @@ class Worker:
         ret += f'gttc={self.going_to_towncenter}#'
         ret += f'collected={self.collected_for_work}#'
         ret += f'collecting={self.collecting_for_work}#'
-        if self.name == 'Merchant':
+        ret += f'pathidx={self.path_index}#'
+        ret += f'path={','.join([str(item) for item in self.path[self.path_index:]])}#'
+        if self.occupation == 'Merchant':
             if self.targettown is not None:
                 ret += f'targettown={self.targettown.id}#'
         ret = ret[:-1] + '\n'

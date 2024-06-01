@@ -1,9 +1,9 @@
 # import pygame as pg
 import random
 import noise
-from .settings import TILE_SIZE
+from .settings import TILE_SIZE, LOAD
 from .buildings import *
-from .utils import draw_text, load_images
+from .utils import load_images
 from .resourcemanager import ResourceManager
 from .techmanager import TechManager
 from .workers import Worker
@@ -11,7 +11,6 @@ import networkx as nx
 from matplotlib.pyplot import plot, savefig, scatter, cla
 
 
-LOADMAP = True
 MAPNAME = 'map.txt'
 
 CHARMAP = {'tree': 't',
@@ -47,7 +46,6 @@ class World:
         self.hud.parent = self
 
         if savedata:
-            # LOADMAP = True
             self.perlin_scale = float(savedata['world']['perlin'])
         else:
             self.perlin_scale = grid_length_x / 2
@@ -68,11 +66,12 @@ class World:
 
         self.towns = []
 
-        print('placing tc')
         # choose a random spot on the map to place one initial town center
-        self.place_towncenter(savedata)
 
-        print('placed tc')
+        if savedata is None:
+            self.place_towncenter()
+        else:
+            self.load_savedata(savedata)
 
         self.temp_tile = None
 
@@ -84,37 +83,211 @@ class World:
         self.mouse_pos = None
         self.mouse_action = None
 
-        print('done with creating world')
+    def place_towncenter(self):
+        x, y = self.get_random_position()
+        render_pos = self.world[x][y]['render_pos']
+        grid_pos = (x, y)
+        self.bldg_ctr += 1
+        ent = TownCenter(render_pos, grid_pos, ResourceManager(), TechManager(), self.tiles, f'blgd{self.bldg_ctr}')
+        self.towns.append(ent)
+        self.buildings[x][y] = ent
+        self.entities.append(ent)
 
-    def place_towncenter(self, savedata):
-        if not LOADMAP:
-            x, y = self.get_random_position()
-            render_pos = self.world[x][y]['render_pos']
-            grid_pos = (x, y)
-            ent = TownCenter(render_pos, grid_pos, ResourceManager(), TechManager(), self.tiles, f'blgd{self.bldg_ctr}')
-            self.bldg_ctr += 1
-            self.towns.append(ent)
-            self.buildings[x][y] = ent
-            self.entities.append(ent)
-        else:
-            if savedata is not None:
-                data = savedata['buildings']
-                for d in data:
-                    if d['name'] == 'towncenter':
-                        print(d)
-                        loc = d['loc'][1:-1].split(',')
-                        x, y = int(loc[0]), int(loc[1])
-                        render = d['pos'][1:-1].split(',')
-                        rx, ry = float(render[0]), float(render[1])
-                        ent = TownCenter((rx, ry), (x, y), ResourceManager(), TechManager(), self.tiles,
-                                         d['id'])
-                        print(x, y)
-                        print(rx, ry)
-                        self.bldg_ctr += 1
-                        self.towns.append(ent)
-                        self.buildings[x][y] = ent
-                        self.entities.append(ent)
-        # sys.exit()
+    def load_savedata(self, savedata):
+        data = savedata['buildings']
+        town_bldgs = {}
+        towns = {}
+        # instantiate town centers
+        for d in data:
+            if d['name'] == 'towncenter':
+                loc = d['loc'][1:-1].split(',')
+                x, y = int(loc[0]), int(loc[1])
+                render = d['pos'][1:-1].split(',')
+                rx, ry = float(render[0]), float(render[1])
+                ent = TownCenter((rx, ry), (x, y), ResourceManager(), TechManager(), self.tiles,
+                                 d['id'])
+                goodslist = d['inventory'].split(',')
+                for entry in goodslist:
+                    splitline = entry.split(':')
+                    ent.resourcemanager.resources[splitline[0]] = int(splitline[1])
+                techs = d.get('technologies', None)
+                if techs is not None:
+                    ent.techmanager.technologies = techs.split(',')
+                techcooldowns = d.get('cooldowns', None)
+                if techcooldowns is not None:
+                    cooldownlist = techcooldowns.split(',')
+                    for item in cooldownlist:
+                        splitline = item.split(':')
+                        ent.techmanager.researchcooldowns[splitline[0]] = 0
+                techresearch = d.get('currentresearch', None)
+                if techresearch is not None:
+                    cooldownlist = techresearch.split(',')
+                    for item in cooldownlist:
+                        splitline = item.split(':')
+                        ent.techmanager.current_research[splitline[0]] = int(splitline[1])
+                ent.techmanager.update_unlock_status()
+                bldgs = d['buildings'].split(',')
+                town_bldgs[d['id']] = bldgs
+                towns[d['id']] = ent
+
+                self.bldg_ctr += 1
+                self.towns.append(ent)
+                self.buildings[x][y] = ent
+                self.entities.append(ent)
+
+        bldgs = {}
+
+        # instantiate other buildings
+        for d in data:
+            if d['name'] != 'towncenter':
+                loc = d['loc'][1:-1].split(',')
+                x, y = int(loc[0]), int(loc[1])
+                render = d['pos'][1:-1].split(',')
+                rx, ry = float(render[0]), float(render[1])
+                self.bldg_ctr += 1
+
+                rm = towns[d['town']].resourcemanager
+
+                ent = None
+                if d['name'] == 'well':
+                    ent = Well((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'chopping':
+                    ent = ChoppingBlock((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'quarry':
+                    ent = Quarry((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'road':
+                    ent = Road(self.temp_tile['render_pos'], (x, y), rm, d['id'])
+                elif d['name'] == 'wheatfield':
+                    ent = Wheatfield((rx, ry), (x, y), rm, d['id'])
+                elif ['name'] == 'market':
+                    ent = Market((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'workbench':
+                    ent = Workbench((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'house':
+                    ent = House((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'market':
+                    ent = Market((rx, ry), (x, y), rm, d['id'])
+
+                if 'inventory' in d:
+                    inv = d['inventory'].split(',')
+                    for item in inv:
+                        splitline = item.split(':')
+                        ent.storage[splitline[0]] = float(splitline[1])
+
+                bldgs[d['id']] = ent
+                self.buildings[x][y] = ent
+                self.entities.append(ent)
+                for t in self.towns:
+                    if t.id == d['town']:
+                        t.buildings.append(ent)
+                        if ent.name in t.num_buildings:
+                            t.num_buildings[ent.name] += 1
+                        else:
+                            t.num_buildings[ent.name] = 1
+                        if ent.name == 'house':
+                            t.housing_capacity += 5
+                        break
+
+        data = savedata['workers']
+        for d in data:
+            unique_id = d['id']
+            name = d['name']
+            loc = d['pos'][1:-1].split(',')
+            x, y = int(loc[0]), int(loc[1])
+            home = d['home']
+            work = d['work']
+            inv = d['inventory']
+            skills = d['skills']
+            town = d['town']
+            energy = int(d['energy'])
+
+            w = Worker(self.world[x][y], self, unique_id)
+            w.name = name
+            w.energy = energy
+            if town != 'None':
+                w.town = towns[town]
+            if home != 'None':
+                w.home = bldgs[home]
+                w.home.occupants.append(w)
+            if work != 'None':
+                w.workplace = bldgs[work]
+                if w.workplace.name == 'well':
+                    w.occupation = 'Water Carrier'
+                    w.image = pg.transform.scale(self.tiles['watercarrier'],
+                                                 (self.tiles['watercarrier'].get_width() * 2,
+                                                  self.tiles['watercarrier'].get_height() * 2))
+                if w.workplace.name == 'wheatfield':
+                    w.occupation = 'Farmer'
+                    w.image = pg.transform.scale(self.tiles['farmer'],
+                                                 (self.tiles['farmer'].get_width() * 2,
+                                                  self.tiles['farmer'].get_height() * 2))
+                if w.workplace.name == 'chopping':
+                    w.occupation = 'Woodcutter'
+                    w.image = pg.transform.scale(self.tiles['woodcutter'],
+                                                 (self.tiles['woodcutter'].get_width() * 2,
+                                                  self.tiles['woodcutter'].get_height() * 2))
+                if w.workplace.name == 'quarry':
+                    w.occupation = 'Quarryman'
+                    w.image = pg.transform.scale(self.tiles['quarryman'],
+                                                 (self.tiles['quarryman'].get_width() * 2,
+                                                  self.tiles['quarryman'].get_height() * 2))
+                if w.workplace.name == 'workbench':
+                    w.occupation = 'Tool Maker'
+                    w.image = pg.transform.scale(self.tiles['farmer'],
+                                                 (self.tiles['farmer'].get_width() * 2,
+                                                  self.tiles['farmer'].get_height() * 2))
+                if w.workplace.name == 'market':
+                    w.occupation = 'Merchant'
+                    w.image = pg.transform.scale(self.tiles['merchant'],
+                                                 (self.tiles['merchant'].get_width() * 2,
+                                                  self.tiles['merchant'].get_height() * 2))
+                    if d['targettown'] != 'None':
+                        w.targettown = towns[d['targettown']]
+                w.workplace.workers.append(w)
+
+            # assign travel variables and get a path
+            w.arrived_at_towncenter = True if d['aatc'] == 'True' else False
+            w.arrived_at_work = True if d['aaw'] == 'True' else False
+            w.arrived_at_home = True if d['aah'] == 'True' else False
+            w.going_to_towncenter = True if d['gttc'] == 'True' else False
+            w.going_to_work = True if d['gtw'] == 'True' else False
+            w.going_home = True if d['gh'] == 'True' else False
+            w.collected_for_work = True if d['collected'] == 'True' else False
+            w.collecting_for_work = True if d['collecting'] == 'True' else False
+
+            w.path_index = 0
+            w.path = []
+            rawpath = d['path'].split(',')
+            for i in range(0, len(rawpath), 2):
+                x, y = rawpath[i], rawpath[i+1]
+                x = x.replace('(', '')
+                x = x.replace(' ', '')
+                x = x.replace(')', '')
+                y = y.replace('(', '')
+                y = y.replace(' ', '')
+                y = y.replace(')', '')
+                w.path.append((int(x), int(y)))
+
+            w.check_end_of_path()
+
+            if inv:
+                splitline = inv.split(',')
+                for item in splitline:
+                    key, value = item.split(':')
+                    value = int(value)
+                    w.inventory[key] = value
+            if skills:
+                splitline = skills.split(',')
+                for item in splitline:
+                    key, value = item.split(':')
+                    value = int(value)
+                    w.skills[key] = value
+
+        # final updates on building stats
+        for b in bldgs:
+            bldgs[b].currently_in_building = len([w for w in bldgs[b].workers if w.arrived_at_work])
+            bldgs[b].resourcecooldown = 0
+            bldgs[b].update_percent_employed()
 
     def deselect_all(self):
         self.deselect_building()
@@ -153,9 +326,9 @@ class World:
 
     def create_towncenter(self, grid_pos):
         if not self.in_any_towncenter_radius(grid_pos):
+            self.bldg_ctr += 1
             ent = TownCenter(self.temp_tile['render_pos'], grid_pos, ResourceManager(), TechManager(), self.tiles,
                              f'bldg{self.bldg_ctr}')
-            self.bldg_ctr += 1
             ent.techmanager.technologies = self.active_town_center.techmanager.technologies.copy()
             # check to see if merchants need a target town
             for town in self.towns:
@@ -205,8 +378,6 @@ class World:
         self.entities.append(ent)
         self.buildings[ent.loc[0]][ent.loc[1]] = ent
 
-        # print('placed entity: ', self.buildings[ent.loc[0]][ent.loc[1]], 'at location ', ent.loc)
-
         # if the building is not a town center, assign it to the currently active one
         if self.hud.structure_to_build['name'] != 'towncenter':
             self.add_building_to_town(ent)
@@ -230,6 +401,7 @@ class World:
                         if self.in_towncenter_radius(grid_pos):
                             ent = self.create_town_building(grid_pos)
                     if ent is not None:
+                        ent.town = self.active_town_center.id
                         self.place_entity(ent)
                         if ent.name == 'road':
                             self.update_road_network(grid_pos)
@@ -305,16 +477,11 @@ class World:
 
     def update(self):
 
-        # self.mouse_pos = pg.mouse.get_pos()
-        # self.mouse_action = pg.mouse.get_pressed()
         self.temp_tile = None
 
         # if the user left-clicks, deselect anything that is selected
         if self.mouse_action[2]:
             self.deselect_all()
-
-        # if not self.mouse_action[0]:
-        #     return
 
         # get grid coordinates of current mouse position
         grid_pos = self.mouse_to_grid(self.mouse_pos[0], self.mouse_pos[1], self.camera.scroll)
@@ -355,13 +522,11 @@ class World:
             for w in building.occupants:
                 if w.is_visible():
                     self.highlights.append(w)
-                    # self.highlight_worker(w, (0, 0, 255))
         elif building.name in ['chopping', 'well', 'wheatfield', 'quarry']:
             # get all workers and highlight them
             for w in building.workers:
                 if w.is_visible():
                     self.highlights.append(w)
-                    # self.highlight_worker(w, (0, 0, 255))
 
     def highlight_building(self, building, color):
         x, y = building.loc
@@ -381,11 +546,9 @@ class World:
         if worker.workplace is not None:
             # get workplace and highlight it
             self.highlights.append(worker.workplace)
-            # self.highlight_building(worker.workplace, (0, 0, 255))
         if worker.home is not None:
             # get house and highlight it
             self.highlights.append(worker.home)
-            # self.highlight_building(worker.home, (0, 0, 255))
 
     def draw_terrain_tile(self, tile, render_pos):
         if tile != '':
@@ -422,9 +585,6 @@ class World:
                 return
             if worker.arrived_at_towncenter and not worker.moving:
                 return
-                # if self.selected_worker is worker:
-                #     self.deselect_all()
-                # return
             self.screen.blit(worker.image,
                              (render_pos[0] + worker.offsets[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
                               render_pos[1] + worker.offsets[1] - (worker.image.get_height() - TILE_SIZE) + self.camera.scroll.y))
@@ -523,7 +683,7 @@ class World:
     def create_world(self):
 
         matrix = None
-        if LOADMAP:
+        if LOAD:
             f = open(MAPNAME, 'r')
             matrix = [i[:-1].split(',') for i in f.readlines()]
             f.close()
@@ -535,7 +695,7 @@ class World:
             for grid_y in range(self.grid_length_y):
                 world_tile = self.grid_to_world(grid_x, grid_y)
 
-                if LOADMAP:
+                if LOAD:
                     # char = R_CHARMAP[matrix[grid_x][grid_y]]
                     if matrix[grid_x][grid_y] == 'r':
                         char = 'rock'
@@ -552,11 +712,9 @@ class World:
                 world[grid_x].append(world_tile)
 
                 render_pos = world_tile['render_pos']
-                # grass = [self.tiles['grass1'], self.tiles['grass2'], self.tiles['grass3']]
-                grass = [self.tiles['grass2'], self.tiles['grass3']]
+                grass = [self.tiles['grass1'], self.tiles['grass2'], self.tiles['grass3']]
                 self.grass_tiles.blit(random.choice(grass),
                                       (render_pos[0] + self.grass_tiles.get_width() / 2, render_pos[1]))
-        print('created world')
 
         return world
 
@@ -578,7 +736,7 @@ class World:
         perlin = 100 * noise.pnoise2(grid_x / self.perlin_scale, grid_y / self.perlin_scale)
 
         tile = ''
-        if not LOADMAP:
+        if not LOAD:
             if (perlin >= 20) or (perlin <= -50):
                 tile = 'tree'
             else:
@@ -633,9 +791,7 @@ class World:
         self.road_network = nx.Graph()
 
     def update_road_network(self, pos):
-        print('Updating road network')
         self.road_network.add_node((pos[0], pos[1]))
-        print(self.road_network.nodes)
         nbrs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         for i in range(len(self.buildings)):
             for j in range(len(self.buildings[i])):
@@ -643,8 +799,8 @@ class World:
                     print(f'{self.buildings[i][j]} {(i, j)}')
         for nbr in nbrs:
             if 0 <= pos[0] + nbr[0] < self.grid_length_x and 0 <= pos[1] + nbr[1] < self.grid_length_y:
-                print('nbr is good: ', pos[0] + nbr[0], ',', pos[1] + nbr[1])
-                print('nbr bldg: ', self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]])
+                # print('nbr is good: ', pos[0] + nbr[0], ',', pos[1] + nbr[1])
+                # print('nbr bldg: ', self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]])
                 if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]] is not None:
                     if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]].name == 'road':
                         self.road_network.add_edge(pos, (pos[0] + nbr[0], pos[1] + nbr[1]))
@@ -715,16 +871,12 @@ class World:
 
         for n1, n2 in self.world_network.edges:
             x1, y1 = n1
-            # x1 = self.grid_length_x - 1 - x1
             y1 = self.grid_length_y - y1 - 1
             x2, y2 = n2
-            # x2 = self.grid_length_x - 1 - x2
             y2 = self.grid_length_y - y2 - 1
 
             plot([x1, x2], [y1, y2], 'k')
 
-
-        # nx.draw_networkx(self.world_network, with_labels=True)
         savefig('world_network.png')
         cla()
 
@@ -736,34 +888,21 @@ class World:
             for y in range(self.grid_length_y):
                 if (x, y) in self.road_network.nodes:
                     color = (.5, .5, 0)
-                    print('Node: ', (x, y))
-                    # scatter([y], [self.grid_length_x - 1 - x], c=(color,))
                 else:
                     color = (1., 1., 1.)
-                    # scatter([y], [self.grid_length_x - 1 - x], c=(color,))
-                # xs.append(self.grid_length_x - 1 - x)
                 xs.append(x)
                 ys.append(self.grid_length_y - 1 - y)
-                # ys.append(y)
                 colors.append(color)
-        # scatter(ys, xs, c=colors)
         scatter(xs, ys, c=colors)
 
         for n1, n2 in self.road_network.edges:
             x1, y1 = n1
             y1 = self.grid_length_y - 1 - y1
-            # x1 = self.grid_length_x - 1 - x1
             x2, y2 = n2
             y2 = self.grid_length_y - 1 - y2
-            # x2 = self.grid_length_x - 1 - x2
 
-            print((x1, y1), (x2, y2))
-
-            # plot([y1, y2], [x1, x2], 'k')
             plot([x1, x2], [y1, y2], 'k')
 
-        # nx.draw_networkx(self.world_network, with_labels=True)
-        print(self.road_network.edges)
         savefig('road_network.png')
 
     def write_map(self):
@@ -771,10 +910,6 @@ class World:
         for x in range(self.grid_length_x):
             string = ''
             for y in range(self.grid_length_y):
-                # if self.buildings[x][y] is not None:
-                #     string += CHARMAP[self.buildings[x][y].name]
-                # else:
-                #     string += CHARMAP[self.world[x][y]['tile']]
                 string += CHARMAP[self.world[x][y]['tile']]
                 string += ','
             f.write(string[:-1] + '\n')
@@ -855,5 +990,5 @@ class World:
         ret += f'y={self.grid_length_y}#'
         ret += f'perlin={self.perlin_scale}#'
         ret += f'villagers={','.join([w.id for w in self.entities if isinstance(w, Worker)])}#'
-        ret += '\n'
+        ret = ret[:-1] + '\n'
         return ret

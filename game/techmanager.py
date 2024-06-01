@@ -43,11 +43,9 @@ class TechManager:
 
     def update_unlock_status(self):
         for key in self.building_unlock_status:
-            # self.building_unlock_status[key] = True
             if all([i in self.technologies for i in BLDG_PREREQS[key]]):
                 self.building_unlock_status[key] = True
         for key in self.tech_unlock_status:
-            # self.tech_unlock_status[key] = True
             if key in self.technologies:
                 self.tech_unlock_status[key] = False
             elif all([i in self.technologies for i in TECH_PREREQS[key]]):

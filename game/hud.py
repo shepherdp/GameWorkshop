@@ -355,7 +355,7 @@ class HUD:
         w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_building.image, h=h * .1)
         self.screen.blit(img_scale, self.panel_positions['selected_building'])
-        draw_text(self.screen, self.selected_building.name, 40, (255, 255, 255),
+        draw_text(self.screen, self.selected_building.id, 40, (255, 255, 255),
                   [i + 5 for i in self.select_rect.topleft])
 
     def draw_selected_building_employment(self):
@@ -417,7 +417,7 @@ class HUD:
         w, h = self.select_rect.width, self.select_rect.height
         img_scale = self.scale_image(self.selected_worker.image, h=h * .1)
         self.screen.blit(img_scale, self.panel_positions[f'selected_building'])
-        draw_text(self.screen, self.selected_worker.occupation, 40, (255, 255, 255),
+        draw_text(self.screen, self.selected_worker.id, 40, (255, 255, 255),
                   [i + 5 for i in self.select_rect.topleft])
 
         self.draw_selected_worker_inventory()
@@ -425,32 +425,8 @@ class HUD:
     def draw_selected_worker_inventory(self):
         draw_text(self.screen, f'Energy: {self.selected_worker.energy} / 100', 20,
                   (255, 255, 255), self.panel_positions[f'selected_text_1'])
-        draw_text(self.screen, 'Inventory', 20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
-        draw_text(self.screen, f'Gold: {self.selected_worker.gold}', 20, (255, 255, 255), self.panel_positions[f'selected_text_3'])
-        i = 4
-        for name, count in self.selected_worker.inventory.items():
-            draw_text(self.screen, f'{name}: {count}', 20, (255, 255, 255), self.panel_positions[f'selected_text_{i}'])
-            i += 1
-        # current_task = 'Wandering'
-        # if self.selected_worker.going_to_work:
-        #     current_task = 'Going to work'
-        #     if self.selected_worker.collected_for_work:
-        #         current_task += ' with supplies'
-        # if self.selected_worker.going_home:
-        #     current_task = 'Going home'
-        #     if sum(self.selected_worker.inventory.values()) > 0:
-        #         current_task += ' with goods'
-        # if self.selected_worker.going_to_towncenter:
-        #     current_task = 'Going to town center'
-        #     if sum(self.selected_worker.inventory.values()) > 0:
-        #         current_task += ' with goods'
-        # if self.selected_worker.arrived_at_work:
-        #     current_task = 'Working'
-        # if self.selected_worker.arrived_at_home:
-        #     current_task = 'Resting'
-        # if self.selected_worker.arrived_at_towncenter:
-        #     current_task = 'Trading'
-        # draw_text(self.screen, f'{current_task}', 20, (255, 255, 255), self.panel_positions[f'selected_text_{i}'])
+        draw_text(self.screen, f'Gold: {self.selected_worker.gold}', 20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
+        draw_text(self.screen, f'{self.selected_worker.current_task}', 20, (255, 255, 255), self.panel_positions[f'selected_text_3'])
 
     def draw_selected_building_occupancy(self):
         draw_text(self.screen,

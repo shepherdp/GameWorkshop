@@ -338,6 +338,9 @@ class Worker:
                 self.update_merchant()
                 return
 
+            if self.workplace is None:
+                self.get_random_path()
+
             # if they are at their job, and it is full, collect the resources and head to town
             if self.arrived_at_work:
                 if self.collected_for_work:

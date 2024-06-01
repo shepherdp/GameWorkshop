@@ -44,6 +44,7 @@ def load_images():
     # buttons
     deselect_button = pg.image.load('assets\\graphics\\buttons\\deselect_button.png').convert_alpha()
     select_button = pg.image.load('assets\\graphics\\buttons\\select_button.png').convert_alpha()
+    delete_button = pg.image.load('assets\\graphics\\buttons\\delete_button.png').convert_alpha()
 
     beggar = pg.image.load('assets\\graphics\\characters\\beggar.png').convert_alpha()
     watercarrier = pg.image.load('assets\\graphics\\characters\\watercarrier.png').convert_alpha()
@@ -51,6 +52,7 @@ def load_images():
     farmer = pg.image.load('assets\\graphics\\characters\\farmer.png').convert_alpha()
     quarryman = pg.image.load('assets\\graphics\\characters\\quarryman.png').convert_alpha()
     merchant = pg.image.load('assets\\graphics\\characters\\merchant.png').convert_alpha()
+
 
 
     images = {'rock': rock,
@@ -85,7 +87,8 @@ def load_images():
               'simpletools_tech': simpletools_tech_icon,
               'agriculture': agriculture_tech_icon,
               'deselect_button': deselect_button,
-              'select_button': select_button
+              'select_button': select_button,
+              'delete_button': delete_button
               }
 
     return images

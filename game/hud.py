@@ -177,6 +177,23 @@ class HUD:
                 render_pos[0] += surface_w + 10
             i += 1
 
+        i = 15
+        render_pos = list(self.panel_positions['building_panel'])
+        render_pos[0] += .05 * self.panel_dimensions['building_panel'][0]
+        render_pos[1] += .05 * self.panel_dimensions['building_panel'][1]
+        pos = render_pos.copy()
+        pos[0] += 3 * (surface_w + 10)
+        pos[1] += 3 * (tiles[0]['icon'].get_height() + 10)
+        img = self.images['delete_button']
+        img_scale = self.scale_image(img, w=surface_w)
+        rect = img_scale.get_rect(topleft=pos)
+        tiles[i] = {'name': 'delete_button',
+                    'icon': img_scale,
+                    'image': self.images['delete_button'],
+                    'rect': rect,
+                    'affordable': True,
+                    'unlocked': True}
+
         return tiles
 
     def get_techtile_dict(self):
@@ -279,12 +296,15 @@ class HUD:
         if self.parent.active_town_center is not None:
             for key in self.build_tiles:
                 tile = self.build_tiles[key]
+
+                # replace this with an affordability calculation when resource amounts change instead of every frame
                 if self.parent.active_town_center.resourcemanager.is_affordable(tile['name']):
                     tile['affordable'] = True
                 else:
                     tile['affordable'] = False
-                if self.parent.active_town_center.techmanager.building_unlock_status[tile['name']]:
-                    tile['unlocked'] = True
+                if tile['name'] != 'delete_button':
+                    if self.parent.active_town_center.techmanager.building_unlock_status[tile['name']]:
+                        tile['unlocked'] = True
                 if self.context_display == 'building':
                     if tile['rect'].collidepoint(self.mouse_pos) and tile['affordable'] and tile['unlocked']:
                         if self.mouse_action[0]:
@@ -292,6 +312,9 @@ class HUD:
                             self.parent.selected_building = None
                             self.selected_building = None
                             self.select_panel_visible = False
+                            if self.structure_to_build['name'] == 'delete_button':
+                                self.structure_to_build['img'] = None
+                                self.parent.ready_to_delete = True
 
     def update_tech_tiles(self):
         if self.parent.active_town_center is not None:
@@ -313,12 +336,11 @@ class HUD:
                             self.parent.active_town_center.techmanager.start_research(tile['name'])
 
     def update(self):
-        # self.mouse_pos = pg.mouse.get_pos()
-        # self.mouse_action = pg.mouse.get_pressed()
 
-        if self.selected_worker is not None:
-            if self.selected_worker.arrived_at_home or self.selected_worker.arrived_at_work:
-                self.parent.deselect_all()
+        # this will deselect a worker that is in a building
+        # if self.selected_worker is not None:
+        #     if self.selected_worker.arrived_at_home or self.selected_worker.arrived_at_work:
+        #         self.parent.deselect_all()
 
         # check if user wants to unselect a structure they were going to build
         self.check_deselect_structure_to_build()
@@ -484,7 +506,6 @@ class HUD:
 
     def draw_building_panel_tiles(self):
         for key in self.build_tiles:
-
             tile = self.build_tiles[key]
 
             # darken the current tile if it isn't affordable

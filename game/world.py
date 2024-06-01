@@ -39,6 +39,7 @@ class World:
         self.grid_length_y = grid_length_y
         self.width = width
         self.height = height
+        self.ready_to_delete = False
 
         self.bldg_ctr = 0
         self.wrkr_ctr = 0
@@ -393,19 +394,43 @@ class World:
             self.get_temp_tile(grid_pos)
 
             if self.mouse_action[0]:
-                # if left click and the building can be placed, do so
-                if not self.temp_tile['collision']:
-                    ent = None
-                    if self.hud.structure_to_build['name'] == 'towncenter':
-                        ent = self.create_towncenter(grid_pos)
+                if not self.ready_to_delete:
+
+                    # if left click and the building can be placed, do so
+                    if not self.temp_tile['collision']:
+                        ent = None
+                        if self.hud.structure_to_build['name'] == 'towncenter':
+                            ent = self.create_towncenter(grid_pos)
+                        else:
+                            if self.in_towncenter_radius(grid_pos):
+                                ent = self.create_town_building(grid_pos)
+                        if ent is not None:
+                            ent.town = self.active_town_center.id
+                            self.place_entity(ent)
+                            if ent.name == 'road':
+                                self.update_road_network(grid_pos)
+                else:
+                    bldg = self.buildings[grid_pos[0]][grid_pos[1]]
+                    if bldg is not None:
+                        if bldg.name == 'house':
+                            self.active_town_center.housing_capacity -= 5
+                            for w in bldg.occupants:
+                                w.home = None
+                                w.reset_travel_vars()
+                        else:
+                            for w in bldg.workers:
+                                w.workplace = None
+                                w.reset_travel_vars()
+
+                        # remove it from the face of the earth
+                        self.active_town_center.buildings.remove(bldg)
+                        self.active_town_center.num_buildings[bldg.name] -= 1
+                        self.entities.remove(bldg)
+                        self.buildings[grid_pos[0]][grid_pos[1]] = None
+                        del bldg
                     else:
-                        if self.in_towncenter_radius(grid_pos):
-                            ent = self.create_town_building(grid_pos)
-                    if ent is not None:
-                        ent.town = self.active_town_center.id
-                        self.place_entity(ent)
-                        if ent.name == 'road':
-                            self.update_road_network(grid_pos)
+                        print('no')
+
 
     def check_select_worker(self, grid_pos):
         worker = self.workers[grid_pos[0]][grid_pos[1]]
@@ -619,6 +644,14 @@ class World:
 
     def draw_build_indicator(self, grid_pos, iso_poly):
 
+        if self.ready_to_delete:
+            building = self.buildings[grid_pos[0]][grid_pos[1]]
+            if building is not None:
+                pg.draw.polygon(self.screen, (0, 255, 0), iso_poly, 3)
+            else:
+                pg.draw.polygon(self.screen, (255, 0, 0, 100), iso_poly, 3)
+            return
+
         # red indicator if tile cannot be placed
         if self.temp_tile['collision'] or (self.workers[grid_pos[0]][grid_pos[1]] is not None):
             pg.draw.polygon(self.screen, (255, 0, 0, 100), iso_poly, 3)
@@ -642,10 +675,20 @@ class World:
 
         self.draw_build_indicator(grid_pos, iso_poly)
 
-        render_pos = self.temp_tile['render_pos']
-        self.screen.blit(self.temp_tile['image'],
-                         (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
-                          render_pos[1] - (self.temp_tile['image'].get_height() - TILE_SIZE) + self.camera.scroll.y))
+        if self.ready_to_delete:
+            if self.buildings[grid_pos[0]][grid_pos[1]] is not None:
+                render_pos = self.temp_tile['render_pos']
+                self.temp_tile['image'] = self.buildings[grid_pos[0]][grid_pos[1]].image.copy()
+                self.temp_tile['image'].fill((190, 0, 0, 100), special_flags=pg.BLEND_ADD)
+                self.screen.blit(self.temp_tile['image'],
+                                 (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                                  render_pos[1] - (
+                                              self.temp_tile['image'].get_height() - TILE_SIZE) + self.camera.scroll.y))
+        if not self.ready_to_delete:
+            render_pos = self.temp_tile['render_pos']
+            self.screen.blit(self.temp_tile['image'],
+                             (render_pos[0] + self.grass_tiles.get_width() / 2 + self.camera.scroll.x,
+                              render_pos[1] - (self.temp_tile['image'].get_height() - TILE_SIZE) + self.camera.scroll.y))
 
     def draw(self):
 
@@ -663,7 +706,7 @@ class World:
                             self.buildings[x][y] is None,
                             tile == ''])
 
-                if free and self.temp_tile is not None:
+                if free and self.temp_tile is not None and not self.ready_to_delete:
                     self.draw_radius_indicator(x, y)
 
                 # if it is not a grass tile, mark it as not free and draw the tile
@@ -909,10 +952,11 @@ class World:
     def write_map(self):
         f = open('map.txt', 'w')
         for x in range(self.grid_length_x):
-            string = ''
-            for y in range(self.grid_length_y):
-                string += CHARMAP[self.world[x][y]['tile']]
-                string += ','
+            string = ','.join([CHARMAP[self.world[x][y]['tile']] for y in range(self.grid_length_y)])
+            # string = ''
+            # for y in range(self.grid_length_y):
+            #     string += CHARMAP[self.world[x][y]['tile']]
+            #     string += ','
             f.write(string[:-1] + '\n')
 
         f.close()
@@ -941,19 +985,15 @@ class World:
                 continue
             elif not self.world[num1][0]['collision']:
                 found = True
-                x = num1
-                y = 0
+                x, y = num1, 0
             elif not self.world[0][num2]['collision']:
                 found = True
-                x = 0
-                y = num2
+                x, y = 0, num2
         return x, y
 
     def dist(self, pos1, pos2):
         # get the simple hamming distance between two tiles
-        x1, y1 = pos1[0], pos1[1]
-        x2, y2 = pos2[0], pos2[1]
-        return abs(x2 - x1) + abs(y2 - y1)
+        return abs(pos2[0] - pos1[0]) + abs(pos2[1] - pos1[1])
 
     def in_any_towncenter_radius(self, pos):
         for tc in self.towns:

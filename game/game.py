@@ -113,6 +113,11 @@ class Game:
                       25,
                       (255, 255, 255),
                       (10, 10))
+            draw_text(self.screen,
+                      f'ready to delete: {self.world.ready_to_delete}',
+                      25,
+                      (255, 255, 255),
+                      (30, 10))
 
         pg.display.flip()
 

@@ -57,9 +57,7 @@ class Building:
 
     def update(self):
         now = pg.time.get_ticks()
-        # print(self.id, self.name, now, self.resourcecooldown)
         if now - self.resourcecooldown > 2000:
-            # print('updating')
             if not self.is_full():
                 for r in self.production:
                     self.storage[r] += self.production[r] * self.percent_employed
@@ -68,7 +66,6 @@ class Building:
                 for r in self.production:
                     self.storage[r] = self.capacity
             self.storage = {key: round(self.storage[key], 2) for key in self.storage}
-            # self.resourcemanager.resources['gold'] += 1
             self.resourcecooldown = pg.time.get_ticks()
 
     def check_currently_in_building(self):
@@ -253,27 +250,12 @@ class Workbench(RefinedProductionBuilding):
             # self.resourcemanager.resources['gold'] += 1
             self.resourcecooldown = pg.time.get_ticks()
 
-
-    # def update(self):
-    #     if pg.time.get_ticks() - self.resourcecooldown > 2000:
-    #         if not self.is_full():
-    #             self.storage['wood'] += 1
-    #         # self.resourcemanager.resources['gold'] += 1
-    #         self.resourcecooldown = pg.time.get_ticks()
-
 class Well(BaseProductionBuilding):
 
     def __init__(self, pos, loc, manager, unique_id):
         super().__init__(pos, loc, 'well', 'well', manager, 1, unique_id)
         self.storage = {'water': 0}
         self.production = {'water': 1}
-
-    # def update(self):
-    #     if pg.time.get_ticks() - self.resourcecooldown > 2000:
-    #         if not self.is_full():
-    #             self.storage['water'] += 1
-    #         # self.resourcemanager.resources['gold'] += 1
-    #         self.resourcecooldown = pg.time.get_ticks()
 
 class Road(Building):
 
@@ -287,26 +269,12 @@ class Quarry(BaseProductionBuilding):
         self.storage = {'stone': 0}
         self.production = {'stone': 1}
 
-    # def update(self):
-    #     if pg.time.get_ticks() - self.resourcecooldown > 2000:
-    #         if not self.is_full():
-    #             self.storage['stone'] += 1
-    #         # self.resourcemanager.resources['gold'] += 1
-    #         self.resourcecooldown = pg.time.get_ticks()
-
 class Wheatfield(BaseProductionBuilding):
 
     def __init__(self, pos, loc, manager, unique_id):
         super().__init__(pos, loc, 'wheatfield', 'wheatfield', manager, 2, unique_id)
         self.storage = {'wheat': 0}
         self.production = {'wheat': 1}
-
-    # def update(self):
-    #     if pg.time.get_ticks() - self.resourcecooldown > 2000:
-    #         if not self.is_full():
-    #             self.storage['wheat'] += 1
-    #         # self.resourcemanager.resources['gold'] += 1
-    #         self.resourcecooldown = pg.time.get_ticks()
 
 class House(Building):
 

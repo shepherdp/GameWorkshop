@@ -44,8 +44,6 @@ class Game:
 
         self.spawncooldown = pg.time.get_ticks()
 
-
-
     def run(self):
         self.playing = True
         while self.playing:

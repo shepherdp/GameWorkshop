@@ -60,8 +60,8 @@ class HUD:
                                 'select_panel': (self.width * .01, self.height * .03)}
         self.panel_dimensions = {'resources_panel': (self.width, self.height * .02),
                                  # 'select_panel': (self.width * .2, self.height * .2),
-                                 'select_panel': (self.width * .2, self.height * .96),
-                                 'activate_town_center_button': (self.width * .07, self.height * .05)}
+                                 'select_panel': (self.width * .2, self.height * .96),}
+                                 # 'activate_town_center_button': (self.width * .07, self.height * .05)}
         self.panel_positions['activate_town_center_button'] = (self.panel_positions['select_panel'][0] + .5 * self.panel_dimensions['select_panel'][0],
                                                                self.panel_positions['select_panel'][1] + .05 * self.panel_dimensions['select_panel'][1])
         self.panel_positions['selected_building'] = (self.panel_positions['select_panel'][0] + .02 * self.panel_dimensions['select_panel'][0],
@@ -137,9 +137,11 @@ class HUD:
                                                                                          self.height * .075))
 
     def create_activate_towncenter_button(self):
-        self.activate_town_center_button = pg.Surface(self.panel_dimensions['activate_town_center_button'], pg.SRCALPHA)
-        self.activate_town_center_button.fill((0, 0, 200, 175))
+        self.activate_town_center_button = self.images['select_button']
         self.activate_town_center_rect = self.activate_town_center_button.get_rect(topleft=self.panel_positions['activate_town_center_button'])
+        # self.activate_town_center_button = pg.Surface(self.panel_dimensions['activate_town_center_button'], pg.SRCALPHA)
+        # self.activate_town_center_button.fill((0, 0, 200, 175))
+        # self.activate_town_center_rect = self.activate_town_center_button.get_rect(topleft=self.panel_positions['activate_town_center_button'])
 
     def create_deactivate_towncenter_button(self):
         self.deselect_town_center_button = self.images['deselect_button']
@@ -237,26 +239,6 @@ class HUD:
                 render_pos[0] += 3 * surface_w
 
         return tiles
-
-        # for i in range(4):
-        #     for j in range(4):
-        #         pos = render_pos.copy()
-        #         img = pg.Surface((surface_w, surface_h), pg.SRCALPHA)
-        #         img.fill((0, 0, 0))
-        #         rect = img.get_rect(topleft=pos)
-        #         tiles[(i, j)] = {'name': '',
-        #                       'icon': img,
-        #                       'image': img,
-        #                       'rect': rect,
-        #                       'affordable': True,
-        #                       'unlocked': False}
-        #         horizontalpos += 1
-        #         if not horizontalpos % 4:
-        #             render_pos[0] = leftpos
-        #             render_pos[1] += surface_h + 10
-        #         else:
-        #             render_pos[0] += surface_w + 10
-        # return tiles
 
     def check_activate_towncenter(self):
         if self.selected_building is not None:
@@ -377,8 +359,6 @@ class HUD:
 
     def draw_activate_towncenter_button(self):
         self.screen.blit(self.activate_town_center_button, self.panel_positions['activate_town_center_button'])
-        draw_text(self.screen, 'Select', 30, (255, 255, 255),
-                  self.activate_town_center_rect.topleft)
 
     def draw_buildmode_button(self):
         self.screen.blit(self.buildmode_button, self.panel_positions['buildmode_button'])
@@ -389,11 +369,6 @@ class HUD:
         self.screen.blit(self.techmode_button, self.panel_positions['techmode_button'])
         draw_text(self.screen, 'Tech', 30, (255, 255, 255),
                   self.techmode_button_rect.topleft)
-
-    def draw_activate_towncenter_button(self):
-        self.screen.blit(self.activate_town_center_button, self.panel_positions['activate_town_center_button'])
-        draw_text(self.screen, 'Select', 30, (255, 255, 255),
-                  self.activate_town_center_rect.topleft)
 
     def draw_town_occupancy(self):
 

@@ -209,13 +209,10 @@ class TownCenter(Building):
                             break
             # assign villagers to workplaces if any are needed
             if w.workplace is None:
-                print('Looking for work for ', w.id)
                 for bldg in self.buildings:
                     if bldg.name not in ['house', 'road']:
-                        print('checking ', bldg.id)
                         if len(bldg.workers) < bldg.workers_needed:
                             self.assign_worker_to_building(w, bldg)
-                            print('got em')
                             break
 
         self.techmanager.update_research_progress()

@@ -43,6 +43,7 @@ def load_images():
 
     # buttons
     deselect_button = pg.image.load('assets\\graphics\\buttons\\deselect_button.png').convert_alpha()
+    select_button = pg.image.load('assets\\graphics\\buttons\\select_button.png').convert_alpha()
 
     beggar = pg.image.load('assets\\graphics\\characters\\beggar.png').convert_alpha()
     watercarrier = pg.image.load('assets\\graphics\\characters\\watercarrier.png').convert_alpha()
@@ -83,7 +84,8 @@ def load_images():
               'house': house,
               'simpletools_tech': simpletools_tech_icon,
               'agriculture': agriculture_tech_icon,
-              'deselect_button': deselect_button
+              'deselect_button': deselect_button,
+              'select_button': select_button
               }
 
     return images

@@ -295,6 +295,7 @@ class World:
         self.deselect_building()
         self.deselect_worker()
         self.hud.select_panel_visible = False
+        self.ready_to_delete = False
 
     def get_temp_tile(self, grid_pos):
 
@@ -420,6 +421,9 @@ class World:
                         else:
                             for w in bldg.workers:
                                 w.workplace = None
+
+                                # this only changes the image, needs to do the whole job of unassigning a worker
+                                self.active_town_center.unassign_worker(w)
                                 w.reset_travel_vars()
 
                         # remove it from the face of the earth
@@ -427,9 +431,9 @@ class World:
                         self.active_town_center.num_buildings[bldg.name] -= 1
                         self.entities.remove(bldg)
                         self.buildings[grid_pos[0]][grid_pos[1]] = None
+                        self.world[grid_pos[0]][grid_pos[1]]['collision'] = False
                         del bldg
-                    else:
-                        print('no')
+                        # self.ready_to_delete = False
 
 
     def check_select_worker(self, grid_pos):

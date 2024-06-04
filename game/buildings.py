@@ -159,6 +159,11 @@ class TownCenter(Building):
                     if b.workers[0].targettown is None:
                         return b.workers[0]
 
+    def unassign_worker(self, w):
+        w.image = pg.transform.scale(self.imgs['beggar'],
+                                     (self.imgs['beggar'].get_width() * 2,
+                                      self.imgs['beggar'].get_height() * 2))
+
     def assign_worker_to_building(self, w, b):
         b.workers.append(w)
         if w.workplace is None:
@@ -173,9 +178,9 @@ class TownCenter(Building):
             w.skills[JOBNAMES[b.name]] = 0
         if w.occupation == 'Merchant':
             w.gold = 500
-        pg.transform.scale(self.imgs[JOBIMGS[b.name]],
-                           (self.imgs[JOBIMGS[b.name]].get_width() * 2,
-                            self.imgs[JOBIMGS[b.name]].get_height() * 2))
+        # pg.transform.scale(self.imgs[JOBIMGS[b.name]],
+        #                    (self.imgs[JOBIMGS[b.name]].get_width() * 2,
+        #                     self.imgs[JOBIMGS[b.name]].get_height() * 2))
         w.image = pg.transform.scale(self.imgs[JOBIMGS[b.name]],
                                      (self.imgs[JOBIMGS[b.name]].get_width() * 2,
                                       self.imgs[JOBIMGS[b.name]].get_height() * 2))

@@ -10,36 +10,32 @@ from networkx import dijkstra_path
 class Worker:
 
     def __init__(self, tile, world, unique_id):
-        self.world = world
-        self.world.entities.append(self)
+
+        # ID attributes
         self.name = "worker"
-        image = pg.image.load("assets/graphics/characters/beggar.png").convert_alpha()
-        self.image = pg.transform.scale(image, (image.get_width()*2, image.get_height()*2))
-        self.tile = tile
-        self.moving = False
-        self.path_index = 0
-        self.town = None
-        self.targettown = None
-        self.workplace = None
-        self.home = None
-        self.selected = False
-        self.occupation = 'Wanderer'
-        self.skills = {}
-        self.gold = 5
-        self.just_sold = []
-        self.offsets = [0, 0]
-        self.offset_amounts = [0, 0]
-        self.animationtimer = pg.time.get_ticks()
         self.id = unique_id
 
-        self.energy = 100
-        self.energycooldown = pg.time.get_ticks()
-        self.skillcooldown = pg.time.get_ticks()
+        # world references
+        self.world = world
+        self.tile = tile
+        self.world.entities.append(self)
+        self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
 
+        # other character-specific attributes
+        self.occupation = 'Wanderer'
+        self.skills = {}
         self.inventory = {}
+        self.gold = 5
+        self.age = 0
+        self.energy = 100
 
+        # attributes for pathfinding
+        self.path_index = 0
+        self.path = []
+
+        # attributes for tracking current destination states
         self.current_task = 'wandering'
-
+        self.moving = False
         self.going_to_work = False
         self.arrived_at_work = False
         self.going_to_towncenter = False
@@ -49,10 +45,35 @@ class Worker:
         self.collecting_for_work = False
         self.collected_for_work = False
 
-        # pathfinding
-        self.world.workers[tile["grid"][0]][tile["grid"][1]] = self
+        # attributes for town, workplace, and home
+        self.town = None
+        self.workplace = None
+        self.home = None
+
+        # cooldowns
+        self.energycooldown = pg.time.get_ticks()
+        self.skillcooldown = pg.time.get_ticks()
         self.move_timer = pg.time.get_ticks()
+        self.animationtimer = pg.time.get_ticks()
+
+        # character sprite
+        image = pg.image.load("assets/graphics/characters/beggar.png").convert_alpha()
+        self.image = pg.transform.scale(image,
+                                        (image.get_width() * 2,
+                                              image.get_height() * 2))
+
         self.create_path()
+
+
+
+        # specific to merchant, needs fixing
+        self.targettown = None
+        self.selected = False
+        self.just_sold = []
+
+        # for animation, needs fixing
+        self.offsets = [0, 0]
+        self.offset_amounts = [0, 0]
 
     def create_path(self):
 
@@ -358,6 +379,11 @@ class Worker:
                 if self.workplace is not None:
                     if sum(self.inventory.values()) > 0:
                         self.dropoff_at_towncenter()
+                    if self.home is None:
+                        self.town.villagers.remove(self)
+                        self.town = None
+                        if self.workplace is not None:
+                            self.town.unassign_worker()
                     if not self.collecting_for_work:
                         # only leave town center if all goods are sold
                         if sum([val for val in self.inventory.values()]) == 0:

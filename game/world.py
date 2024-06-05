@@ -841,10 +841,10 @@ class World:
     def update_road_network(self, pos):
         self.road_network.add_node((pos[0], pos[1]))
         nbrs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        for i in range(len(self.buildings)):
-            for j in range(len(self.buildings[i])):
-                if self.buildings[i][j] is not None:
-                    print(f'{self.buildings[i][j]} {(i, j)}')
+        # for i in range(len(self.buildings)):
+        #     for j in range(len(self.buildings[i])):
+        #         if self.buildings[i][j] is not None:
+        #             print(f'{self.buildings[i][j]} {(i, j)}')
         for nbr in nbrs:
             if 0 <= pos[0] + nbr[0] < self.grid_length_x and 0 <= pos[1] + nbr[1] < self.grid_length_y:
                 # print('nbr is good: ', pos[0] + nbr[0], ',', pos[1] + nbr[1])

@@ -178,9 +178,6 @@ class TownCenter(Building):
             w.skills[JOBNAMES[b.name]] = 0
         if w.occupation == 'Merchant':
             w.gold = 500
-        # pg.transform.scale(self.imgs[JOBIMGS[b.name]],
-        #                    (self.imgs[JOBIMGS[b.name]].get_width() * 2,
-        #                     self.imgs[JOBIMGS[b.name]].get_height() * 2))
         w.image = pg.transform.scale(self.imgs[JOBIMGS[b.name]],
                                      (self.imgs[JOBIMGS[b.name]].get_width() * 2,
                                       self.imgs[JOBIMGS[b.name]].get_height() * 2))

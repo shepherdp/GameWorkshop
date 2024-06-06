@@ -48,28 +48,24 @@ class Building:
         self.currently_in_building = 0
 
     def is_full(self):
-        d = {key: val for key, val in self.storage.items() if key in self.production}
-        return sum(d.values()) + sum(self.production.values()) > self.capacity
+        d = {key: self.storage[key] for key in self.production}
+        return sum(d.values()) == self.capacity
+        # return sum(d.values()) + sum(self.production.values()) > self.capacity
+
+    def almost_full(self):
+        d = {key: self.storage[key] for key in self.production}
+        return sum(d.values()) + sum(self.production.values()) * self.percent_employed > self.capacity
 
     def update_percent_employed(self):
         if self.workers_needed > 0:
-            self.percent_employed = round(len(self.workers) / self.workers_needed, 2)
+            self.percent_employed = round(self.currently_in_building / self.workers_needed, 2)
 
     def update(self):
-        now = pg.time.get_ticks()
-        if now - self.resourcecooldown > 2000:
-            if not self.is_full():
-                for r in self.production:
-                    self.storage[r] += self.production[r] * self.percent_employed
-            else:
-                # top off any remaining capacity space to avoid fractional leftovers
-                for r in self.production:
-                    self.storage[r] = self.capacity
-            self.storage = {key: round(self.storage[key], 2) for key in self.storage}
-            self.resourcecooldown = pg.time.get_ticks()
+        pass
 
     def check_currently_in_building(self):
-        return len([w for w in self.workers if w.arrived_at_work])
+        self.currently_in_building = len([w for w in self.workers if w.arrived_at_work])
+        self.update_percent_employed()
 
     def get_state_for_savefile(self):
         ret = ''
@@ -98,6 +94,30 @@ class BaseProductionBuilding(Building):
     def needs_goods(self):
         return False
 
+    def update(self):
+        now = pg.time.get_ticks()
+        if now - self.resourcecooldown > 2000:
+            self.check_currently_in_building()
+            if not self.is_full():
+                if self.almost_full():
+                    print('ALMOST FULL')
+                    # top off any remaining capacity space to avoid fractional leftovers
+                    for r in self.production:
+                        self.storage[r] = self.capacity
+                else:
+                    print('NOT FULL YET')
+                    for r in self.production:
+                        print(self.percent_employed)
+                        self.storage[r] += self.production[r] * self.percent_employed
+
+            else:
+                print('FULL')
+                # top off any remaining capacity space to avoid fractional leftovers
+                for r in self.production:
+                    self.storage[r] = self.capacity
+            self.storage = {key: round(self.storage[key], 2) for key in self.storage}
+            self.resourcecooldown = pg.time.get_ticks()
+
 class RefinedProductionBuilding(BaseProductionBuilding):
 
     def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers, unique_id):
@@ -107,7 +127,33 @@ class RefinedProductionBuilding(BaseProductionBuilding):
         return any([self.storage[key] < self.consumption[key] * 10 for key in self.consumption])
 
     def goods_needed(self):
-        return {key: int(self.consumption[key] * 10 - self.storage[key]) + 1 for key in self.consumption}
+        return {key: int(self.consumption[key] * 30 - self.storage[key]) + 1 for key in self.consumption}
+
+    def update(self):
+        now = pg.time.get_ticks()
+        if now - self.resourcecooldown > 2000:
+            self.check_currently_in_building()
+            if not self.is_full():
+                if self.almost_full():
+                    print('ALMOST FULL')
+                    # top off any remaining capacity space to avoid fractional leftovers
+                    if not self.needs_goods():
+                        for r in self.production:
+                            self.storage[r] = self.capacity
+                else:
+                    print('NOT FULL YET')
+                    for r in self.production:
+                        print(self.production[r], self.currently_in_building, self.workers_needed)
+                        self.storage[r] += self.production[r] * self.currently_in_building / self.workers_needed
+                        # self.storage[r] += self.production[r] * self.percent_employed
+            else:
+                print('FULL')
+                # top off any remaining capacity space to avoid fractional leftovers
+                if not self.needs_goods():
+                    for r in self.production:
+                        self.storage[r] = self.capacity
+            self.storage = {key: round(self.storage[key], 2) for key in self.storage}
+            self.resourcecooldown = pg.time.get_ticks()
 
 class Housing(Building):
 
@@ -155,7 +201,7 @@ class TownCenter(Building):
     def get_stranded_merchant(self):
         if 'market' in self.num_buildings:
             for b in self.buildings:
-                if b.name == 'market':
+                if b.name == 'market' and len(b.workers) > 0:
                     if b.workers[0].targettown is None:
                         return b.workers[0]
 
@@ -172,15 +218,18 @@ class TownCenter(Building):
             # make sure worker doesn't show up in two buildings
             w.workplace.workers.remove(w)
         w.workplace = b
+        for item in w.workplace.production:
+            if item not in w.inventory:
+                w.inventory[item] = 0
+        for item in w.workplace.consumption:
+            if item not in w.inventory:
+                w.inventory[item] = 0
         w.workplace.update_percent_employed()
         w.occupation = JOBNAMES[b.name]
         if JOBNAMES[b.name] not in w.skills:
             w.skills[JOBNAMES[b.name]] = 0
         if w.occupation == 'Merchant':
             w.gold = 500
-        # pg.transform.scale(self.imgs[JOBIMGS[b.name]],
-        #                    (self.imgs[JOBIMGS[b.name]].get_width() * 2,
-        #                     self.imgs[JOBIMGS[b.name]].get_height() * 2))
         w.image = pg.transform.scale(self.imgs[JOBIMGS[b.name]],
                                      (self.imgs[JOBIMGS[b.name]].get_width() * 2,
                                       self.imgs[JOBIMGS[b.name]].get_height() * 2))
@@ -246,12 +295,19 @@ class Workbench(RefinedProductionBuilding):
     def update(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
             if not self.is_full():
-                if all([self.storage[key] > self.consumption[key] for key in self.consumption]):
+                print('not full')
+                if all([self.storage[key] >= self.consumption[key] for key in self.consumption]):
+                    print('updating goods produced and consumed')
+                    # print(f'production {self.production}')
+                    # print(f'consumption {self.consumption}')
+                    print(f'storage before {self.storage}')
                     for key in self.consumption:
                         self.storage[key] -= self.consumption[key]
                     for key in self.production:
                         self.storage[key] += self.production[key]
+                    print(f'storage after {self.storage}')
                 self.storage = {key: round(self.storage[key], 2) for key in self.storage}
+                print(f'storage final {self.storage}')
 
             # self.resourcemanager.resources['gold'] += 1
             self.resourcecooldown = pg.time.get_ticks()

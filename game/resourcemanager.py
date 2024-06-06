@@ -18,11 +18,11 @@ class ResourceManager:
 
     def __init__(self):
 
-        self.resources = {'wood': 50,
-                          'water': 50,
-                          'stone': 50,
-                          'gold': 100000,
-                          'wheat': 50,
+        self.resources = {'wood': 14,
+                          'water': 2000,
+                          'stone': 14,
+                          'gold': 1000000,
+                          'wheat': 5000,
                           'simpletools': 0}
 
         self.costs = {'well': {'wood': 5},

@@ -59,6 +59,8 @@ class Game:
     def spawn_worker(self):
         # if not self.spawning:
         #     return
+        if self.world.wrkr_ctr > 1:
+            return
         now = pg.time.get_ticks()
         if now - self.spawncooldown > 10000:
             if self.num_characters > sum([i.housing_capacity for i in self.world.towns]) + 3:
@@ -85,6 +87,12 @@ class Game:
                 if event.key == pg.K_ESCAPE:
                     self.playing = False
                     self.quit()
+
+            # recenter the camera when h is pressed
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_h:
+                    self.camera.scroll.x = 0
+                    self.camera.scroll.y = 0
 
             # I have to stop checking everything every update in the World class
             # I need to record button presses here, and then only handle them when necessary in other classes

@@ -367,7 +367,7 @@ class HUD:
                   f'Workers: {len(self.selected_building.workers)} / {self.selected_building.workers_needed}',
                   20, (255, 255, 255), self.panel_positions[f'selected_text_1'])
         draw_text(self.screen,
-                  f'Workers in building: {self.selected_building.check_currently_in_building()} / {self.selected_building.workers_needed}',
+                  f'Workers in building: {self.selected_building.currently_in_building} / {self.selected_building.workers_needed}',
                   20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
 
     def draw_selected_building_storage(self):
@@ -431,7 +431,7 @@ class HUD:
                   20, (255, 255, 255), self.panel_positions[f'selected_text_1']
                   )
         draw_text(self.screen,
-                  f'Occupants in building: {self.selected_building.check_currently_in_building()} / {self.selected_building.housing_capacity}',
+                  f'Occupants in building: {self.selected_building.currently_in_building} / {self.selected_building.housing_capacity}',
                   20, (255, 255, 255), self.panel_positions[f'selected_text_2'])
 
     def draw_selected_building_needs(self):

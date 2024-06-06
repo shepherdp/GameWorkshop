@@ -364,6 +364,9 @@ class World:
             ent = Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
         elif name == 'house':
             ent = House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'temple':
+            ent = Temple(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager,
+                        f'bldg{self.bldg_ctr}')
 
         if ent is not None:
             self.bldg_ctr += 1
@@ -437,7 +440,8 @@ class World:
                         self.buildings[grid_pos[0]][grid_pos[1]] = None
                         self.world[grid_pos[0]][grid_pos[1]]['collision'] = False
                         del bldg
-                        # self.ready_to_delete = False
+                        self.ready_to_delete = False
+                        self.sounds['delete'].play()
 
 
     def check_select_worker(self, grid_pos):

@@ -20,6 +20,9 @@ def load_sounds():
     road = pg.mixer.Sound("assets\\audio\\road.mp3")
     towncenter = pg.mixer.Sound("assets\\audio\\towncenter.mp3")
     house = pg.mixer.Sound("assets\\audio\\house.mp3")
+    temple = pg.mixer.Sound("assets\\audio\\temple.mp3")
+
+    delete = pg.mixer.Sound("assets\\audio\\delete.mp3")
 
     sounds = {'chopping': chopping,
               'well': well,
@@ -29,7 +32,9 @@ def load_sounds():
               'market': market,
               'road': road,
               'towncenter': towncenter,
-              'house': house}
+              'house': house,
+              'temple': temple,
+              'delete': delete}
 
     return sounds
 
@@ -53,6 +58,7 @@ def load_images():
     workbench = pg.image.load('assets\\graphics\\buildings\\workbench.png').convert_alpha()
     house = pg.image.load('assets\\graphics\\buildings\\house.png').convert_alpha()
     market = pg.image.load('assets\\graphics\\buildings\\market.png').convert_alpha()
+    temple = pg.image.load('assets\\graphics\\buildings\\temple.png').convert_alpha()
 
     # icons
     water = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
@@ -87,6 +93,7 @@ def load_images():
               'water': water,
               'towncenter': tc,
               'market': market,
+              'temple': temple,
 
               'beggar': beggar,
               'woodcutter': woodcutter,

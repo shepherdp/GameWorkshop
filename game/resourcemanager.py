@@ -23,9 +23,10 @@ class ResourceManager:
                           'stone': 5000,
                           'gold': 1000000,
                           'wheat': 5000,
-                          'simpletools': 0}
+                          'simpletools': 500}
 
         self.costs = {'well': {'wood': 5},
+                      'temple': {'stone': 5, 'simpletools': 5},
                       'chopping': {'wood': 3, 'water': 2},
                       'towncenter': {'wood': 10, 'water': 10},
                       'road': {'wood': 1},

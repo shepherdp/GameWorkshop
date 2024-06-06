@@ -252,13 +252,11 @@ class Worker:
         for i in range(q):
             price = int(buyer.resourcemanager.get_price(item, mode=1))
             if buyer.resourcemanager.resources['gold'] >= price > minprice:
-                # print(f'  selling {item} at {price}.')
                 buyer.resourcemanager.resources['gold'] -= price
                 buyer.resourcemanager.resources[item] += 1
                 self.gold += price
                 self.inventory[item] -= 1
             else:
-                # print('  too expensive')
                 return False
 
         return True
@@ -302,7 +300,6 @@ class Worker:
         for i in range(q):
             price = int(seller.resourcemanager.get_price(item, mode=0))
             if price <= maxprice and price <= self.gold:
-                # print(f'  buying {item} at {price}.')
                 if item in self.inventory:
                     self.inventory[item] += 1
                 else:
@@ -311,7 +308,6 @@ class Worker:
                 seller.resourcemanager.resources['gold'] += price
                 seller.resourcemanager.resources[item] -= 1
             else:
-                # print('  too expensive')
                 return False
 
         return True
@@ -361,29 +357,49 @@ class Worker:
             self.move()
 
     def update_baseproduction(self):
+
+        # worker reaches workplace
         if self.arrived_at_work:
             self.current_task = 'Working'
+
+            # try to collect from work
+            # if successful, head to town center to sell goods
+            # otherwise keep working
             collected = self.collect_from_work()
             if collected:
                 self.get_path_to_towncenter()
                 self.delivering = True
                 self.current_task = 'Taking goods to town'
+
+        # worker reaches town center
         elif self.arrived_at_towncenter:
+
             if self.workplace is not None:
+                #if bringing in goods from work, try to sell them to the town center
                 if self.delivering:
                     for item in self.workplace.production:
                         self.sell(self.town, item)
                     self.delivering = False
+
+                # if worker still has enough energy, return to work
                 if self.energy >= 25:
                     self.get_path_to_work()
+
+                # otherwise try to buy any goods needed for home and then go there
                 else:
                     self.pickup_home_needs()
                     self.delivering = True
                     self.get_path_to_home()
+
+        # worker reaches home
         elif self.arrived_at_home:
+
+            # drop off any goods bought at the town center
             if self.delivering:
                 self.dropoff_at_home()
                 self.delivering = False
+
+            # if rested, return to work
             if self.energy == 100:
                 self.get_path_to_work()
             else:
@@ -418,7 +434,9 @@ class Worker:
             else:
                 # otherwise, check if the workplace needs input goods, because it is possible that the workplace isn't
                 # filling up due to lack of resources instead of just not being full yet
-                if self.workplace.needs_goods():
+
+                if any([self.workplace.storage[r] == 0 for r in self.workplace.consumption]):
+                # if self.workplace.needs_goods():
                     self.collect_from_work(partial=True)
                     self.current_task = 'Getting goods for work'
                     self.delivering = True
@@ -553,10 +571,13 @@ class Worker:
             #         if now - self.energycooldown > 500:
             #             self.energy += 1
             #             self.energycooldown = now
+
+        # if the worker is currently moving, check if they need a town
+        # fix this; I don't think this needs to be a thing
+        # check if the workplace needs any goods
         else:
-            self.check_needs_town()
-            if self.workplace is not None:
-                self.check_work_needs_goods()
+            if self.current_task == 'Wandering':
+                self.check_needs_town()
             self.move()
 
     def pickup_home_needs(self):

@@ -137,21 +137,27 @@ class RefinedProductionBuilding(BaseProductionBuilding):
                 if self.almost_full():
                     print('ALMOST FULL')
                     # top off any remaining capacity space to avoid fractional leftovers
-                    if not self.needs_goods():
+
+                    if not any([self.storage[r] < self.consumption[r] for r in self.consumption]):
+                    # if not self.needs_goods():
                         for r in self.production:
                             self.storage[r] = self.capacity
+                        for r in self.consumption:
+                            self.storage[r] -= self.consumption[r]
                 else:
                     print('NOT FULL YET')
                     for r in self.production:
-                        print(self.production[r], self.currently_in_building, self.workers_needed)
-                        self.storage[r] += self.production[r] * self.currently_in_building / self.workers_needed
-                        # self.storage[r] += self.production[r] * self.percent_employed
+                        # print(self.production[r], self.currently_in_building, self.workers_needed)
+                        # self.storage[r] += self.production[r] * self.currently_in_building / self.workers_needed
+                        self.storage[r] += self.production[r] * self.percent_employed
+                    for r in self.consumption:
+                        self.storage[r] -= self.consumption[r] * self.percent_employed
             else:
                 print('FULL')
                 # top off any remaining capacity space to avoid fractional leftovers
-                if not self.needs_goods():
-                    for r in self.production:
-                        self.storage[r] = self.capacity
+                # if not self.needs_goods():
+                    # for r in self.production:
+                    #     self.storage[r] = self.capacity
             self.storage = {key: round(self.storage[key], 2) for key in self.storage}
             self.resourcecooldown = pg.time.get_ticks()
 
@@ -177,6 +183,7 @@ class TownCenter(Building):
         self.housing_capacity = 0
         self.imgs = worker_imgs
         self.techmanager = techmanager
+        self.checkvillagers_cooldown = pg.time.get_ticks()
 
     def get_unemployment_rate(self):
         return self.num_employed / self.num_villagers
@@ -251,23 +258,27 @@ class TownCenter(Building):
 
     def update(self):
 
-        # assign villagers to houses if any are needed
-        # print([(w.id, w.workplace) for w in self.villagers if w.workplace is None])
-        for w in self.villagers:
-            if w.home is None:
-                for bldg in self.buildings:
-                    if bldg.name == 'house':
-                        if bldg.has_vacancy():
-                            self.assign_worker_to_house(w, bldg)
-                            self.update_quantity_demanded()
-                            break
-            # assign villagers to workplaces if any are needed
-            if w.workplace is None:
-                for bldg in self.buildings:
-                    if bldg.name not in ['house', 'road']:
-                        if len(bldg.workers) < bldg.workers_needed:
-                            self.assign_worker_to_building(w, bldg)
-                            break
+        now = pg.time.get_ticks()
+        if now - self.checkvillagers_cooldown > 2000:
+
+            # assign villagers to houses if any are needed
+            # print([(w.id, w.workplace) for w in self.villagers if w.workplace is None])
+            for w in self.villagers:
+                if w.home is None:
+                    for bldg in self.buildings:
+                        if bldg.name == 'house':
+                            if bldg.has_vacancy():
+                                self.assign_worker_to_house(w, bldg)
+                                self.update_quantity_demanded()
+                                break
+                # assign villagers to workplaces if any are needed
+                if w.workplace is None:
+                    for bldg in self.buildings:
+                        if bldg.name not in ['house', 'road']:
+                            if len(bldg.workers) < bldg.workers_needed:
+                                self.assign_worker_to_building(w, bldg)
+                                break
+            self.checkvillagers_cooldown = now
 
         self.techmanager.update_research_progress()
 
@@ -292,7 +303,7 @@ class Workbench(RefinedProductionBuilding):
         self.production = {'simpletools': 1}
         self.consumption = {'wood': .1, 'stone': .1}
 
-    def update(self):
+    def update_old(self):
         if pg.time.get_ticks() - self.resourcecooldown > 2000:
             if not self.is_full():
                 print('not full')
@@ -375,6 +386,14 @@ class Market(Building):
 
     def __init__(self, pos, loc, manager, unique_id):
         super().__init__(pos, loc, 'market', 'market', manager, 1, unique_id)
+
+    def needs_goods(self):
+        return False
+
+class Temple(Building):
+
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'temple', 'temple', manager, 1, unique_id)
 
     def needs_goods(self):
         return False

@@ -49,7 +49,8 @@ class Building:
 
     def is_full(self):
         d = {key: val for key, val in self.storage.items() if key in self.production}
-        return sum(d.values()) + sum(self.production.values()) > self.capacity
+        return sum(d.values()) == self.capacity
+        # return sum(d.values()) + sum(self.production.values()) > self.capacity
 
     def update_percent_employed(self):
         if self.workers_needed > 0:
@@ -58,10 +59,15 @@ class Building:
     def update(self):
         now = pg.time.get_ticks()
         if now - self.resourcecooldown > 2000:
+            self.check_currently_in_building()
             if not self.is_full():
+                print('NOT FULL YET')
                 for r in self.production:
-                    self.storage[r] += self.production[r] * self.percent_employed
+                    print(self.production[r], self.currently_in_building, self.workers_needed)
+                    self.storage[r] += self.production[r] * self.currently_in_building / self.workers_needed
+                    # self.storage[r] += self.production[r] * self.percent_employed
             else:
+                print('FULL')
                 # top off any remaining capacity space to avoid fractional leftovers
                 for r in self.production:
                     self.storage[r] = self.capacity
@@ -69,7 +75,7 @@ class Building:
             self.resourcecooldown = pg.time.get_ticks()
 
     def check_currently_in_building(self):
-        return len([w for w in self.workers if w.arrived_at_work])
+        self.currently_in_building = len([w for w in self.workers if w.arrived_at_work])
 
     def get_state_for_savefile(self):
         ret = ''
@@ -155,7 +161,7 @@ class TownCenter(Building):
     def get_stranded_merchant(self):
         if 'market' in self.num_buildings:
             for b in self.buildings:
-                if b.name == 'market':
+                if b.name == 'market' and len(b.workers) > 0:
                     if b.workers[0].targettown is None:
                         return b.workers[0]
 

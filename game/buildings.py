@@ -54,17 +54,18 @@ class Building:
 
     def almost_full(self):
         d = {key: self.storage[key] for key in self.production}
-        return sum(d.values()) + sum(self.production.values()) > self.capacity
+        return sum(d.values()) + sum(self.production.values()) * self.percent_employed > self.capacity
 
     def update_percent_employed(self):
         if self.workers_needed > 0:
-            self.percent_employed = round(len(self.workers) / self.workers_needed, 2)
+            self.percent_employed = round(self.currently_in_building / self.workers_needed, 2)
 
     def update(self):
         pass
 
     def check_currently_in_building(self):
         self.currently_in_building = len([w for w in self.workers if w.arrived_at_work])
+        self.update_percent_employed()
 
     def get_state_for_savefile(self):
         ret = ''
@@ -101,6 +102,41 @@ class BaseProductionBuilding(Building):
                 if self.almost_full():
                     print('ALMOST FULL')
                     # top off any remaining capacity space to avoid fractional leftovers
+                    for r in self.production:
+                        self.storage[r] = self.capacity
+                else:
+                    print('NOT FULL YET')
+                    for r in self.production:
+                        print(self.percent_employed)
+                        self.storage[r] += self.production[r] * self.percent_employed
+
+            else:
+                print('FULL')
+                # top off any remaining capacity space to avoid fractional leftovers
+                for r in self.production:
+                    self.storage[r] = self.capacity
+            self.storage = {key: round(self.storage[key], 2) for key in self.storage}
+            self.resourcecooldown = pg.time.get_ticks()
+
+class RefinedProductionBuilding(BaseProductionBuilding):
+
+    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers, unique_id):
+        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers, unique_id)
+
+    def needs_goods(self):
+        return any([self.storage[key] < self.consumption[key] * 10 for key in self.consumption])
+
+    def goods_needed(self):
+        return {key: int(self.consumption[key] * 30 - self.storage[key]) + 1 for key in self.consumption}
+
+    def update(self):
+        now = pg.time.get_ticks()
+        if now - self.resourcecooldown > 2000:
+            self.check_currently_in_building()
+            if not self.is_full():
+                if self.almost_full():
+                    print('ALMOST FULL')
+                    # top off any remaining capacity space to avoid fractional leftovers
                     if not self.needs_goods():
                         for r in self.production:
                             self.storage[r] = self.capacity
@@ -118,17 +154,6 @@ class BaseProductionBuilding(Building):
                         self.storage[r] = self.capacity
             self.storage = {key: round(self.storage[key], 2) for key in self.storage}
             self.resourcecooldown = pg.time.get_ticks()
-
-class RefinedProductionBuilding(BaseProductionBuilding):
-
-    def __init__(self, pos, loc, img_name, bldg_name, manager, num_workers, unique_id):
-        super().__init__(pos, loc, img_name, bldg_name, manager, num_workers, unique_id)
-
-    def needs_goods(self):
-        return any([self.storage[key] < self.consumption[key] * 10 for key in self.consumption])
-
-    def goods_needed(self):
-        return {key: int(self.consumption[key] * 30 - self.storage[key]) + 1 for key in self.consumption}
 
 class Housing(Building):
 

@@ -45,11 +45,16 @@ class TechManager:
         for key in self.building_unlock_status:
             if all([i in self.technologies for i in BLDG_PREREQS[key]]):
                 self.building_unlock_status[key] = True
+
+            self.building_unlock_status[key] = True
+
         for key in self.tech_unlock_status:
             if key in self.technologies:
                 self.tech_unlock_status[key] = False
             elif all([i in self.technologies for i in TECH_PREREQS[key]]):
                 self.tech_unlock_status[key] = True
+
+            self.tech_unlock_status[key] = True
 
     def update_research_progress(self):
         finished = []

@@ -218,7 +218,7 @@ class Worker:
         #     self.offsets[1] += self.offset_amounts[1]
         #     # print(self.tile['render_pos'][0] + self.offsets[0], self.tile['render_pos'][0] + self.offsets[0])
         #     self.animationtimer = pg.time.get_ticks()
-        if now - self.move_timer > 500:
+        if now - self.move_timer > 1000:
             # print('MOVING', self.path_index, self.path, self.moving)
             # print('current position: ', self.tile['grid'])
             # print('new position: ', self.path[self.path_index])
@@ -405,6 +405,84 @@ class Worker:
         else:
             self.move()
 
+    def update_refinedproduction(self):
+
+        # worker reaches workplace
+        if self.arrived_at_work:
+            self.current_task = 'Working'
+
+            # drop off any goods picked up from the town center
+            if self.delivering:
+                for item in self.workplace.consumption:
+                    self.workplace.storage[item] += self.inventory[item]
+                    self.inventory[item] = 0
+                    self.delivering = False
+
+            # check if work was ready to collect or not
+            # if so, pick up the goods and start going to the town center
+            collected = self.collect_from_work()
+            if collected:
+                self.get_path_to_towncenter()
+                self.delivering = True
+                self.current_task = 'Taking goods to town'
+
+            else:
+                # otherwise, check if the workplace needs input goods, because it is possible that the workplace isn't
+                # filling up due to lack of resources instead of just not being full yet
+                if self.workplace.needs_goods():
+                    self.collect_from_work(partial=True)
+                    self.current_task = 'Getting goods for work'
+                    self.delivering = True
+                    self.get_path_to_towncenter()
+            # if neither of these is the case, just wait because the workplace is filling up
+
+        # worker reaches town center
+        elif self.arrived_at_towncenter:
+            if self.workplace is not None:
+
+                # drop off any goods being delivered from a full production run at work
+                if self.delivering:
+                    for item in self.workplace.production:
+                        self.sell(self.town, item)
+                    self.delivering = False
+
+                # if the worker still has some energy, check if the workplace needs goods and then go there
+                if self.energy >= 25:
+                    if self.workplace.needs_goods():
+                        goods = self.workplace.goods_needed()
+                        # print(f'Need to fetch {goods}')
+                        for good, quant in goods.items():
+                            self.buy(self.town, good, q=quant)
+                        self.delivering = True
+                    self.get_path_to_work()
+
+                # if out of energy, check if home needs any goods, pick them up, and then start going there
+                else:
+                    self.pickup_home_needs()
+                    self.delivering = True
+                    self.get_path_to_home()
+
+        # worker reaches home
+        elif self.arrived_at_home:
+
+            # drop off any goods being brought from the town center, then rest
+            if self.delivering:
+                self.dropoff_at_home()
+                self.delivering = False
+
+            # once rested, go to work
+            if self.energy == 100:
+                self.get_path_to_work()
+            else:
+                now = pg.time.get_ticks()
+                if now - self.energycooldown > 500:
+                    self.energy += 1
+                    self.energycooldown = now
+
+        # if worker has not reached their destination, move
+        else:
+            self.move()
+
     def update(self):
 
         if self.occupation not in ['Beggar', 'Wanderer']:
@@ -425,7 +503,8 @@ class Worker:
                 return
 
             elif self.occupation in ['Tool Maker']:
-                pass
+                self.update_refinedproduction()
+                return
 
 
             if self.workplace is None:
@@ -519,16 +598,26 @@ class Worker:
                 self.home.storage[key] += self.inventory[key]
                 self.inventory[key] = 0
 
-    def collect_from_work(self):
+    def empty_workplace_storage(self):
+        for key in self.workplace.production:
+            if key in self.inventory:
+                self.inventory[key] += int(self.workplace.storage[key])
+            else:
+                self.inventory[key] = int(self.workplace.storage[key])
+            self.workplace.storage[key] -= int(self.workplace.storage[key])
+
+    def collect_from_work(self, partial=False):
+
+        if partial:
+            # print('collecting not full')
+            self.empty_workplace_storage()
+            self.energy -= 15
+            return True
 
         if self.workplace.is_full():
-            for key in self.workplace.production:
-                if key in self.inventory:
-                    self.inventory[key] += int(self.workplace.storage[key])
-                else:
-                    self.inventory[key] = int(self.workplace.storage[key])
-                self.workplace.storage[key] -= int(self.workplace.storage[key])
-            self.energy -= 95
+            # print('collecting full')
+            self.empty_workplace_storage()
+            self.energy -= 15
             return True
         return False
 

@@ -9,6 +9,30 @@ def draw_text(screen, text, size, color, pos):
     text_rect = text_surface.get_rect(topleft=pos)
     screen.blit(text_surface, text_rect)
 
+def load_sounds():
+
+    chopping = pg.mixer.Sound("assets\\audio\\chopping.mp3")
+    well = pg.mixer.Sound("assets\\audio\\well.mp3")
+    quarry = pg.mixer.Sound("assets\\audio\\quarry.mp3")
+    workbench = pg.mixer.Sound("assets\\audio\\workbench.mp3")
+    wheatfield = pg.mixer.Sound("assets\\audio\\wheatfield.mp3")
+    market = pg.mixer.Sound("assets\\audio\\market.mp3")
+    road = pg.mixer.Sound("assets\\audio\\road.mp3")
+    towncenter = pg.mixer.Sound("assets\\audio\\towncenter.mp3")
+    house = pg.mixer.Sound("assets\\audio\\house.mp3")
+
+    sounds = {'chopping': chopping,
+              'well': well,
+              'quarry': quarry,
+              'workbench': workbench,
+              'wheatfield': wheatfield,
+              'market': market,
+              'road': road,
+              'towncenter': towncenter,
+              'house': house}
+
+    return sounds
+
 def load_images():
 
     # world blocks

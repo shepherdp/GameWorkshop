@@ -3,7 +3,7 @@ import random
 import noise
 from .settings import TILE_SIZE, LOAD
 from .buildings import *
-from .utils import load_images
+from .utils import load_images, load_sounds
 from .resourcemanager import ResourceManager
 from .techmanager import TechManager
 from .workers import Worker
@@ -55,6 +55,7 @@ class World:
                                        grid_length_y * TILE_SIZE + 2 * TILE_SIZE)
                                       ).convert_alpha()
         self.tiles = load_images()
+        self.sounds = load_sounds()
         self.world_network = nx.Graph()
         self.world = self.create_world()
 
@@ -340,32 +341,35 @@ class World:
                     m.targettown = ent
             self.towns.append(ent)
 
+            self.sounds['towncenter'].play()
+
             return ent
 
     def create_town_building(self, grid_pos):
-        if self.hud.structure_to_build['name'] == 'well':
+        name = self.hud.structure_to_build['name']
+        ent = None
+        if name == 'well':
+            ent = Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'chopping':
+            ent = ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'quarry':
+            ent = Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'road':
+            ent = Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'wheatfield':
+            ent = Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'market':
+            ent = Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'workbench':
+            ent = Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'house':
+            ent = House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+
+        if ent is not None:
             self.bldg_ctr += 1
-            return Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'chopping':
-            self.bldg_ctr += 1
-            return ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'quarry':
-            self.bldg_ctr += 1
-            return Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'road':
-            return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'wheatfield':
-            self.bldg_ctr += 1
-            return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'market':
-            self.bldg_ctr += 1
-            return Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'workbench':
-            self.bldg_ctr += 1
-            return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'house':
-            self.bldg_ctr += 1
-            return House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+            if name in self.sounds:
+                self.sounds[name].play()
+        return ent
 
     def add_building_to_town(self, ent):
         self.active_town_center.buildings.append(ent)

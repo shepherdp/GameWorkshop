@@ -46,7 +46,7 @@ def load_images():
     grass1 = pg.image.load('assets\\graphics\\terrain\\grass1.png').convert_alpha()
     grass2 = pg.image.load('assets\\graphics\\terrain\\grass2.png').convert_alpha()
     grass3 = pg.image.load('assets\\graphics\\terrain\\grass3.png').convert_alpha()
-    water = pg.image.load('assets\\graphics\\terrain\\water.png').convert_alpha()
+    water1 = pg.image.load('assets\\graphics\\terrain\\water.png').convert_alpha()
 
     # buildings
     well = pg.image.load('assets\\graphics\\buildings\\well.png').convert_alpha()
@@ -82,7 +82,7 @@ def load_images():
     farmer = pg.image.load('assets\\graphics\\characters\\farmer.png').convert_alpha()
     quarryman = pg.image.load('assets\\graphics\\characters\\quarryman.png').convert_alpha()
     merchant = pg.image.load('assets\\graphics\\characters\\merchant.png').convert_alpha()
-
+    priest = pg.image.load('assets\\graphics\\characters\\priest.png').convert_alpha()
 
 
     images = {'rock': rock,
@@ -90,7 +90,7 @@ def load_images():
               'well': well,
               'chopping': chopping,
               'road': road,
-              'water': water,
+              'water1': water1,
               'towncenter': tc,
               'market': market,
               'temple': temple,
@@ -101,6 +101,7 @@ def load_images():
               'quarryman': quarryman,
               'farmer': farmer,
               'merchant': merchant,
+              'priest': priest,
 
               'water': water,
               'stone': stone,

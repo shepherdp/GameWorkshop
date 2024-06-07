@@ -8,16 +8,18 @@ JOBNAMES = {'chopping': 'Woodcutter',
             'wheatfield': 'Farmer',
             'well': 'Water Carrier',
             'workbench': 'Tool Maker',
-            'market': 'Merchant'
+            'market': 'Merchant',
+            'temple': 'Priest'
             }
 
 JOBIMGS = {'chopping': 'woodcutter',
-            'quarry': 'quarryman',
-            'wheatfield': 'farmer',
-            'well': 'watercarrier',
-            'workbench': 'farmer',
-            'market': 'merchant'
-            }
+           'quarry': 'quarryman',
+           'wheatfield': 'farmer',
+           'well': 'watercarrier',
+           'workbench': 'farmer',
+           'market': 'merchant',
+           'temple': 'priest'
+           }
 
 USERATES = {'water': .4,
             'wood': .2}

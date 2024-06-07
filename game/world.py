@@ -64,6 +64,8 @@ class World:
 
         self.collision_matrix = self.create_collision_matrix()
         self.create_world_network()
+        # for edge in self.world_network.edges:
+        #     print(self.world_network.edges[edge]['weight'])
         self.create_road_network()
 
         self.towns = []
@@ -94,6 +96,16 @@ class World:
         self.towns.append(ent)
         self.buildings[x][y] = ent
         self.entities.append(ent)
+
+        for nbr in [[0, 1], [1, 0], [0, -1], [-1, 0]]:
+            nbrx, nbry = x + nbr[0], y + nbr[1]
+            if not (0 <= nbrx < self.grid_length_x) or not (0 <= nbry < self.grid_length_y):
+                continue
+            if self.world[nbrx][nbry]['tile'] == '':
+                self.world_network.edges[((x, y), (nbrx, nbry))]['weight'] = 1000
+
+        # for edge in self.world_network.edges:
+        #     print(self.world_network.edges[edge]['weight'])
 
     def load_savedata(self, savedata):
         data = savedata['buildings']
@@ -417,6 +429,8 @@ class World:
                             self.place_entity(ent)
                             if ent.name == 'road':
                                 self.update_road_network(grid_pos)
+
+                # delete the building
                 else:
                     bldg = self.buildings[grid_pos[0]][grid_pos[1]]
                     if bldg is not None:
@@ -839,9 +853,12 @@ class World:
                         continue
 
                     # if both the current tile and the neighbor are walkable, add an edge between them
-                    if self.world[x][y]['tile'] in ['', 'towncenter'] and \
-                            self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
-                        self.world_network.add_edge((x, y), (nbrx, nbry), weight=1)
+                    if self.world[x][y]['tile'] == '' and self.world[nbrx][nbry]['tile'] == '':
+                    # if self.world[x][y]['tile'] in ['', 'towncenter'] and \
+                    #         self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
+                        self.world_network.add_edge((x, y), (nbrx, nbry), weight=100)
+                    elif self.world[x][y]['tile'] == 'towncenter' and self.world[nbrx][nbry]['tile'] == '':
+                        self.world_network.add_edge((x, y), (nbrx, nbry), weight=1000)
 
     def create_road_network(self):
         self.road_network = nx.Graph()
@@ -849,17 +866,14 @@ class World:
     def update_road_network(self, pos):
         self.road_network.add_node((pos[0], pos[1]))
         nbrs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        # for i in range(len(self.buildings)):
-        #     for j in range(len(self.buildings[i])):
-        #         if self.buildings[i][j] is not None:
-        #             print(f'{self.buildings[i][j]} {(i, j)}')
         for nbr in nbrs:
-            if 0 <= pos[0] + nbr[0] < self.grid_length_x and 0 <= pos[1] + nbr[1] < self.grid_length_y:
-                # print('nbr is good: ', pos[0] + nbr[0], ',', pos[1] + nbr[1])
-                # print('nbr bldg: ', self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]])
-                if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]] is not None:
-                    if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]].name == 'road':
-                        self.road_network.add_edge(pos, (pos[0] + nbr[0], pos[1] + nbr[1]))
+            nbrx, nbry = pos[0] + nbr[0], pos[1] + nbr[1]
+            if 0 <= nbrx < self.grid_length_x and 0 <= nbry < self.grid_length_y:
+                if self.buildings[nbrx][nbry] is not None:
+                    if self.buildings[nbrx][nbry].name == 'road':
+                        self.world_network.edges[(pos, (nbrx, nbry))]['weight'] = 1
+                        self.road_network.add_edge(pos, (nbrx, nbry))
+
 
     def cart_to_iso(self, x, y):
         # get isometric coordinates from cartesian ones

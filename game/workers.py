@@ -66,6 +66,7 @@ class Worker:
         self.image = pg.transform.scale(image,
                                         (image.get_width() * 2,
                                         image.get_height() * 2))
+        self.animationcounter = 0
 
         # get a town if one is available
         self.find_town()
@@ -216,26 +217,59 @@ class Worker:
 
     def move(self):
         now = pg.time.get_ticks()
-        # if now - self.animationtimer > 100:
-        #     self.offsets[0] += self.offset_amounts[0]
-        #     self.offsets[1] += self.offset_amounts[1]
-        #     # print(self.tile['render_pos'][0] + self.offsets[0], self.tile['render_pos'][0] + self.offsets[0])
-        #     self.animationtimer = pg.time.get_ticks()
-        if now - self.move_timer > 1000:
-            # print('MOVING', self.path_index, self.path, self.moving)
-            # print('current position: ', self.tile['grid'])
-            # print('new position: ', self.path[self.path_index])
-            new_pos = self.path[self.path_index]
-            new_tile = self.world.world[new_pos[0]][new_pos[1]]
-            # print(self.tile['render_pos'], new_tile['render_pos'])
-            self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 5
-            self.offset_amounts[1] = (new_tile['render_pos'][1] - self.tile['render_pos'][1]) / 5
-            self.offsets = [0, 0]
-            self.change_tile(new_tile)
-            self.path_index += 1
-            self.move_timer = now
 
+        if now - self.move_timer > 200:
+            # print('moving')
+            # print('path idx', self.path_index)
+            # print('renderpos', self.tile['render_pos'])
+            # print('offsets', self.offsets)
+            # print('animcounter', self.animationcounter)
+            if not self.animationcounter:
+                self.offsets = [0, 0]
+                new_pos = self.path[self.path_index]
+                new_tile = self.world.world[new_pos[0]][new_pos[1]]
+                self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 5
+                self.offset_amounts[1] = (new_tile['render_pos'][1] - self.tile['render_pos'][1]) / 5
+                self.change_tile(new_tile)
+                self.path_index += 1
+                self.animationcounter = (self.animationcounter + 1) % 5
+            else:
+                self.offsets[0] += self.offset_amounts[0]
+                self.offsets[1] += self.offset_amounts[1]
+                self.animationcounter = (self.animationcounter + 1) % 5
+
+            self.move_timer = now
             self.check_end_of_path()
+
+
+
+
+
+
+
+
+
+
+        # # if now - self.animationtimer > 100:
+        # #     self.offsets[0] += self.offset_amounts[0]
+        # #     self.offsets[1] += self.offset_amounts[1]
+        # #     # print(self.tile['render_pos'][0] + self.offsets[0], self.tile['render_pos'][0] + self.offsets[0])
+        # #     self.animationtimer = pg.time.get_ticks()
+        # if now - self.move_timer > 1000:
+        #     # print('MOVING', self.path_index, self.path, self.moving)
+        #     # print('current position: ', self.tile['grid'])
+        #     # print('new position: ', self.path[self.path_index])
+        #     new_pos = self.path[self.path_index]
+        #     new_tile = self.world.world[new_pos[0]][new_pos[1]]
+        #     # print(self.tile['render_pos'], new_tile['render_pos'])
+        #     self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 5
+        #     self.offset_amounts[1] = (new_tile['render_pos'][1] - self.tile['render_pos'][1]) / 5
+        #     self.offsets = [0, 0]
+        #     self.change_tile(new_tile)
+        #     self.path_index += 1
+        #     self.move_timer = now
+        #
+        #     self.check_end_of_path()
 
     def sell(self, buyer, item, minprice=0, q=-1):
         # print('SELLING')
@@ -457,7 +491,6 @@ class Worker:
                 if self.energy >= 25:
                     if self.workplace.needs_goods():
                         goods = self.workplace.goods_needed()
-                        # print(f'Need to fetch {goods}')
                         for good, quant in goods.items():
                             self.buy(self.town, good, q=quant)
                         self.delivering = True

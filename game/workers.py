@@ -516,62 +516,6 @@ class Worker:
             if self.workplace is None:
                 self.get_random_path()
 
-            # # if they are at their job, and it is full, collect the resources and head to town
-            # if self.arrived_at_work:
-            #     if self.collected_for_work:
-            #         self.current_task = 'Working'
-            #         for item in self.workplace.consumption:
-            #             self.workplace.storage[item] += self.inventory[item]
-            #             self.inventory[item] = 0
-            #             self.collected_for_work = False
-            #     if self.collect_from_work():
-            #         self.get_path_to_towncenter()
-            #         self.current_task = 'Taking goods to town'
-            #
-            # # if they arrived at the town center, sit and wait or drop off goods and return to work
-            # elif self.arrived_at_towncenter:
-            #     if self.workplace is not None:
-            #         if sum(self.inventory.values()) > 0:
-            #             self.dropoff_at_towncenter()
-            #         if self.home is None:
-            #             self.town.villagers.remove(self)
-            #             if self.workplace is not None:
-            #                 self.town.unassign_worker()
-            #             self.town = None
-            #         if not self.collecting_for_work:
-            #             # only leave town center if all goods are sold
-            #             if sum([val for val in self.inventory.values()]) == 0:
-            #                 if self.energy >= 25:
-            #                     self.get_path_to_work()
-            #                 else:
-            #                     self.pickup_home_needs()
-            #                     self.get_path_to_home()
-            #         else:
-            #             if not self.collected_for_work:
-            #                 goods = self.workplace.goods_needed()
-            #                 for g in goods:
-            #                     if g in self.inventory:
-            #                         self.inventory[g] += min([self.town.resourcemanager.resources[g], goods[g]])
-            #                     else:
-            #                         self.inventory[g] = min([self.town.resourcemanager.resources[g], goods[g]])
-            #                     self.town.resourcemanager.resources[g] -= min([self.town.resourcemanager.resources[g], goods[g]])
-            #                 self.collected_for_work = True
-            #                 self.collecting_for_work = False
-            #                 self.get_path_to_work()
-            #                 self.current_task = 'Taking goods to work'
-            #     else:
-            #         self.reset_travel_vars()
-            #
-            # elif self.arrived_at_home:
-            #     self.dropoff_at_home()
-            #     if self.energy == 100:
-            #         self.get_path_to_work()
-            #     else:
-            #         now = pg.time.get_ticks()
-            #         if now - self.energycooldown > 500:
-            #             self.energy += 1
-            #             self.energycooldown = now
-
         # if the worker is currently moving, check if they need a town
         # fix this; I don't think this needs to be a thing
         # check if the workplace needs any goods
@@ -592,15 +536,6 @@ class Worker:
                 self.inventory[minkey] = 0
             amount_to_buy = min([self.town.resourcemanager.resources[minkey], needs[minkey]])
             self.buy(self.town, minkey, q=amount_to_buy)
-            # for i in range(int(amount_to_buy)):
-            #     price = self.town.get_sell_price(minkey)
-            #     if self.gold >= price:
-            #         self.inventory[minkey] += 1
-            #         self.town.resourcemanager.resources[minkey] -= 1
-            #         self.gold -= price
-            #         self.town.resourcemanager.resources['gold'] += price
-            #     else:
-            #         break
 
     def dropoff_at_home(self):
         for key in self.inventory:
@@ -619,13 +554,11 @@ class Worker:
     def collect_from_work(self, partial=False):
 
         if partial:
-            # print('collecting not full')
             self.empty_workplace_storage()
             self.energy -= 15
             return True
 
         if self.workplace.is_full():
-            # print('collecting full')
             self.empty_workplace_storage()
             self.energy -= 15
             return True

@@ -24,7 +24,6 @@ def load_images():
     tree = pg.image.load('..\\assets\\graphics\\terrain\\tree.png').convert_alpha()
     well = pg.image.load('..\\assets\\graphics\\buildings\\well.png').convert_alpha()
     b1 = pg.image.load('..\\assets\\graphics\\buildings\\house.png').convert_alpha()
-    b2 = pg.image.load('..\\assets\\graphics\\buildings\\building2.png').convert_alpha()
     chopping = pg.image.load('..\\assets\\graphics\\buildings\\choppingblock.png').convert_alpha()
     road = pg.image.load('..\\assets\\graphics\\buildings\\road.png').convert_alpha()
     water = pg.image.load('..\\assets\\graphics\\terrain\\water.png').convert_alpha()
@@ -33,7 +32,6 @@ def load_images():
     block = pg.image.load('..\\assets\\graphics\\terrain\\grass1.png').convert_alpha()
 
     images = {'b1': b1,
-              'b2': b2,
               'rock': rock,
               'tree': tree,
               'well': well,

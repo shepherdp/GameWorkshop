@@ -3,7 +3,7 @@ import random
 import noise
 from .settings import TILE_SIZE, LOAD
 from .buildings import *
-from .utils import load_images
+from .utils import load_images, load_sounds
 from .resourcemanager import ResourceManager
 from .techmanager import TechManager
 from .workers import Worker
@@ -55,6 +55,7 @@ class World:
                                        grid_length_y * TILE_SIZE + 2 * TILE_SIZE)
                                       ).convert_alpha()
         self.tiles = load_images()
+        self.sounds = load_sounds()
         self.world_network = nx.Graph()
         self.world = self.create_world()
 
@@ -63,6 +64,8 @@ class World:
 
         self.collision_matrix = self.create_collision_matrix()
         self.create_world_network()
+        # for edge in self.world_network.edges:
+        #     print(self.world_network.edges[edge]['weight'])
         self.create_road_network()
 
         self.towns = []
@@ -93,6 +96,16 @@ class World:
         self.towns.append(ent)
         self.buildings[x][y] = ent
         self.entities.append(ent)
+
+        for nbr in [[0, 1], [1, 0], [0, -1], [-1, 0]]:
+            nbrx, nbry = x + nbr[0], y + nbr[1]
+            if not (0 <= nbrx < self.grid_length_x) or not (0 <= nbry < self.grid_length_y):
+                continue
+            if self.world[nbrx][nbry]['tile'] == '':
+                self.world_network.edges[((x, y), (nbrx, nbry))]['weight'] = 1000
+
+        # for edge in self.world_network.edges:
+        #     print(self.world_network.edges[edge]['weight'])
 
     def load_savedata(self, savedata):
         data = savedata['buildings']
@@ -340,32 +353,38 @@ class World:
                     m.targettown = ent
             self.towns.append(ent)
 
+            self.sounds['towncenter'].play()
+
             return ent
 
     def create_town_building(self, grid_pos):
-        if self.hud.structure_to_build['name'] == 'well':
+        name = self.hud.structure_to_build['name']
+        ent = None
+        if name == 'well':
+            ent = Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'chopping':
+            ent = ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'quarry':
+            ent = Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'road':
+            ent = Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'wheatfield':
+            ent = Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'market':
+            ent = Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'workbench':
+            ent = Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'house':
+            ent = House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+        elif name == 'temple':
+            ent = Temple(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager,
+                        f'bldg{self.bldg_ctr}')
+
+        if ent is not None:
             self.bldg_ctr += 1
-            return Well(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'chopping':
-            self.bldg_ctr += 1
-            return ChoppingBlock(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'quarry':
-            self.bldg_ctr += 1
-            return Quarry(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'road':
-            return Road(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'wheatfield':
-            self.bldg_ctr += 1
-            return Wheatfield(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'market':
-            self.bldg_ctr += 1
-            return Market(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'workbench':
-            self.bldg_ctr += 1
-            return Workbench(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
-        elif self.hud.structure_to_build['name'] == 'house':
-            self.bldg_ctr += 1
-            return House(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager, f'bldg{self.bldg_ctr}')
+            if name in self.sounds:
+                self.sounds[name].play()
+        return ent
 
     def add_building_to_town(self, ent):
         self.active_town_center.buildings.append(ent)
@@ -410,6 +429,8 @@ class World:
                             self.place_entity(ent)
                             if ent.name == 'road':
                                 self.update_road_network(grid_pos)
+
+                # delete the building
                 else:
                     bldg = self.buildings[grid_pos[0]][grid_pos[1]]
                     if bldg is not None:
@@ -433,7 +454,8 @@ class World:
                         self.buildings[grid_pos[0]][grid_pos[1]] = None
                         self.world[grid_pos[0]][grid_pos[1]]['collision'] = False
                         del bldg
-                        # self.ready_to_delete = False
+                        self.ready_to_delete = False
+                        self.sounds['delete'].play()
 
 
     def check_select_worker(self, grid_pos):
@@ -831,9 +853,12 @@ class World:
                         continue
 
                     # if both the current tile and the neighbor are walkable, add an edge between them
-                    if self.world[x][y]['tile'] in ['', 'towncenter'] and \
-                            self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
-                        self.world_network.add_edge((x, y), (nbrx, nbry), weight=1)
+                    if self.world[x][y]['tile'] == '' and self.world[nbrx][nbry]['tile'] == '':
+                    # if self.world[x][y]['tile'] in ['', 'towncenter'] and \
+                    #         self.world[nbrx][nbry]['tile'] in ['', 'towncenter']:
+                        self.world_network.add_edge((x, y), (nbrx, nbry), weight=100)
+                    elif self.world[x][y]['tile'] == 'towncenter' and self.world[nbrx][nbry]['tile'] == '':
+                        self.world_network.add_edge((x, y), (nbrx, nbry), weight=1000)
 
     def create_road_network(self):
         self.road_network = nx.Graph()
@@ -841,17 +866,14 @@ class World:
     def update_road_network(self, pos):
         self.road_network.add_node((pos[0], pos[1]))
         nbrs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        # for i in range(len(self.buildings)):
-        #     for j in range(len(self.buildings[i])):
-        #         if self.buildings[i][j] is not None:
-        #             print(f'{self.buildings[i][j]} {(i, j)}')
         for nbr in nbrs:
-            if 0 <= pos[0] + nbr[0] < self.grid_length_x and 0 <= pos[1] + nbr[1] < self.grid_length_y:
-                # print('nbr is good: ', pos[0] + nbr[0], ',', pos[1] + nbr[1])
-                # print('nbr bldg: ', self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]])
-                if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]] is not None:
-                    if self.buildings[pos[0] + nbr[0]][pos[1] + nbr[1]].name == 'road':
-                        self.road_network.add_edge(pos, (pos[0] + nbr[0], pos[1] + nbr[1]))
+            nbrx, nbry = pos[0] + nbr[0], pos[1] + nbr[1]
+            if 0 <= nbrx < self.grid_length_x and 0 <= nbry < self.grid_length_y:
+                if self.buildings[nbrx][nbry] is not None:
+                    if self.buildings[nbrx][nbry].name == 'road':
+                        self.world_network.edges[(pos, (nbrx, nbry))]['weight'] = 1
+                        self.road_network.add_edge(pos, (nbrx, nbry))
+
 
     def cart_to_iso(self, x, y):
         # get isometric coordinates from cartesian ones

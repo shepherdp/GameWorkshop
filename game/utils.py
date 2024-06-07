@@ -9,6 +9,35 @@ def draw_text(screen, text, size, color, pos):
     text_rect = text_surface.get_rect(topleft=pos)
     screen.blit(text_surface, text_rect)
 
+def load_sounds():
+
+    chopping = pg.mixer.Sound("assets\\audio\\chopping.mp3")
+    well = pg.mixer.Sound("assets\\audio\\well.mp3")
+    quarry = pg.mixer.Sound("assets\\audio\\quarry.mp3")
+    workbench = pg.mixer.Sound("assets\\audio\\workbench.mp3")
+    wheatfield = pg.mixer.Sound("assets\\audio\\wheatfield.mp3")
+    market = pg.mixer.Sound("assets\\audio\\market.mp3")
+    road = pg.mixer.Sound("assets\\audio\\road.mp3")
+    towncenter = pg.mixer.Sound("assets\\audio\\towncenter.mp3")
+    house = pg.mixer.Sound("assets\\audio\\house.mp3")
+    temple = pg.mixer.Sound("assets\\audio\\temple.mp3")
+
+    delete = pg.mixer.Sound("assets\\audio\\delete.mp3")
+
+    sounds = {'chopping': chopping,
+              'well': well,
+              'quarry': quarry,
+              'workbench': workbench,
+              'wheatfield': wheatfield,
+              'market': market,
+              'road': road,
+              'towncenter': towncenter,
+              'house': house,
+              'temple': temple,
+              'delete': delete}
+
+    return sounds
+
 def load_images():
 
     # world blocks
@@ -17,7 +46,7 @@ def load_images():
     grass1 = pg.image.load('assets\\graphics\\terrain\\grass1.png').convert_alpha()
     grass2 = pg.image.load('assets\\graphics\\terrain\\grass2.png').convert_alpha()
     grass3 = pg.image.load('assets\\graphics\\terrain\\grass3.png').convert_alpha()
-    water = pg.image.load('assets\\graphics\\terrain\\water.png').convert_alpha()
+    water1 = pg.image.load('assets\\graphics\\terrain\\water.png').convert_alpha()
 
     # buildings
     well = pg.image.load('assets\\graphics\\buildings\\well.png').convert_alpha()
@@ -29,6 +58,7 @@ def load_images():
     workbench = pg.image.load('assets\\graphics\\buildings\\workbench.png').convert_alpha()
     house = pg.image.load('assets\\graphics\\buildings\\house.png').convert_alpha()
     market = pg.image.load('assets\\graphics\\buildings\\market.png').convert_alpha()
+    temple = pg.image.load('assets\\graphics\\buildings\\temple.png').convert_alpha()
 
     # icons
     water = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
@@ -52,7 +82,7 @@ def load_images():
     farmer = pg.image.load('assets\\graphics\\characters\\farmer.png').convert_alpha()
     quarryman = pg.image.load('assets\\graphics\\characters\\quarryman.png').convert_alpha()
     merchant = pg.image.load('assets\\graphics\\characters\\merchant.png').convert_alpha()
-
+    priest = pg.image.load('assets\\graphics\\characters\\priest.png').convert_alpha()
 
 
     images = {'rock': rock,
@@ -60,9 +90,10 @@ def load_images():
               'well': well,
               'chopping': chopping,
               'road': road,
-              'water': water,
+              'water1': water1,
               'towncenter': tc,
               'market': market,
+              'temple': temple,
 
               'beggar': beggar,
               'woodcutter': woodcutter,
@@ -70,6 +101,7 @@ def load_images():
               'quarryman': quarryman,
               'farmer': farmer,
               'merchant': merchant,
+              'priest': priest,
 
               'water': water,
               'stone': stone,

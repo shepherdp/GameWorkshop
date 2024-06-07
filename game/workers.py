@@ -575,6 +575,7 @@ class Worker:
                     self.gold += price
         self.energy -= 15
 
+    # I think things are set up now such that I can change this and simplify a bit
     def reset_travel_vars(self):
         self.going_to_work = False
         self.arrived_at_work = False

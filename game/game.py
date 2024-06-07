@@ -26,6 +26,11 @@ class Game:
         # hud
         self.hud = HUD(self.width, self.height, self.screen)
 
+        self.days = 0
+        self.datestring = ''
+        self.get_datestring()
+        self.daytimer = pg.time.get_ticks()
+
         if LOAD:
             savedata = self.load()
         else:
@@ -98,7 +103,22 @@ class Game:
             #     # end drag
             #     print('unclick')
 
+    def get_datestring(self):
+        years = self.days // 336
+        num = self.days - years * 336
+        months = num // 28
+        num -= months * 28
+        weeks = num // 7
+        num -= weeks * 7
+        days = num % 7
+        self.datestring = f'Year {years + 1}, Month {months + 1}, Week {weeks + 1}, Day {days + 1}'
+
     def update(self):
+        now = pg.time.get_ticks()
+        if now - self.daytimer > 50:
+            self.days += 1
+            self.get_datestring()
+            self.daytimer = now
         self.camera.update()
         for e in self.entities:
             e.update()
@@ -116,11 +136,13 @@ class Game:
                       25,
                       (255, 255, 255),
                       (10, 10))
-            draw_text(self.screen,
-                      f'ready to delete: {self.world.ready_to_delete}',
-                      25,
-                      (255, 255, 255),
-                      (30, 10))
+
+        pos = self.width * .3
+        draw_text(self.screen,
+                  f'{self.datestring}',
+                  25,
+                  (255, 255, 255),
+                  (pos, 0))
 
         pg.display.flip()
 

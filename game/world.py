@@ -454,7 +454,7 @@ class World:
                         self.buildings[grid_pos[0]][grid_pos[1]] = None
                         self.world[grid_pos[0]][grid_pos[1]]['collision'] = False
                         del bldg
-                        self.ready_to_delete = False
+                        # self.ready_to_delete = False
                         self.sounds['delete'].play()
 
 

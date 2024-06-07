@@ -331,7 +331,7 @@ class Well(BaseProductionBuilding):
 class Road(Building):
 
     def __init__(self, pos, loc, manager, unique_id):
-        super().__init__(pos, loc, 'road', 'road', manager, 0, unique_id)
+        super().__init__(pos, loc, 'road', 'road', manager, unique_id)
 
 class Quarry(BaseProductionBuilding):
 

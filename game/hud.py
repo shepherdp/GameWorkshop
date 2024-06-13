@@ -4,9 +4,9 @@ from .utils import draw_text, load_images
 
 
 BLDG = ['towncenter', 'well', 'chopping', 'quarry', 'wheatfield',
-        'house', 'road', 'workbench', 'market', 'temple']
+        'house', 'road', 'workbench', 'market', 'temple', 'coalmine']
 TECH = ['simpletools_tech', 'agriculture']
-RSRC = ['wood', 'stone', 'water', 'wheat', 'simpletools']
+RSRC = ['wood', 'stone', 'water', 'wheat', 'simpletools', 'coal']
 
 class HUD:
 

@@ -179,8 +179,8 @@ class World:
                     ent = Workbench((rx, ry), (x, y), rm, d['id'])
                 elif d['name'] == 'house':
                     ent = House((rx, ry), (x, y), rm, d['id'])
-                elif d['name'] == 'market':
-                    ent = Market((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'temple':
+                    ent = Temple((rx, ry), (x, y), rm, d['id'])
 
                 if 'inventory' in d:
                     inv = d['inventory'].split(',')
@@ -379,6 +379,9 @@ class World:
         elif name == 'temple':
             ent = Temple(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager,
                         f'bldg{self.bldg_ctr}')
+        elif name == 'coalmine':
+            ent = Coalmine(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager,
+                         f'bldg{self.bldg_ctr}')
 
         if ent is not None:
             self.bldg_ctr += 1

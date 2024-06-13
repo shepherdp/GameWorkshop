@@ -9,7 +9,8 @@ JOBNAMES = {'chopping': 'Woodcutter',
             'well': 'Water Carrier',
             'workbench': 'Tool Maker',
             'market': 'Merchant',
-            'temple': 'Priest'
+            'temple': 'Priest',
+            'coalmine': 'Miner'
             }
 
 JOBIMGS = {'chopping': 'woodcutter',
@@ -18,7 +19,8 @@ JOBIMGS = {'chopping': 'woodcutter',
            'well': 'watercarrier',
            'workbench': 'farmer',
            'market': 'merchant',
-           'temple': 'priest'
+           'temple': 'priest',
+           'coalmine': 'miner'
            }
 
 USERATES = {'water': .4,
@@ -292,6 +294,13 @@ class ChoppingBlock(BaseProductionBuilding):
         super().__init__(pos, loc, 'choppingblock', 'chopping', manager, 2, unique_id)
         self.storage = {'wood': 0}
         self.production = {'wood': 1}
+
+class Coalmine(BaseProductionBuilding):
+
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'coalmine', 'coalmine', manager, 2, unique_id)
+        self.storage = {'coal': 0}
+        self.production = {'coal': 1}
 
 class Workbench(RefinedProductionBuilding):
 

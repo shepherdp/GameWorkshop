@@ -59,6 +59,7 @@ def load_images():
     house = pg.image.load('assets\\graphics\\buildings\\house.png').convert_alpha()
     market = pg.image.load('assets\\graphics\\buildings\\market.png').convert_alpha()
     temple = pg.image.load('assets\\graphics\\buildings\\temple.png').convert_alpha()
+    coalmine = pg.image.load('assets\\graphics\\buildings\\coalmine.png').convert_alpha()
 
     # icons
     water = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
@@ -66,6 +67,7 @@ def load_images():
     wood = pg.image.load('assets\\graphics\\icons\\wood_icon.png').convert_alpha()
     wheat = pg.image.load('assets\\graphics\\icons\\wheat_icon.png').convert_alpha()
     simpletools = pg.image.load('assets\\graphics\\icons\\simpletools_icon.png').convert_alpha()
+    coal = pg.image.load('assets\\graphics\\icons\\coal.png').convert_alpha()
 
     # tech icons
     simpletools_tech_icon = pg.image.load('assets\\graphics\\icons\\simpletools_tech_icon.png').convert_alpha()
@@ -83,6 +85,7 @@ def load_images():
     quarryman = pg.image.load('assets\\graphics\\characters\\quarryman.png').convert_alpha()
     merchant = pg.image.load('assets\\graphics\\characters\\merchant.png').convert_alpha()
     priest = pg.image.load('assets\\graphics\\characters\\priest.png').convert_alpha()
+    miner = pg.image.load('assets\\graphics\\characters\\miner.png').convert_alpha()
 
 
     images = {'rock': rock,
@@ -94,6 +97,7 @@ def load_images():
               'towncenter': tc,
               'market': market,
               'temple': temple,
+              'coalmine': coalmine,
 
               'beggar': beggar,
               'woodcutter': woodcutter,
@@ -102,12 +106,14 @@ def load_images():
               'farmer': farmer,
               'merchant': merchant,
               'priest': priest,
+              'miner': miner,
 
               'water': water,
               'stone': stone,
               'wood': wood,
               'wheat': wheat,
               'simpletools': simpletools,
+              'coal': coal,
 
               'quarry': quarry,
               'wheatfield': wheatfield,

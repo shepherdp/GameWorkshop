@@ -60,8 +60,8 @@ class Game:
 
     # consider moving this to World class
     def spawn_worker(self):
-        # if self.world.wrkr_ctr > 1:
-        #     return
+        if self.world.wrkr_ctr == 1:
+            return
         now = pg.time.get_ticks()
         if now - self.spawncooldown > 10000:
             if self.num_characters > sum([i.housing_capacity for i in self.world.towns]) + 3:
@@ -115,7 +115,7 @@ class Game:
 
     def update(self):
         now = pg.time.get_ticks()
-        if now - self.daytimer > 50:
+        if now - self.daytimer > 5000:
             self.days += 1
             self.get_datestring()
             self.daytimer = now

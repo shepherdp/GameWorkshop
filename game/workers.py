@@ -218,26 +218,25 @@ class Worker:
     def move(self):
         now = pg.time.get_ticks()
 
-        if now - self.move_timer > 200:
+        if now - self.move_timer > 100:
             # print('moving')
             # print('path idx', self.path_index)
-            # print('renderpos', self.tile['render_pos'])
-            # print('offsets', self.offsets)
+            print('renderpos', self.tile['render_pos'])
+            print('  offsets', self.offsets)
             # print('animcounter', self.animationcounter)
             if not self.animationcounter:
                 self.offsets = [0, 0]
                 new_pos = self.path[self.path_index]
                 new_tile = self.world.world[new_pos[0]][new_pos[1]]
-                self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 5
-                self.offset_amounts[1] = (new_tile['render_pos'][1] - self.tile['render_pos'][1]) / 5
+                self.offset_amounts[0] = (new_tile['render_pos'][0] - self.tile['render_pos'][0]) / 10
+                self.offset_amounts[1] = (new_tile['render_pos'][1] - self.tile['render_pos'][1]) / 10
                 self.change_tile(new_tile)
                 self.path_index += 1
-                self.animationcounter = (self.animationcounter + 1) % 5
             else:
                 self.offsets[0] += self.offset_amounts[0]
                 self.offsets[1] += self.offset_amounts[1]
-                self.animationcounter = (self.animationcounter + 1) % 5
 
+            self.animationcounter = (self.animationcounter + 1) % 10
             self.move_timer = now
             self.check_end_of_path()
 

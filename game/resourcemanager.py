@@ -10,13 +10,15 @@ class ResourceManager:
                     'water': 10,
                     'wheat': 12,
                     'simpletools': 50,
-                    'coal': 30}
+                    'coal': 30,
+                    'irontools': 100}
     max_prices = {'wood': 40,
                   'stone': 50,
                   'water': 35,
                   'wheat': 45,
                   'simpletools': 100,
-                  'coal': 60}
+                  'coal': 60,
+                  'irontools': 200}
 
     def __init__(self):
 
@@ -26,7 +28,8 @@ class ResourceManager:
                           'gold': 1000000,
                           'wheat': 5000,
                           'simpletools': 500,
-                          'coal': 500}
+                          'coal': 500,
+                          'irontools': 1000}
 
         self.costs = {'well': {'wood': 5},
                       'temple': {'stone': 5, 'simpletools': 5},
@@ -39,9 +42,10 @@ class ResourceManager:
                       'workbench': {'wood': 4, 'stone': 1},
                       'market': {'wood': 10, 'stone': 10},
                       'coalmine': {'stone': 10},
+                      'forge': {'stone': 10, 'wood': 10, 'simpletools': 10},
 
                       'simpletools_tech': {'wood': 40, 'stone': 40},
-                      'agriculture': {'wood': 50, 'simpletools': 20, 'water': 20}
+                      'agriculture_tech': {'wood': 50, 'simpletools': 20, 'water': 20}
                       }
 
         self.quantity_demanded = {'wood': 0,

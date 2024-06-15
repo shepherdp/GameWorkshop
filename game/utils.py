@@ -60,6 +60,7 @@ def load_images():
     market = pg.image.load('assets\\graphics\\buildings\\market.png').convert_alpha()
     temple = pg.image.load('assets\\graphics\\buildings\\temple.png').convert_alpha()
     coalmine = pg.image.load('assets\\graphics\\buildings\\coalmine.png').convert_alpha()
+    forge = pg.image.load('assets\\graphics\\buildings\\forge.png').convert_alpha()
 
     # icons
     water = pg.image.load('assets\\graphics\\icons\\water_icon.png').convert_alpha()
@@ -68,6 +69,7 @@ def load_images():
     wheat = pg.image.load('assets\\graphics\\icons\\wheat_icon.png').convert_alpha()
     simpletools = pg.image.load('assets\\graphics\\icons\\simpletools_icon.png').convert_alpha()
     coal = pg.image.load('assets\\graphics\\icons\\coal.png').convert_alpha()
+    irontools = pg.image.load('assets\\graphics\\icons\\irontools_icon.png').convert_alpha()
 
     # tech icons
     simpletools_tech_icon = pg.image.load('assets\\graphics\\icons\\simpletools_tech_icon.png').convert_alpha()
@@ -98,6 +100,7 @@ def load_images():
               'market': market,
               'temple': temple,
               'coalmine': coalmine,
+              'forge': forge,
 
               'beggar': beggar,
               'woodcutter': woodcutter,
@@ -114,6 +117,7 @@ def load_images():
               'wheat': wheat,
               'simpletools': simpletools,
               'coal': coal,
+              'irontools': irontools,
 
               'quarry': quarry,
               'wheatfield': wheatfield,
@@ -123,7 +127,7 @@ def load_images():
               'grass3': grass3,
               'house': house,
               'simpletools_tech': simpletools_tech_icon,
-              'agriculture': agriculture_tech_icon,
+              'agriculture_tech': agriculture_tech_icon,
               'deselect_button': deselect_button,
               'select_button': select_button,
               'delete_button': delete_button

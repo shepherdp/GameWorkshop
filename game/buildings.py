@@ -10,7 +10,8 @@ JOBNAMES = {'chopping': 'Woodcutter',
             'workbench': 'Tool Maker',
             'market': 'Merchant',
             'temple': 'Priest',
-            'coalmine': 'Miner'
+            'coalmine': 'Miner',
+            'forge': 'Smith'
             }
 
 JOBIMGS = {'chopping': 'woodcutter',
@@ -20,7 +21,8 @@ JOBIMGS = {'chopping': 'woodcutter',
            'workbench': 'farmer',
            'market': 'merchant',
            'temple': 'priest',
-           'coalmine': 'miner'
+           'coalmine': 'miner',
+           'forge': 'miner'
            }
 
 USERATES = {'water': .4,
@@ -404,3 +406,11 @@ class Temple(EmploymentBuilding):
 
     def needs_goods(self):
         return False
+
+class Forge(RefinedProductionBuilding):
+
+    def __init__(self, pos, loc, manager, unique_id):
+        super().__init__(pos, loc, 'forge', 'forge', manager, 2, unique_id)
+        self.storage = {'coal': 1, 'wood': 1, 'irontools': 0}
+        self.production = {'irontools': 1}
+        self.consumption = {'wood': .1, 'coal': .1}

@@ -181,6 +181,8 @@ class World:
                     ent = House((rx, ry), (x, y), rm, d['id'])
                 elif d['name'] == 'temple':
                     ent = Temple((rx, ry), (x, y), rm, d['id'])
+                elif d['name'] == 'forge':
+                    ent = Forge((rx, ry), (x, y), rm, d['id'])
 
                 if 'inventory' in d:
                     inv = d['inventory'].split(',')
@@ -382,6 +384,9 @@ class World:
         elif name == 'coalmine':
             ent = Coalmine(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager,
                          f'bldg{self.bldg_ctr}')
+        elif name == 'forge':
+            ent = Forge(self.temp_tile['render_pos'], grid_pos, self.active_town_center.resourcemanager,
+                        f'bldg{self.bldg_ctr}')
 
         if ent is not None:
             self.bldg_ctr += 1

@@ -4,20 +4,21 @@ import pygame as pg
 BLDG_PREREQS = {'chopping': [],
                 'well': [],
                 'quarry': [],
-                'wheatfield': ['agriculture'],
+                'wheatfield': ['agriculture_tech'],
                 'workbench': ['simpletools_tech'],
                 'towncenter': [],
                 'house': [],
                 'road': [],
                 'market': [],
                 'temple': [],
-                'coalmine': []}
+                'coalmine': [],
+                'forge': []}
 
 TECH_PREREQS = {'simpletools_tech': [],
-                'agriculture': ['simpletools_tech']}
+                'agriculture_tech': ['simpletools_tech']}
 
 TECH_TIMES = {'simpletools_tech': 10000 // 10,
-              'agriculture': 14000 // 10}
+              'agriculture_tech': 14000 // 10}
 
 class TechManager:
 
